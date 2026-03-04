@@ -10,12 +10,78 @@
   <link rel="stylesheet" href="../css/style.css">
   <style>
     /* ── Simulation page overrides ── */
-    body { padding-top: var(--nav-h); }
+    body {
+      padding-top: var(--nav-h);
+      position: relative;
+      min-height: 100vh;
+    }
+
+    /* Mouse-following glow */
+    .page-glow {
+      position: fixed;
+      width: 700px; height: 700px;
+      border-radius: 50%;
+      pointer-events: none;
+      filter: blur(140px);
+      opacity: 0;
+      transform: translate(-50%, -50%);
+      background: #7c4dff;
+      transition: opacity 0.5s ease;
+      z-index: 0;
+    }
+    body:hover .page-glow { opacity: 0.07; }
+
+    /* Subtle grid pattern */
+    .page-grid {
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      z-index: 0;
+      background-image:
+        linear-gradient(rgba(42, 46, 57, 0.3) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(42, 46, 57, 0.3) 1px, transparent 1px);
+      background-size: 48px 48px;
+      mask-image: radial-gradient(ellipse 70% 60% at 50% 30%, black 0%, transparent 100%);
+      -webkit-mask-image: radial-gradient(ellipse 70% 60% at 50% 30%, black 0%, transparent 100%);
+    }
+
+    /* Ambient corner orbs */
+    .corner-orb {
+      position: fixed;
+      border-radius: 50%;
+      pointer-events: none;
+      filter: blur(100px);
+      z-index: 0;
+    }
+    .corner-orb-1 {
+      width: 400px; height: 400px;
+      background: #2962ff;
+      top: -120px; right: -80px;
+      opacity: 0.06;
+      animation: orbDrift1 18s ease-in-out infinite alternate;
+    }
+    .corner-orb-2 {
+      width: 350px; height: 350px;
+      background: #26a69a;
+      bottom: -100px; left: -60px;
+      opacity: 0.05;
+      animation: orbDrift2 22s ease-in-out infinite alternate;
+    }
+    @keyframes orbDrift1 {
+      from { transform: translate(0, 0) scale(1); }
+      to   { transform: translate(-40px, 50px) scale(1.15); }
+    }
+    @keyframes orbDrift2 {
+      from { transform: translate(0, 0) scale(1); }
+      to   { transform: translate(30px, -40px) scale(1.1); }
+    }
 
     .sim-layout {
       max-width: 1100px;
       margin: 0 auto;
       padding: 2rem clamp(1rem, 3vw, 3rem) 4rem;
+      position: relative;
+      z-index: 1;
     }
 
     .sim-header {
@@ -315,6 +381,12 @@
     </ul>
   </nav>
 
+  <!-- Background effects -->
+  <div class="page-grid"></div>
+  <div class="page-glow" id="page-glow"></div>
+  <div class="corner-orb corner-orb-1"></div>
+  <div class="corner-orb corner-orb-2"></div>
+
   <div class="sim-layout">
     <div class="sim-header">
       <a href="../index.html" class="back-link">← Back to Guide</a>
@@ -373,6 +445,13 @@
   </div>
 
   <script>
+    /* ── Mouse-following glow ── */
+    const pageGlow = document.getElementById("page-glow");
+    document.addEventListener("mousemove", (e) => {
+      pageGlow.style.left = e.clientX + "px";
+      pageGlow.style.top = e.clientY + "px";
+    });
+
     /* ── Synthetic data generator ── */
     const profiles = {
       AAPL: { annual: 0.25, vol: 0.22, name: "Apple Inc." },
