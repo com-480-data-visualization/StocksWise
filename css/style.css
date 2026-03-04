@@ -377,23 +377,27 @@ html  { scroll-padding-top: calc(var(--nav-h) + 36px + 16px); }
    MAIN CONTENT
    ══════════════════════════════════════════════ */
 #content {
-  max-width: 1200px;
-  margin: 0 auto;
-  padding: 0 clamp(1rem, 3vw, 3rem);
+  width: 100%;
 }
 
 /* ══════════════════════════════════════════════
    TWO-COLUMN SECTIONS
    ══════════════════════════════════════════════ */
 .topic-section {
+  position: relative;
+  border-top: 1px solid var(--border);
+}
+
+.topic-section-inner {
   display: grid;
   grid-template-columns: 240px 1fr;
   gap: 3rem;
   min-height: 80vh;
-  padding: 5rem 0;
-  border-top: 1px solid var(--border);
+  padding: 5rem clamp(1rem, 3vw, 3rem);
+  max-width: 1200px;
+  margin: 0 auto;
   position: relative;
-  overflow: hidden;
+  z-index: 1;
 }
 
 /* ── Per-section ambient glow ── */
@@ -780,10 +784,10 @@ footer a:hover { color: var(--accent-light); }
    RESPONSIVE
    ══════════════════════════════════════════════ */
 @media (max-width: 768px) {
-  .topic-section {
+  .topic-section-inner {
     grid-template-columns: 1fr;
     min-height: auto;
-    padding: 3rem 0;
+    padding: 3rem 1rem;
     gap: 1.5rem;
   }
   .sticky-label {
