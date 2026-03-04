@@ -97,6 +97,20 @@
   reveals.forEach((el) => observer.observe(el));
 })();
 
+/* ── Mouse-following glow ── */
+(function initGlow() {
+  document.querySelectorAll(".topic-section").forEach((section) => {
+    const glow = section.querySelector(".section-glow");
+    if (!glow) return;
+
+    section.addEventListener("mousemove", (e) => {
+      const rect = section.getBoundingClientRect();
+      glow.style.left = (e.clientX - rect.left) + "px";
+      glow.style.top = (e.clientY - rect.top) + "px";
+    });
+  });
+})();
+
 /* ── Nav background on scroll ── */
 (function initNavScroll() {
   const nav = document.getElementById("topnav");

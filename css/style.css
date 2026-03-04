@@ -400,50 +400,28 @@ html  { scroll-padding-top: calc(var(--nav-h) + 36px + 16px); }
   z-index: 1;
 }
 
-/* ── Per-section ambient glow ── */
-.topic-section::before {
-  content: "";
+/* ── Mouse-following glow per section ── */
+.section-glow {
   position: absolute;
-  width: 500px; height: 500px;
+  width: 600px; height: 600px;
   border-radius: 50%;
   pointer-events: none;
   filter: blur(120px);
-  opacity: 0.07;
-  animation: sectionOrb 16s ease-in-out infinite alternate;
+  opacity: 0;
+  transition: opacity 0.4s ease;
+  transform: translate(-50%, -50%);
+  z-index: 0;
 }
 
-#stocks::before  { background: #2962ff; top: -100px; right: -150px; }
-#etfs::before    { background: #26a69a; top: 50px;   left: -200px; animation-delay: -3s; }
-#risks::before   { background: #ef5350; top: -50px;  right: -100px; animation-delay: -6s; }
-#simulation::before { background: #7c4dff; top: 0;   left: -150px; animation-delay: -9s; }
-#quiz::before    { background: #2962ff; top: -80px;  right: -120px; animation-delay: -12s; }
-
-/* Second glow orb (opposite corner) */
-.topic-section::after {
-  content: "";
-  position: absolute;
-  width: 400px; height: 400px;
-  border-radius: 50%;
-  pointer-events: none;
-  filter: blur(100px);
-  opacity: 0.05;
-  animation: sectionOrb2 20s ease-in-out infinite alternate;
+.topic-section:hover .section-glow {
+  opacity: 0.09;
 }
 
-#stocks::after  { background: #7c4dff; bottom: -100px; left: -100px; }
-#etfs::after    { background: #2962ff; bottom: -80px;  right: -120px; animation-delay: -4s; }
-#risks::after   { background: #ff9100; bottom: -120px; left: -80px; animation-delay: -8s; }
-#simulation::after { background: #26a69a; bottom: -60px; right: -100px; animation-delay: -12s; }
-#quiz::after    { background: #7c4dff; bottom: -100px; left: -100px; animation-delay: -2s; }
-
-@keyframes sectionOrb {
-  from { transform: translate(0, 0) scale(1); }
-  to   { transform: translate(40px, 30px) scale(1.2); }
-}
-@keyframes sectionOrb2 {
-  from { transform: translate(0, 0) scale(1.1); }
-  to   { transform: translate(-30px, -20px) scale(0.9); }
-}
+#stocks .section-glow  { background: #2962ff; }
+#etfs .section-glow    { background: #26a69a; }
+#risks .section-glow   { background: #ef5350; }
+#simulation .section-glow { background: #7c4dff; }
+#quiz .section-glow    { background: #2962ff; }
 
 /* Alternating subtle bg tint for rhythm */
 .topic-section:nth-child(even) {
