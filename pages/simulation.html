@@ -1,0 +1,396 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>StockWise — Simulator</title>
+  <link rel="stylesheet" href="../css/style.css">
+  <style>
+    /* ── Simulation-specific styles ── */
+    .sim-wrapper {
+      max-width: 900px;
+      margin: 0 auto;
+      padding: calc(var(--nav-h) + 3rem) 2rem 4rem;
+    }
+
+    .sim-wrapper h1 {
+      font-size: 2rem;
+      font-weight: 800;
+      margin-bottom: 0.5rem;
+    }
+    .sim-wrapper > p {
+      color: var(--text-muted);
+      margin-bottom: 2.5rem;
+    }
+
+    .sim-controls {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+      gap: 1rem;
+      margin-bottom: 2rem;
+    }
+
+    .sim-field label {
+      display: block;
+      font-size: 0.8rem;
+      font-weight: 600;
+      color: var(--text-muted);
+      margin-bottom: 0.35rem;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+
+    .sim-field select,
+    .sim-field input {
+      width: 100%;
+      padding: 0.65rem 0.85rem;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      color: var(--text);
+      font-size: 0.95rem;
+      font-family: inherit;
+      outline: none;
+      transition: border-color 0.2s;
+    }
+    .sim-field select:focus,
+    .sim-field input:focus {
+      border-color: var(--accent);
+    }
+
+    .sim-run {
+      padding: 0.75rem 2rem;
+      background: var(--accent);
+      color: var(--bg);
+      font-weight: 700;
+      border: none;
+      border-radius: 999px;
+      cursor: pointer;
+      font-size: 0.95rem;
+      transition: transform 0.2s, box-shadow 0.2s;
+    }
+    .sim-run:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 6px 24px rgba(79, 195, 247, 0.3);
+    }
+
+    /* Chart placeholder */
+    .chart-area {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      min-height: 400px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin-bottom: 1.5rem;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .chart-placeholder {
+      color: var(--text-muted);
+      font-size: 0.95rem;
+      text-align: center;
+      padding: 2rem;
+    }
+
+    /* Result cards */
+    .sim-results {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+      gap: 1rem;
+    }
+
+    .result-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 1.25rem;
+    }
+    .result-card .label {
+      font-size: 0.75rem;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      color: var(--text-muted);
+      margin-bottom: 0.25rem;
+    }
+    .result-card .value {
+      font-size: 1.5rem;
+      font-weight: 800;
+    }
+    .result-card .value.positive { color: var(--green); }
+    .result-card .value.negative { color: var(--red); }
+
+    .back-link {
+      display: inline-block;
+      margin-bottom: 1.5rem;
+      font-size: 0.9rem;
+      color: var(--text-muted);
+    }
+    .back-link:hover { color: var(--accent); }
+
+    .disclaimer {
+      margin-top: 2rem;
+      padding: 1rem;
+      background: var(--accent-dim);
+      border-radius: 8px;
+      font-size: 0.8rem;
+      color: var(--text-muted);
+    }
+
+    /* Simple SVG chart styles */
+    .chart-area svg {
+      width: 100%;
+      height: 100%;
+    }
+    .chart-line {
+      fill: none;
+      stroke: var(--accent);
+      stroke-width: 2;
+    }
+    .chart-area-fill {
+      fill: var(--accent-dim);
+    }
+    .chart-axis text {
+      fill: var(--text-muted);
+      font-size: 11px;
+    }
+    .chart-axis line,
+    .chart-axis path {
+      stroke: var(--border);
+    }
+    .chart-grid line {
+      stroke: var(--border);
+      stroke-dasharray: 2 4;
+    }
+  </style>
+</head>
+<body>
+
+  <nav id="topnav">
+    <a href="../index.html" class="logo">StockWise</a>
+    <ul>
+      <li><a href="../index.html">← Back to Guide</a></li>
+    </ul>
+  </nav>
+
+  <div class="sim-wrapper">
+    <a href="../index.html" class="back-link">← Back to Guide</a>
+    <h1>Investment Simulator</h1>
+    <p>Pick a stock, a starting date, and an amount — we'll show you what would have happened.</p>
+
+    <div class="sim-controls">
+      <div class="sim-field">
+        <label>Ticker</label>
+        <select id="sim-ticker">
+          <option value="AAPL">AAPL — Apple</option>
+          <option value="MSFT">MSFT — Microsoft</option>
+          <option value="NVDA">NVDA — NVIDIA</option>
+          <option value="AMZN">AMZN — Amazon</option>
+          <option value="TSLA">TSLA — Tesla</option>
+          <option value="QQQ">QQQ — NASDAQ-100 ETF</option>
+        </select>
+      </div>
+      <div class="sim-field">
+        <label>Start Date</label>
+        <input type="date" id="sim-date" value="2015-01-02">
+      </div>
+      <div class="sim-field">
+        <label>Amount (€)</label>
+        <input type="number" id="sim-amount" value="1000" min="1">
+      </div>
+    </div>
+
+    <button class="sim-run" id="sim-run">Run Simulation</button>
+
+    <div class="chart-area" id="chart-area">
+      <div class="chart-placeholder" id="chart-placeholder">
+        Press <strong>Run Simulation</strong> to see your results.
+      </div>
+    </div>
+
+    <div class="sim-results" id="sim-results"></div>
+
+    <div class="disclaimer">
+      <strong>Disclaimer:</strong> This simulator uses synthetic placeholder data for prototype purposes.
+      The final version will use real historical prices. This is not financial advice.
+    </div>
+  </div>
+
+  <script>
+    /* ── Synthetic data generator (prototype placeholder) ── */
+    const profiles = {
+      AAPL: { annual: 0.25, vol: 0.22 },
+      MSFT: { annual: 0.22, vol: 0.20 },
+      NVDA: { annual: 0.45, vol: 0.45 },
+      AMZN: { annual: 0.20, vol: 0.28 },
+      TSLA: { annual: 0.35, vol: 0.55 },
+      QQQ:  { annual: 0.14, vol: 0.15 },
+    };
+
+    function generateSynthetic(ticker, startDate, endDate) {
+      const prof = profiles[ticker];
+      const dailyReturn = prof.annual / 252;
+      const dailyVol = prof.vol / Math.sqrt(252);
+      const points = [];
+      let price = 100;
+      const d = new Date(startDate);
+      const end = new Date(endDate);
+
+      while (d <= end) {
+        if (d.getDay() !== 0 && d.getDay() !== 6) {
+          const shock = (Math.random() - 0.5) * 2 * dailyVol + dailyReturn;
+          price *= (1 + shock);
+          if (price < 1) price = 1;
+          points.push({ date: new Date(d), price });
+        }
+        d.setDate(d.getDate() + 1);
+      }
+      return points;
+    }
+
+    /* ── Simple SVG chart (no D3 dependency for prototype) ── */
+    function drawChart(container, data, amount) {
+      container.innerHTML = "";
+      const W = container.clientWidth;
+      const H = 400;
+      const pad = { top: 20, right: 20, bottom: 40, left: 60 };
+      const innerW = W - pad.left - pad.right;
+      const innerH = H - pad.top - pad.bottom;
+
+      const startPrice = data[0].price;
+      const values = data.map((d) => (d.price / startPrice) * amount);
+      const minV = Math.min(...values) * 0.95;
+      const maxV = Math.max(...values) * 1.05;
+      const minDate = data[0].date.getTime();
+      const maxDate = data[data.length - 1].date.getTime();
+
+      const xScale = (date) => pad.left + ((date.getTime() - minDate) / (maxDate - minDate)) * innerW;
+      const yScale = (val) => pad.top + innerH - ((val - minV) / (maxV - minV)) * innerH;
+
+      const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+      svg.setAttribute("viewBox", `0 0 ${W} ${H}`);
+      svg.setAttribute("width", W);
+      svg.setAttribute("height", H);
+
+      // Grid lines
+      const gridSteps = 5;
+      for (let i = 0; i <= gridSteps; i++) {
+        const val = minV + (i / gridSteps) * (maxV - minV);
+        const y = yScale(val);
+        const line = document.createElementNS("http://www.w3.org/2000/svg", "line");
+        line.setAttribute("x1", pad.left);
+        line.setAttribute("x2", W - pad.right);
+        line.setAttribute("y1", y);
+        line.setAttribute("y2", y);
+        line.setAttribute("class", "chart-grid");
+        svg.appendChild(line);
+
+        const text = document.createElementNS("http://www.w3.org/2000/svg", "text");
+        text.setAttribute("x", pad.left - 8);
+        text.setAttribute("y", y + 4);
+        text.setAttribute("text-anchor", "end");
+        text.setAttribute("class", "chart-axis");
+        text.textContent = `€${Math.round(val).toLocaleString()}`;
+        svg.appendChild(text);
+      }
+
+      // X-axis labels
+      const yearSet = new Set();
+      data.forEach((d) => {
+        const yr = d.date.getFullYear();
+        if (!yearSet.has(yr)) {
+          yearSet.add(yr);
+          const text = document.createElementNS("http://www.w3.org/2000/svg", "text");
+          text.setAttribute("x", xScale(d.date));
+          text.setAttribute("y", H - 8);
+          text.setAttribute("text-anchor", "middle");
+          text.setAttribute("class", "chart-axis");
+          text.textContent = yr;
+          svg.appendChild(text);
+        }
+      });
+
+      // Area fill
+      let areaD = `M ${xScale(data[0].date)} ${yScale(values[0])}`;
+      for (let i = 1; i < data.length; i++) {
+        areaD += ` L ${xScale(data[i].date)} ${yScale(values[i])}`;
+      }
+      areaD += ` L ${xScale(data[data.length - 1].date)} ${pad.top + innerH}`;
+      areaD += ` L ${xScale(data[0].date)} ${pad.top + innerH} Z`;
+      const area = document.createElementNS("http://www.w3.org/2000/svg", "path");
+      area.setAttribute("d", areaD);
+      area.setAttribute("class", "chart-area-fill");
+      svg.appendChild(area);
+
+      // Line
+      let lineD = `M ${xScale(data[0].date)} ${yScale(values[0])}`;
+      for (let i = 1; i < data.length; i++) {
+        lineD += ` L ${xScale(data[i].date)} ${yScale(values[i])}`;
+      }
+      const path = document.createElementNS("http://www.w3.org/2000/svg", "path");
+      path.setAttribute("d", lineD);
+      path.setAttribute("class", "chart-line");
+      svg.appendChild(path);
+
+      container.appendChild(svg);
+    }
+
+    /* ── Run simulation ── */
+    document.getElementById("sim-run").addEventListener("click", () => {
+      const ticker = document.getElementById("sim-ticker").value;
+      const startDate = document.getElementById("sim-date").value;
+      const amount = parseFloat(document.getElementById("sim-amount").value) || 1000;
+      const endDate = "2025-03-01";
+
+      const data = generateSynthetic(ticker, startDate, endDate);
+      if (data.length < 2) return;
+
+      const startPrice = data[0].price;
+      const endPrice = data[data.length - 1].price;
+      const finalValue = (endPrice / startPrice) * amount;
+      const totalReturn = ((finalValue - amount) / amount) * 100;
+      const years = (data[data.length - 1].date - data[0].date) / (365.25 * 86400000);
+      const cagr = (Math.pow(finalValue / amount, 1 / years) - 1) * 100;
+
+      // Peak and trough for max drawdown
+      let peak = -Infinity;
+      let maxDD = 0;
+      data.forEach((d) => {
+        const val = (d.price / startPrice) * amount;
+        if (val > peak) peak = val;
+        const dd = (peak - val) / peak;
+        if (dd > maxDD) maxDD = dd;
+      });
+
+      // Draw chart
+      const chartArea = document.getElementById("chart-area");
+      drawChart(chartArea, data, amount);
+
+      // Result cards
+      const resultsEl = document.getElementById("sim-results");
+      const positive = finalValue >= amount;
+      resultsEl.innerHTML = `
+        <div class="result-card">
+          <div class="label">Final Value</div>
+          <div class="value ${positive ? "positive" : "negative"}">€${Math.round(finalValue).toLocaleString()}</div>
+        </div>
+        <div class="result-card">
+          <div class="label">Total Return</div>
+          <div class="value ${positive ? "positive" : "negative"}">${totalReturn >= 0 ? "+" : ""}${totalReturn.toFixed(1)}%</div>
+        </div>
+        <div class="result-card">
+          <div class="label">CAGR</div>
+          <div class="value">${cagr.toFixed(1)}%</div>
+        </div>
+        <div class="result-card">
+          <div class="label">Max Drawdown</div>
+          <div class="value negative">-${(maxDD * 100).toFixed(1)}%</div>
+        </div>
+      `;
+    });
+  </script>
+
+</body>
+</html>
