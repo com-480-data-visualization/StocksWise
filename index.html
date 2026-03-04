@@ -4,14 +4,23 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>StockWise — Investing Made Clear</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="css/style.css">
 </head>
 <body>
 
   <!-- ───────── NAV ───────── -->
   <nav id="topnav">
-    <a href="/" class="logo">StockWise</a>
-    <ul>
+    <a href="/" class="logo">
+      <span class="logo-dot"></span>
+      StockWise
+    </a>
+    <button class="nav-toggle" id="nav-toggle" aria-label="Toggle menu">
+      <span></span><span></span><span></span>
+    </button>
+    <ul id="nav-links">
       <li><a href="#stocks">Stocks</a></li>
       <li><a href="#etfs">ETFs</a></li>
       <li><a href="#risks">Risks</a></li>
@@ -20,12 +29,35 @@
     </ul>
   </nav>
 
+  <!-- ───────── TICKER TAPE ───────── -->
+  <div class="ticker-tape">
+    <div class="ticker-track" id="ticker-track"></div>
+  </div>
+
   <!-- ───────── HERO ───────── -->
   <header id="hero">
     <div class="hero-content">
+      <span class="hero-badge"><span class="hero-badge-dot"></span> EPFL Data Visualization 2025</span>
       <h1>You have <span class="accent">€1,000</span>.<br>What do you do?</h1>
-      <p class="subtitle">A beginner-friendly guide to investing on the NASDAQ — powered by data.</p>
-      <a href="#stocks" class="cta">Start Learning</a>
+      <p class="subtitle">A beginner-friendly, data-driven guide to investing on the NASDAQ. Learn concepts, explore real market data, and simulate your own strategies.</p>
+      <div class="hero-actions">
+        <a href="#stocks" class="cta">Start Learning <span>→</span></a>
+        <a href="pages/simulation.html" class="cta cta-secondary">Open Simulator</a>
+      </div>
+      <div class="hero-stats">
+        <div class="hero-stat">
+          <span class="hero-stat-value">6,800+</span>
+          <span class="hero-stat-label">Stock tickers</span>
+        </div>
+        <div class="hero-stat">
+          <span class="hero-stat-value">45 yrs</span>
+          <span class="hero-stat-label">Of history</span>
+        </div>
+        <div class="hero-stat">
+          <span class="hero-stat-value">30M+</span>
+          <span class="hero-stat-label">Data points</span>
+        </div>
+      </div>
     </div>
   </header>
 
@@ -36,25 +68,26 @@
     <section id="stocks" class="topic-section">
       <div class="topic-label">
         <div class="sticky-label">
-          <span class="section-number">01</span>
+          <span class="section-number">Module 01</span>
           <h2>Stocks</h2>
+          <p class="section-desc">The building blocks of investing. Understand what you're buying before you buy it.</p>
         </div>
       </div>
       <div class="topic-detail">
-        <div class="card">
-          <h3>What is a stock?</h3>
+        <div class="card reveal">
+          <h3><span class="card-icon">📄</span> What is a stock?</h3>
           <p>A <strong>stock</strong> (or share) is a tiny piece of ownership in a company. When you buy one share of Apple, you literally own a fraction of everything Apple has — its cash, buildings, patents, and future profits.</p>
         </div>
-        <div class="card">
-          <h3>What is a stock market?</h3>
+        <div class="card reveal">
+          <h3><span class="card-icon">🏛</span> What is a stock market?</h3>
           <p>A <strong>stock market</strong> is a marketplace where buyers and sellers trade shares. The NASDAQ, the New York Stock Exchange (NYSE), and Euronext are examples. Think of it like an auction house that runs every weekday.</p>
         </div>
-        <div class="card">
-          <h3>How are prices set?</h3>
+        <div class="card reveal">
+          <h3><span class="card-icon">⚖️</span> How are prices set?</h3>
           <p>Prices move with <strong>supply and demand</strong>. If more people want to buy a stock than sell it, the price rises. If more want to sell, it drops. Company earnings, news, and market sentiment all influence demand.</p>
         </div>
-        <div class="card">
-          <h3>Key terms</h3>
+        <div class="card reveal">
+          <h3><span class="card-icon">📖</span> Key terms</h3>
           <ul class="term-list">
             <li><strong>Ticker</strong> — the short code for a stock (e.g. AAPL for Apple).</li>
             <li><strong>Market cap</strong> — total value of all shares (price × number of shares).</li>
@@ -69,21 +102,22 @@
     <section id="etfs" class="topic-section">
       <div class="topic-label">
         <div class="sticky-label">
-          <span class="section-number">02</span>
+          <span class="section-number">Module 02</span>
           <h2>ETFs</h2>
+          <p class="section-desc">Diversification in a single trade. The easiest way to start investing.</p>
         </div>
       </div>
       <div class="topic-detail">
-        <div class="card">
-          <h3>What is an ETF?</h3>
+        <div class="card reveal">
+          <h3><span class="card-icon">📦</span> What is an ETF?</h3>
           <p>An <strong>Exchange-Traded Fund</strong> bundles many stocks into one tradable product. Instead of buying 100 companies individually, you buy one ETF that holds all of them. It trades on the stock market just like a regular share.</p>
         </div>
-        <div class="card">
-          <h3>Why do beginners love ETFs?</h3>
+        <div class="card reveal">
+          <h3><span class="card-icon">🛡</span> Why do beginners love ETFs?</h3>
           <p><strong>Instant diversification.</strong> If one company in the bundle crashes, the others cushion the blow. The QQQ ETF, for example, tracks the 100 largest NASDAQ companies — so you get Apple, Microsoft, NVIDIA, and 97 others in a single purchase.</p>
         </div>
-        <div class="card">
-          <h3>ETFs vs. individual stocks</h3>
+        <div class="card reveal">
+          <h3><span class="card-icon">⚔️</span> ETFs vs. individual stocks</h3>
           <div class="comparison">
             <div class="comp-col">
               <h4>ETFs</h4>
@@ -105,8 +139,8 @@
             </div>
           </div>
         </div>
-        <div class="card">
-          <h3>Popular NASDAQ ETFs</h3>
+        <div class="card reveal">
+          <h3><span class="card-icon">⭐</span> Popular NASDAQ ETFs</h3>
           <ul class="term-list">
             <li><strong>QQQ</strong> — tracks the NASDAQ-100 (top 100 non-financial companies).</li>
             <li><strong>VGT</strong> — Vanguard Information Technology ETF.</li>
@@ -120,29 +154,30 @@
     <section id="risks" class="topic-section">
       <div class="topic-label">
         <div class="sticky-label">
-          <span class="section-number">03</span>
+          <span class="section-number">Module 03</span>
           <h2>Risks</h2>
+          <p class="section-desc">Every return comes with a price. Learn to measure and manage risk.</p>
         </div>
       </div>
       <div class="topic-detail">
-        <div class="card">
-          <h3>Why do prices go down?</h3>
+        <div class="card reveal">
+          <h3><span class="card-icon">📉</span> Why do prices go down?</h3>
           <p>Markets react to <strong>uncertainty</strong>. Bad earnings, interest rate hikes, geopolitical crises, or simple panic can trigger sell-offs. In March 2020, the NASDAQ dropped 30% in three weeks due to COVID-19 fears — then recovered within five months.</p>
         </div>
-        <div class="card">
-          <h3>Volatility</h3>
+        <div class="card reveal">
+          <h3><span class="card-icon">🌊</span> Volatility</h3>
           <p><strong>Volatility</strong> measures how much a price swings up and down. NVIDIA moved ±5% in a single day dozens of times in 2023. A savings account has near-zero volatility. Higher volatility = higher potential reward, but also higher potential loss.</p>
         </div>
-        <div class="card">
-          <h3>Key risk metrics</h3>
+        <div class="card reveal">
+          <h3><span class="card-icon">📊</span> Key risk metrics</h3>
           <ul class="term-list">
             <li><strong>Max drawdown</strong> — the worst peak-to-trough drop. Tesla lost 73% from Nov 2021 to Jan 2023.</li>
             <li><strong>Sharpe ratio</strong> — return per unit of risk. Higher is better. Above 1.0 is considered good.</li>
             <li><strong>VIX</strong> — the "fear index." When VIX spikes, markets are panicking.</li>
           </ul>
         </div>
-        <div class="card">
-          <h3>The golden rule</h3>
+        <div class="card reveal">
+          <h3><span class="card-icon">🔑</span> The golden rule</h3>
           <p><em>"Never invest money you can't afford to lose."</em> Diversification, long time horizons, and emotional discipline are your best defenses. Historically, the NASDAQ has returned ~10% annually over 20+ year periods — but short-term swings can be brutal.</p>
         </div>
       </div>
@@ -152,20 +187,21 @@
     <section id="simulation" class="topic-section">
       <div class="topic-label">
         <div class="sticky-label">
-          <span class="section-number">04</span>
+          <span class="section-number">Module 04</span>
           <h2>Our Simulation</h2>
+          <p class="section-desc">Travel back in time and see what your money could have done.</p>
         </div>
       </div>
       <div class="topic-detail">
-        <div class="card card-highlight">
-          <h3>What if you had invested?</h3>
+        <div class="card card-highlight reveal">
+          <h3><span class="card-icon">🚀</span> What if you had invested?</h3>
           <p>Our simulator lets you travel back in time. Pick a company, choose a date, enter an amount, and watch how your investment would have grown (or shrunk) using real historical data.</p>
           <ul class="term-list">
             <li>Compare stocks vs. ETFs side-by-side.</li>
             <li>See how strategies like <strong>Dollar-Cost Averaging</strong> perform against lump-sum investing.</li>
             <li>Explore the impact of major events: the 2008 crash, COVID, the AI boom.</li>
           </ul>
-          <a href="pages/simulation.html" class="btn-sim">Launch Simulator →</a>
+          <a href="pages/simulation.html" class="btn-sim">Launch Simulator <span>→</span></a>
         </div>
       </div>
     </section>
@@ -174,19 +210,16 @@
     <section id="quiz" class="topic-section">
       <div class="topic-label">
         <div class="sticky-label">
-          <span class="section-number">05</span>
+          <span class="section-number">Module 05</span>
           <h2>Quiz</h2>
+          <p class="section-desc">Test what you've learned and discover your investor profile.</p>
         </div>
       </div>
       <div class="topic-detail">
-        <div class="card" id="quiz-container">
-          <h3>Test your knowledge</h3>
+        <div class="card reveal" id="quiz-container">
+          <h3><span class="card-icon">🧠</span> Test your knowledge</h3>
           <p class="quiz-intro">Answer these quick questions to see what you've learned — and discover your investor profile.</p>
-
-          <div id="quiz-body">
-            <!-- Questions injected by JS -->
-          </div>
-
+          <div id="quiz-body"></div>
           <div id="quiz-result" class="hidden">
             <h3 id="result-title"></h3>
             <p id="result-text"></p>
@@ -199,7 +232,7 @@
 
   <!-- ───────── FOOTER ───────── -->
   <footer>
-    <p>StockWise — EPFL Data Visualization 2025 &middot; This is not financial advice.</p>
+    <p>StockWise — EPFL COM-480 Data Visualization 2025 · This is not financial advice.</p>
   </footer>
 
   <script src="js/main.js"></script>

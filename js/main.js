@@ -1,24 +1,125 @@
+/* ══════════════════════════════════════════════
+   StockWise — Main JS
+   ══════════════════════════════════════════════ */
+
+/* ── Ticker Tape ── */
+(function initTicker() {
+  const track = document.getElementById("ticker-track");
+  if (!track) return;
+
+  const tickers = [
+    { symbol: "AAPL",  price: "189.84", change: "+1.23%", up: true },
+    { symbol: "MSFT",  price: "415.56", change: "+0.87%", up: true },
+    { symbol: "NVDA",  price: "878.37", change: "+3.41%", up: true },
+    { symbol: "AMZN",  price: "178.25", change: "-0.42%", up: false },
+    { symbol: "TSLA",  price: "175.21", change: "-2.15%", up: false },
+    { symbol: "META",  price: "502.30", change: "+1.65%", up: true },
+    { symbol: "GOOG",  price: "153.81", change: "+0.35%", up: true },
+    { symbol: "QQQ",   price: "438.12", change: "+0.92%", up: true },
+    { symbol: "NFLX",  price: "605.88", change: "+2.08%", up: true },
+    { symbol: "AMD",   price: "172.44", change: "-1.12%", up: false },
+  ];
+
+  // Duplicate for seamless loop
+  const items = [...tickers, ...tickers];
+  track.innerHTML = items
+    .map(
+      (t) => `
+    <div class="ticker-item">
+      <span class="ticker-symbol">${t.symbol}</span>
+      <span class="ticker-price">$${t.price}</span>
+      <span class="ticker-change ${t.up ? "up" : "down"}">${t.change}</span>
+    </div>`
+    )
+    .join("");
+})();
+
+/* ── Mobile nav toggle ── */
+(function initNavToggle() {
+  const toggle = document.getElementById("nav-toggle");
+  const links = document.getElementById("nav-links");
+  if (!toggle || !links) return;
+
+  toggle.addEventListener("click", () => {
+    links.classList.toggle("open");
+  });
+
+  // Close on link click
+  links.querySelectorAll("a").forEach((a) => {
+    a.addEventListener("click", () => links.classList.remove("open"));
+  });
+})();
+
 /* ── Scroll-spy: highlight active nav link ── */
-const sections = document.querySelectorAll(".topic-section");
-const navLinks = document.querySelectorAll("#topnav ul a");
+(function initScrollSpy() {
+  const sections = document.querySelectorAll(".topic-section");
+  const navLinks = document.querySelectorAll("#nav-links a");
 
-const observer = new IntersectionObserver(
-  (entries) => {
-    entries.forEach((entry) => {
-      if (entry.isIntersecting) {
-        const id = entry.target.id;
-        navLinks.forEach((link) => {
-          link.classList.toggle("active", link.getAttribute("href") === `#${id}`);
-        });
-      }
-    });
-  },
-  { rootMargin: `-${getComputedStyle(document.documentElement).getPropertyValue("--nav-h")} 0px -60% 0px`, threshold: 0 }
-);
+  const observer = new IntersectionObserver(
+    (entries) => {
+      entries.forEach((entry) => {
+        if (entry.isIntersecting) {
+          const id = entry.target.id;
+          navLinks.forEach((link) => {
+            link.classList.toggle(
+              "active",
+              link.getAttribute("href") === `#${id}`
+            );
+          });
+        }
+      });
+    },
+    {
+      rootMargin: "-30% 0px -60% 0px",
+      threshold: 0,
+    }
+  );
 
-sections.forEach((s) => observer.observe(s));
+  sections.forEach((s) => observer.observe(s));
+})();
 
-/* ── Quiz ── */
+/* ── Scroll reveal animation ── */
+(function initReveal() {
+  const reveals = document.querySelectorAll(".reveal");
+
+  const observer = new IntersectionObserver(
+    (entries) => {
+      entries.forEach((entry) => {
+        if (entry.isIntersecting) {
+          entry.target.classList.add("visible");
+          observer.unobserve(entry.target);
+        }
+      });
+    },
+    { threshold: 0.1, rootMargin: "0px 0px -40px 0px" }
+  );
+
+  reveals.forEach((el) => observer.observe(el));
+})();
+
+/* ── Nav background on scroll ── */
+(function initNavScroll() {
+  const nav = document.getElementById("topnav");
+  if (!nav) return;
+
+  let ticking = false;
+  window.addEventListener("scroll", () => {
+    if (!ticking) {
+      requestAnimationFrame(() => {
+        nav.style.borderBottomColor =
+          window.scrollY > 80
+            ? "var(--border-light)"
+            : "var(--border)";
+        ticking = false;
+      });
+      ticking = true;
+    }
+  });
+})();
+
+/* ══════════════════════════════════════════════
+   QUIZ
+   ══════════════════════════════════════════════ */
 const quizData = [
   {
     q: "What does a stock represent?",
@@ -123,13 +224,16 @@ function evaluateQuiz() {
   let profile, msg;
   if (pct >= 80) {
     profile = "Growth Investor";
-    msg = "Solid understanding of the fundamentals — you're ready to explore individual stocks and more advanced strategies.";
+    msg =
+      "Solid understanding of the fundamentals — you're ready to explore individual stocks and more advanced strategies.";
   } else if (pct >= 50) {
     profile = "Balanced Investor";
-    msg = "Good base! A mix of ETFs and blue-chip stocks would suit your current knowledge. Keep learning!";
+    msg =
+      "Good base! A mix of ETFs and blue-chip stocks would suit your current knowledge. Keep learning!";
   } else {
     profile = "Conservative Investor";
-    msg = "No worries — everyone starts somewhere. Index ETFs are a great first step while you build your knowledge.";
+    msg =
+      "No worries — everyone starts somewhere. Index ETFs are a great first step while you build your knowledge.";
   }
 
   titleEl.textContent = `${score}/${quizData.length} — ${profile}`;
