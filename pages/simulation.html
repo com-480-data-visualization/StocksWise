@@ -178,7 +178,7 @@
     .chart-area svg { display: block; }
     .chart-line {
       fill: none;
-      stroke: var(--accent);
+      stroke: #2962ff;
       stroke-width: 2;
       stroke-linejoin: round;
       stroke-linecap: round;
@@ -186,46 +186,75 @@
     .chart-area-fill {
       fill: url(#chartGradient);
     }
-    .chart-axis text {
-      fill: var(--text-muted);
-      font-size: 10px;
-      font-family: var(--font-mono);
+    /* Class applied directly to <text> and <line> elements */
+    text.chart-axis {
+      fill: #787b86;
+      font-size: 11px;
+      font-family: "JetBrains Mono", "Fira Code", monospace;
     }
-    .chart-grid line {
-      stroke: var(--border);
+    line.chart-grid {
+      stroke: #2a2e39;
       stroke-dasharray: 2 4;
+    }
+    line.chart-baseline {
+      stroke: #787b86;
+      stroke-width: 1;
+      stroke-dasharray: 4 3;
+    }
+    text.chart-baseline-label {
+      fill: #787b86;
+      font-size: 10px;
+      font-family: "JetBrains Mono", "Fira Code", monospace;
+    }
+
+    /* Y-axis label bg pill */
+    rect.y-label-bg {
+      fill: #1e222d;
+      rx: 3;
     }
 
     /* Crosshair & tooltip */
-    .chart-crosshair {
-      stroke: var(--text-muted);
+    line.chart-crosshair {
+      stroke: #787b86;
       stroke-width: 0.5;
       stroke-dasharray: 3 3;
       pointer-events: none;
     }
-    .chart-dot {
-      fill: var(--accent);
-      stroke: var(--bg);
+    circle.chart-dot {
+      fill: #2962ff;
+      stroke: #131722;
       stroke-width: 2;
       pointer-events: none;
     }
     .chart-tooltip-box {
       pointer-events: none;
     }
-    .chart-tooltip-bg {
-      fill: var(--surface-2);
-      stroke: var(--border);
-      rx: 4;
+    rect.chart-tooltip-bg {
+      fill: #252a37;
+      stroke: #363a45;
+      rx: 6;
     }
-    .chart-tooltip-text {
-      fill: var(--text-strong);
-      font-size: 11px;
-      font-family: var(--font-mono);
+    text.chart-tooltip-text {
+      fill: #f0f2f5;
+      font-size: 12px;
+      font-weight: 600;
+      font-family: "JetBrains Mono", "Fira Code", monospace;
     }
-    .chart-tooltip-date {
-      fill: var(--text-muted);
+    text.chart-tooltip-date {
+      fill: #787b86;
       font-size: 10px;
-      font-family: var(--font-mono);
+      font-family: "JetBrains Mono", "Fira Code", monospace;
+    }
+    /* Y-axis hover price tag */
+    rect.chart-price-tag-bg {
+      fill: #2962ff;
+      rx: 3;
+    }
+    text.chart-price-tag {
+      fill: #ffffff;
+      font-size: 10px;
+      font-weight: 600;
+      font-family: "JetBrains Mono", "Fira Code", monospace;
     }
 
     /* ── Result cards ── */
@@ -375,19 +404,19 @@
       return points;
     }
 
-    /* ── SVG Chart with gradient + crosshair ── */
+    /* ── SVG Chart ── */
     function drawChart(container, data, amount) {
       container.innerHTML = "";
       const W = container.clientWidth;
       const H = container.clientHeight || 420;
-      const pad = { top: 20, right: 16, bottom: 36, left: 56 };
+      const pad = { top: 24, right: 80, bottom: 40, left: 16 };
       const innerW = W - pad.left - pad.right;
       const innerH = H - pad.top - pad.bottom;
 
       const startPrice = data[0].price;
       const values = data.map((d) => (d.price / startPrice) * amount);
-      const minV = Math.min(...values) * 0.95;
-      const maxV = Math.max(...values) * 1.05;
+      const minV = Math.min(...values) * 0.93;
+      const maxV = Math.max(...values) * 1.07;
       const minDate = data[0].date.getTime();
       const maxDate = data[data.length - 1].date.getTime();
 
@@ -408,7 +437,7 @@
       grad.setAttribute("x2", "0"); grad.setAttribute("y2", "1");
       const stop1 = document.createElementNS(ns, "stop");
       stop1.setAttribute("offset", "0%");
-      stop1.setAttribute("stop-color", "rgba(41, 98, 255, 0.25)");
+      stop1.setAttribute("stop-color", "rgba(41, 98, 255, 0.3)");
       const stop2 = document.createElementNS(ns, "stop");
       stop2.setAttribute("offset", "100%");
       stop2.setAttribute("stop-color", "rgba(41, 98, 255, 0.0)");
@@ -417,23 +446,37 @@
       defs.appendChild(grad);
       svg.appendChild(defs);
 
-      // Grid lines
-      const gridSteps = 5;
+      // Helper: format euro value
+      const fmtEur = (v) => `€${Math.round(v).toLocaleString()}`;
+
+      // Grid lines + right-side Y-axis labels
+      const gridSteps = 6;
       for (let i = 0; i <= gridSteps; i++) {
         const val = minV + (i / gridSteps) * (maxV - minV);
         const yy = y(val);
+
         const line = document.createElementNS(ns, "line");
         line.setAttribute("x1", pad.left); line.setAttribute("x2", W - pad.right);
         line.setAttribute("y1", yy); line.setAttribute("y2", yy);
         line.setAttribute("class", "chart-grid");
         svg.appendChild(line);
 
+        // Y-axis labels on the RIGHT (TradingView-style)
+        const label = fmtEur(val);
+        const labelBg = document.createElementNS(ns, "rect");
+        labelBg.setAttribute("class", "y-label-bg");
+        labelBg.setAttribute("x", W - pad.right + 6);
+        labelBg.setAttribute("y", yy - 9);
+        labelBg.setAttribute("width", pad.right - 12);
+        labelBg.setAttribute("height", 18);
+        svg.appendChild(labelBg);
+
         const text = document.createElementNS(ns, "text");
-        text.setAttribute("x", pad.left - 8);
-        text.setAttribute("y", yy + 3);
-        text.setAttribute("text-anchor", "end");
+        text.setAttribute("x", W - pad.right + 12);
+        text.setAttribute("y", yy + 4);
+        text.setAttribute("text-anchor", "start");
         text.setAttribute("class", "chart-axis");
-        text.textContent = `€${Math.round(val).toLocaleString()}`;
+        text.textContent = label;
         svg.appendChild(text);
       }
 
@@ -445,13 +488,30 @@
           yearSet.add(yr);
           const text = document.createElementNS(ns, "text");
           text.setAttribute("x", x(d.date));
-          text.setAttribute("y", H - 8);
+          text.setAttribute("y", H - 10);
           text.setAttribute("text-anchor", "middle");
           text.setAttribute("class", "chart-axis");
           text.textContent = yr;
           svg.appendChild(text);
         }
       });
+
+      // Baseline at initial investment
+      const baseY = y(amount);
+      if (baseY > pad.top && baseY < pad.top + innerH) {
+        const baseLine = document.createElementNS(ns, "line");
+        baseLine.setAttribute("x1", pad.left); baseLine.setAttribute("x2", W - pad.right);
+        baseLine.setAttribute("y1", baseY); baseLine.setAttribute("y2", baseY);
+        baseLine.setAttribute("class", "chart-baseline");
+        svg.appendChild(baseLine);
+
+        const baseLabel = document.createElementNS(ns, "text");
+        baseLabel.setAttribute("x", pad.left + 4);
+        baseLabel.setAttribute("y", baseY - 6);
+        baseLabel.setAttribute("class", "chart-baseline-label");
+        baseLabel.textContent = `Initial: ${fmtEur(amount)}`;
+        svg.appendChild(baseLabel);
+      }
 
       // Area fill
       let areaD = `M ${x(data[0].date)} ${y(values[0])}`;
@@ -470,7 +530,9 @@
       path.setAttribute("class", "chart-line");
       svg.appendChild(path);
 
-      // Crosshair elements (hidden by default)
+      // ── Interactive layer ──
+
+      // Crosshair lines
       const crossV = document.createElementNS(ns, "line");
       crossV.setAttribute("class", "chart-crosshair");
       crossV.setAttribute("y1", pad.top); crossV.setAttribute("y2", pad.top + innerH);
@@ -483,19 +545,33 @@
       crossH.style.display = "none";
       svg.appendChild(crossH);
 
+      // Dot on line
       const dot = document.createElementNS(ns, "circle");
       dot.setAttribute("class", "chart-dot");
-      dot.setAttribute("r", "4");
+      dot.setAttribute("r", "5");
       dot.style.display = "none";
       svg.appendChild(dot);
 
-      // Tooltip group
+      // Y-axis price tag (blue pill on right)
+      const priceTagG = document.createElementNS(ns, "g");
+      priceTagG.style.display = "none";
+      const priceTagBg = document.createElementNS(ns, "rect");
+      priceTagBg.setAttribute("class", "chart-price-tag-bg");
+      priceTagBg.setAttribute("width", pad.right - 12);
+      priceTagBg.setAttribute("height", 20);
+      const priceTagText = document.createElementNS(ns, "text");
+      priceTagText.setAttribute("class", "chart-price-tag");
+      priceTagG.appendChild(priceTagBg);
+      priceTagG.appendChild(priceTagText);
+      svg.appendChild(priceTagG);
+
+      // Tooltip card
       const tooltipG = document.createElementNS(ns, "g");
       tooltipG.setAttribute("class", "chart-tooltip-box");
       tooltipG.style.display = "none";
       const tooltipBg = document.createElementNS(ns, "rect");
       tooltipBg.setAttribute("class", "chart-tooltip-bg");
-      tooltipBg.setAttribute("width", "110"); tooltipBg.setAttribute("height", "38");
+      tooltipBg.setAttribute("width", "140"); tooltipBg.setAttribute("height", "44");
       const tooltipVal = document.createElementNS(ns, "text");
       tooltipVal.setAttribute("class", "chart-tooltip-text");
       const tooltipDate = document.createElementNS(ns, "text");
@@ -512,6 +588,8 @@
       overlay.setAttribute("fill", "transparent");
       overlay.style.cursor = "crosshair";
 
+      const allInteractive = [crossV, crossH, dot, tooltipG, priceTagG];
+
       overlay.addEventListener("mousemove", (e) => {
         const rect = svg.getBoundingClientRect();
         const mx = ((e.clientX - rect.left) / rect.width) * W;
@@ -522,23 +600,32 @@
         const cx = x(d.date);
         const cy = y(val);
 
+        // Crosshair
         crossV.setAttribute("x1", cx); crossV.setAttribute("x2", cx);
         crossH.setAttribute("y1", cy); crossH.setAttribute("y2", cy);
         dot.setAttribute("cx", cx); dot.setAttribute("cy", cy);
 
-        const tx = Math.min(cx + 12, W - 124);
-        const ty = Math.max(cy - 48, pad.top);
+        // Price tag on Y-axis (right side)
+        priceTagBg.setAttribute("x", W - pad.right + 6);
+        priceTagBg.setAttribute("y", cy - 10);
+        priceTagText.setAttribute("x", W - pad.right + 12);
+        priceTagText.setAttribute("y", cy + 4);
+        priceTagText.textContent = fmtEur(val);
+
+        // Tooltip card
+        const tx = cx > W / 2 ? cx - 152 : cx + 12;
+        const ty = Math.max(cy - 52, pad.top);
         tooltipBg.setAttribute("x", tx); tooltipBg.setAttribute("y", ty);
-        tooltipVal.setAttribute("x", tx + 8); tooltipVal.setAttribute("y", ty + 16);
-        tooltipVal.textContent = `€${Math.round(val).toLocaleString()}`;
-        tooltipDate.setAttribute("x", tx + 8); tooltipDate.setAttribute("y", ty + 30);
+        tooltipVal.setAttribute("x", tx + 10); tooltipVal.setAttribute("y", ty + 18);
+        tooltipVal.textContent = fmtEur(val);
+        tooltipDate.setAttribute("x", tx + 10); tooltipDate.setAttribute("y", ty + 34);
         tooltipDate.textContent = d.date.toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric" });
 
-        crossV.style.display = crossH.style.display = dot.style.display = tooltipG.style.display = "";
+        allInteractive.forEach((el) => (el.style.display = ""));
       });
 
       overlay.addEventListener("mouseleave", () => {
-        crossV.style.display = crossH.style.display = dot.style.display = tooltipG.style.display = "none";
+        allInteractive.forEach((el) => (el.style.display = "none"));
       });
 
       svg.appendChild(overlay);
