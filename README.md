@@ -6,8 +6,6 @@ Learn key financial concepts, explore real market data, and simulate your own in
 🌐 **Deep Dive in the Finance World Now**  
 https://com-480-data-visualization.github.io/StocksWise/
 
----
-
 ## 👨‍💻 Team
 
 | Name | SCIPER |
@@ -15,8 +13,6 @@ https://com-480-data-visualization.github.io/StocksWise/
 | Gustave Lapierre | |
 | Youssef Seddik | |
 | Maxime Garambois | 346526 |
-
----
 
 ## 🚀 Project Milestones
 
@@ -39,25 +35,17 @@ https://www.kaggle.com/datasets/jacksoncrow/stock-market-dataset
 **Extended dataset**  
 *(To be added)*
 
----
-
 ### ❓ Problematic
 
 *(Define the core question or problem your project addresses.)*
-
----
 
 ### 🔍 Exploratory Data Analysis
 
 *(Initial insights, patterns, and observations from the dataset.)*
 
----
-
 ### 📚 Related Works
 
 *(Projects, papers, or tools that inspired this work.)*
-
----
 
 ### 🔗 References
 
