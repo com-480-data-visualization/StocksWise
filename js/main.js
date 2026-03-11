@@ -1,5 +1,5 @@
 /* ══════════════════════════════════════════════
-   StockWise — Main JS
+   StocksWise — Main JS
    ══════════════════════════════════════════════ */
 
 /* ── Theme Toggle ── */
@@ -14,6 +14,7 @@
     document.body.classList.toggle("light");
     const isLight = document.body.classList.contains("light");
     localStorage.setItem("sw-theme", isLight ? "light" : "dark");
+    document.dispatchEvent(new CustomEvent("sw-theme-change"));
   });
 })();
 
@@ -147,127 +148,177 @@
 })();
 
 /* ══════════════════════════════════════════════
-   QUIZ
+   PER-MODULE QUIZZES (popup modals)
    ══════════════════════════════════════════════ */
-const quizData = [
-  {
-    q: "What does a stock represent?",
-    options: [
-      "A loan you give to a company",
-      "A piece of ownership in a company",
-      "A government bond",
-      "A type of savings account",
-    ],
-    answer: 1,
-  },
-  {
-    q: "What is the main advantage of an ETF over a single stock?",
-    options: [
-      "ETFs are always cheaper",
-      "ETFs never lose value",
-      "ETFs provide diversification",
-      "ETFs pay higher dividends",
-    ],
-    answer: 2,
-  },
-  {
-    q: "What does the Sharpe ratio measure?",
-    options: [
-      "The total return of a stock",
-      "The volatility of a stock",
-      "Return per unit of risk",
-      "The daily trading volume",
-    ],
-    answer: 2,
-  },
-  {
-    q: "If a stock's price drops 50%, how much must it rise to recover?",
-    options: ["50%", "75%", "100%", "200%"],
-    answer: 2,
-  },
-  {
-    q: "What does 'Adj Close' account for?",
-    options: [
-      "Inflation",
-      "Stock splits and dividends",
-      "Broker fees",
-      "Currency conversion",
-    ],
-    answer: 1,
-  },
-];
+(function initModuleQuizzes() {
+  const moduleQuizzes = {
+    stocks: {
+      title: "Stocks — Module Quiz",
+      questions: [
+        {
+          q: "What does a stock represent?",
+          options: ["A loan you give to a company", "A piece of ownership in a company", "A government bond", "A type of savings account"],
+          answer: 1,
+        },
+        {
+          q: "What does 'Adj Close' account for?",
+          options: ["Inflation", "Stock splits and dividends", "Broker fees", "Currency conversion"],
+          answer: 1,
+        },
+      ],
+    },
+    etfs: {
+      title: "ETFs — Module Quiz",
+      questions: [
+        {
+          q: "What is the main advantage of an ETF over a single stock?",
+          options: ["ETFs are always cheaper", "ETFs never lose value", "ETFs provide diversification", "ETFs pay higher dividends"],
+          answer: 2,
+        },
+        {
+          q: "What does the QQQ ETF track?",
+          options: ["The S&P 500", "The Dow Jones", "The 100 largest non-financial NASDAQ companies", "All US tech stocks"],
+          answer: 2,
+        },
+      ],
+    },
+    risks: {
+      title: "Risks — Module Quiz",
+      questions: [
+        {
+          q: "What does the Sharpe ratio measure?",
+          options: ["The total return of a stock", "The volatility of a stock", "Return per unit of risk", "The daily trading volume"],
+          answer: 2,
+        },
+        {
+          q: "If a stock's price drops 50%, how much must it rise to recover?",
+          options: ["50%", "75%", "100%", "200%"],
+          answer: 2,
+        },
+      ],
+    },
+    simulation: {
+      title: "Simulation — Module Quiz",
+      questions: [
+        {
+          q: "What is Dollar-Cost Averaging?",
+          options: ["Buying the cheapest stocks", "Investing a fixed amount at regular intervals", "Selling when prices drop", "Only buying in January"],
+          answer: 1,
+        },
+        {
+          q: "Why is backtesting with historical data useful?",
+          options: ["It guarantees future returns", "It shows how strategies would have performed", "It eliminates all risk", "It predicts exact prices"],
+          answer: 1,
+        },
+      ],
+    },
+  };
 
-function buildQuiz() {
-  const container = document.getElementById("quiz-body");
-  if (!container) return;
+  const overlay = document.getElementById("quiz-overlay");
+  const modal = overlay.querySelector(".quiz-modal");
+  const titleEl = document.getElementById("quiz-modal-title");
+  const bodyEl = document.getElementById("quiz-modal-body");
+  const resultEl = document.getElementById("quiz-modal-result");
+  const submitBtn = document.getElementById("quiz-modal-submit");
+  const closeBtn = document.getElementById("quiz-close");
 
-  let html = "";
-  quizData.forEach((item, i) => {
-    html += `<div class="quiz-question" data-correct="${item.answer}">
-      <p>${i + 1}. ${item.q}</p>
-      <div class="quiz-options">`;
-    item.options.forEach((opt, j) => {
-      html += `<label>
-        <input type="radio" name="q${i}" value="${j}">
-        ${opt}
-      </label>`;
-    });
-    html += `</div></div>`;
-  });
-  html += `<button id="quiz-submit">Check Answers</button>`;
-  container.innerHTML = html;
+  let currentModule = null;
 
-  document.getElementById("quiz-submit").addEventListener("click", evaluateQuiz);
-}
-
-function evaluateQuiz() {
-  const questions = document.querySelectorAll(".quiz-question");
-  let score = 0;
-
-  questions.forEach((qEl) => {
-    const correct = parseInt(qEl.dataset.correct, 10);
-    const labels = qEl.querySelectorAll("label");
-    const selected = qEl.querySelector("input:checked");
-
-    labels.forEach((label, idx) => {
-      label.querySelector("input").disabled = true;
-      if (idx === correct) {
-        label.classList.add("correct");
-      } else if (selected && parseInt(selected.value, 10) === idx) {
-        label.classList.add("wrong");
-      }
-    });
-
-    if (selected && parseInt(selected.value, 10) === correct) {
-      score++;
-    }
-  });
-
-  document.getElementById("quiz-submit").disabled = true;
-
-  const resultEl = document.getElementById("quiz-result");
-  const titleEl = document.getElementById("result-title");
-  const textEl = document.getElementById("result-text");
-
-  const pct = Math.round((score / quizData.length) * 100);
-  let profile, msg;
-  if (pct >= 80) {
-    profile = "Growth Investor";
-    msg =
-      "Solid understanding of the fundamentals — you're ready to explore individual stocks and more advanced strategies.";
-  } else if (pct >= 50) {
-    profile = "Balanced Investor";
-    msg =
-      "Good base! A mix of ETFs and blue-chip stocks would suit your current knowledge. Keep learning!";
-  } else {
-    profile = "Conservative Investor";
-    msg =
-      "No worries — everyone starts somewhere. Index ETFs are a great first step while you build your knowledge.";
+  // Restore completed modules from localStorage
+  function getCompleted() {
+    try { return JSON.parse(localStorage.getItem("sw-completed") || "[]"); } catch { return []; }
+  }
+  function setCompleted(list) {
+    localStorage.setItem("sw-completed", JSON.stringify(list));
+  }
+  function markCompleted(mod) {
+    const list = getCompleted();
+    if (!list.includes(mod)) { list.push(mod); setCompleted(list); }
+    updateUI(mod);
+  }
+  function updateUI(mod) {
+    const badge = document.getElementById("badge-" + mod);
+    if (badge) { badge.textContent = "Completed"; badge.classList.add("show"); }
+    const btn = document.querySelector(`.btn-quiz[data-module="${mod}"]`);
+    if (btn) { btn.textContent = "Completed"; btn.classList.add("completed"); }
   }
 
-  titleEl.textContent = `${score}/${quizData.length} — ${profile}`;
-  textEl.textContent = msg;
-  resultEl.classList.remove("hidden");
-}
+  // Restore on load
+  getCompleted().forEach(updateUI);
 
-buildQuiz();
+  // Open modal
+  document.querySelectorAll(".btn-quiz").forEach((btn) => {
+    btn.addEventListener("click", () => {
+      const mod = btn.dataset.module;
+      if (getCompleted().includes(mod)) return;
+      currentModule = mod;
+      openQuiz(mod);
+    });
+  });
+
+  function openQuiz(mod) {
+    const data = moduleQuizzes[mod];
+    titleEl.textContent = data.title;
+    resultEl.classList.add("hidden");
+    resultEl.classList.remove("fail");
+    submitBtn.disabled = false;
+    submitBtn.textContent = "Check Answers";
+
+    let html = "";
+    data.questions.forEach((item, i) => {
+      html += `<div class="quiz-question" data-correct="${item.answer}">
+        <p>${i + 1}. ${item.q}</p>
+        <div class="quiz-options">`;
+      item.options.forEach((opt, j) => {
+        html += `<label><input type="radio" name="mq${i}" value="${j}"> ${opt}</label>`;
+      });
+      html += `</div></div>`;
+    });
+    bodyEl.innerHTML = html;
+    overlay.classList.add("open");
+    document.body.style.overflow = "hidden";
+  }
+
+  function closeQuiz() {
+    overlay.classList.remove("open");
+    document.body.style.overflow = "";
+    currentModule = null;
+  }
+
+  closeBtn.addEventListener("click", closeQuiz);
+  overlay.addEventListener("click", (e) => { if (e.target === overlay) closeQuiz(); });
+  document.addEventListener("keydown", (e) => { if (e.key === "Escape" && overlay.classList.contains("open")) closeQuiz(); });
+
+  // Evaluate
+  submitBtn.addEventListener("click", () => {
+    const questions = bodyEl.querySelectorAll(".quiz-question");
+    let score = 0;
+
+    questions.forEach((qEl) => {
+      const correct = parseInt(qEl.dataset.correct, 10);
+      const labels = qEl.querySelectorAll("label");
+      const selected = qEl.querySelector("input:checked");
+
+      labels.forEach((label, idx) => {
+        label.querySelector("input").disabled = true;
+        if (idx === correct) label.classList.add("correct");
+        else if (selected && parseInt(selected.value, 10) === idx) label.classList.add("wrong");
+      });
+
+      if (selected && parseInt(selected.value, 10) === correct) score++;
+    });
+
+    submitBtn.disabled = true;
+    const total = questions.length;
+    const passed = score === total;
+
+    resultEl.classList.remove("hidden", "fail");
+    if (passed) {
+      resultEl.textContent = `${score}/${total} — Module completed!`;
+      markCompleted(currentModule);
+    } else {
+      resultEl.classList.add("fail");
+      resultEl.textContent = `${score}/${total} — Not quite! Close and try again.`;
+    }
+  });
+})();
