@@ -81,29 +81,19 @@ Existing platforms (Bloomberg, Yahoo Finance, Trade Republic) are built for expe
 * NVIDIA surged +600% in 2023–2024 on AI hype, a compelling story for young audiences.
 
 #### Growth of $1 Invested (2010–2020)
-Tech giants vastly outperform the QQQ index. NVIDIA and Tesla show explosive but volatile growth, while QQQ offers a smoother ride — a key insight for beginners weighing risk vs. reward.
+Tech giants vastly outperform the QQQ index. NVIDIA and Tesla show explosive but volatile growth, while QQQ offers a smoother ride, a key insight for beginners weighing risk vs. reward.
 
 ![Growth of $1 Invested](data-science-stuff/figures/growth_of_1.png)
 
 #### Dataset Coverage
-Most tickers have 3,000–10,000 trading days of history. ETFs cluster tightly around the same range, while stocks show a wider spread — some IPO'd recently, others date back to the 1980s.
+Most tickers have 3,000–10,000 trading days of history. ETFs cluster tightly around the same range, while stocks show a wider spread, some IPO'd recently, others date back to the 1980s.
 
 ![Dataset Coverage Histogram](data-science-stuff/figures/coverage_histogram.png)
 
-#### Trading Volume & Market Crises
-Volume spikes coincide precisely with major market crises — the dot-com bubble, the 2008 financial crash, and the COVID-19 selloff — validating the dataset's signal quality.
-
-![QQQ Volume with Crises](data-science-stuff/figures/volume_crises.png)
-
 #### Volatility: Stocks vs. ETFs
-Individual growth stocks (NVIDIA, Tesla) exhibit 2–4x the volatility of the QQQ ETF, confirming that diversified ETFs offer significantly smoother returns — a core lesson for our target audience.
+Individual growth stocks (NVIDIA, Tesla) exhibit 2–4x the volatility of the QQQ ETF, confirming that diversified ETFs offer significantly smoother returns, a core lesson for our target audience.
 
 ![Volatility Comparison](data-science-stuff/figures/volatility_comparison.png)
-
-#### Risk vs. Return Scatter
-The classic risk-return tradeoff visualized across all NASDAQ securities. ETFs cluster in the low-volatility zone while individual stocks span the full spectrum. Key tickers are highlighted.
-
-![Risk vs Return](data-science-stuff/figures/risk_return_scatter.png)
 
 **Preprocessing plan:** sector tagging (FinanceDatabase), price normalization, rolling metrics (MA 30d/200d, Sharpe, volatility), ML feature extraction, monthly aggregation for long-range views
 
