@@ -8,7 +8,14 @@
 *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
 
 :root {
-  /* Palette */
+  /* Shared */
+  --radius:   10px;
+  --radius-lg: 16px;
+  --nav-h:    60px;
+  --font: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  --font-mono: "JetBrains Mono", "Fira Code", monospace;
+
+  /* Dark palette (default) */
   --bg:           #131722;
   --bg-deep:      #0c0e15;
   --surface:      #1e222d;
@@ -34,12 +41,43 @@
   --gradient-hero: linear-gradient(135deg, #131722 0%, #1a1f35 40%, #1e1a30 70%, #131722 100%);
   --gradient-btn:  linear-gradient(135deg, #2962ff 0%, #5b8def 100%);
 
-  --radius:   10px;
-  --radius-lg: 16px;
-  --nav-h:    60px;
+  --nav-bg:       rgba(19, 23, 34, 0.82);
+  --link-hover:   #fff;
+  --glow-opacity: 0.09;
+  --card-shadow:  rgba(0, 0, 0, 0.3);
+}
 
-  --font: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-  --font-mono: "JetBrains Mono", "Fira Code", monospace;
+/* ── Light Theme ── */
+body.light {
+  --bg:           #f8f9fb;
+  --bg-deep:      #eef0f4;
+  --surface:      #ffffff;
+  --surface-2:    #f0f2f5;
+  --surface-hover: #e8eaef;
+  --border:       #d9dce3;
+  --border-light: #c8ccd4;
+
+  --text:         #434651;
+  --text-strong:  #131722;
+  --text-muted:   #787b86;
+
+  --accent:       #2962ff;
+  --accent-light: #1e53e5;
+  --accent-glow:  rgba(41, 98, 255, 0.15);
+  --accent-dim:   rgba(41, 98, 255, 0.06);
+
+  --green:        #089981;
+  --green-bg:     rgba(8, 153, 129, 0.1);
+  --red:          #f23645;
+  --red-bg:       rgba(242, 54, 69, 0.1);
+
+  --gradient-hero: linear-gradient(135deg, #f8f9fb 0%, #e8ecf4 40%, #eee8f4 70%, #f8f9fb 100%);
+  --gradient-btn:  linear-gradient(135deg, #2962ff 0%, #5b8def 100%);
+
+  --nav-bg:       rgba(248, 249, 251, 0.85);
+  --link-hover:   #131722;
+  --glow-opacity: 0.06;
+  --card-shadow:  rgba(0, 0, 0, 0.06);
 }
 
 html {
@@ -58,7 +96,7 @@ body {
 }
 
 a { color: var(--accent-light); text-decoration: none; transition: color 0.2s; }
-a:hover { color: #fff; }
+a:hover { color: var(--link-hover); }
 
 strong { color: var(--text-strong); }
 
@@ -79,7 +117,7 @@ strong { color: var(--text-strong); }
   align-items: center;
   justify-content: space-between;
   padding: 0 clamp(1rem, 3vw, 3rem);
-  background: rgba(19, 23, 34, 0.82);
+  background: var(--nav-bg);
   backdrop-filter: blur(20px) saturate(1.4);
   -webkit-backdrop-filter: blur(20px) saturate(1.4);
   border-bottom: 1px solid var(--border);
@@ -123,10 +161,50 @@ strong { color: var(--text-strong); }
   background: var(--surface);
 }
 #topnav ul a.active {
-  color: var(--text-strong);
+  color: #fff;
   background: var(--accent);
   box-shadow: 0 2px 8px var(--accent-glow);
 }
+
+/* ── Theme Toggle ── */
+.theme-toggle {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px; height: 36px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--surface);
+  cursor: pointer;
+  transition: border-color 0.2s, background 0.2s;
+  flex-shrink: 0;
+  margin-left: 0.5rem;
+}
+.theme-toggle:hover {
+  border-color: var(--border-light);
+  background: var(--surface-hover);
+}
+.theme-toggle svg {
+  width: 18px; height: 18px;
+  fill: none;
+  stroke: var(--text-muted);
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  transition: stroke 0.2s;
+}
+.theme-toggle:hover svg { stroke: var(--text-strong); }
+
+/* Sun icon hidden in dark, moon hidden in light */
+.theme-toggle .icon-sun  { display: none; }
+.theme-toggle .icon-moon { display: block; }
+body.light .theme-toggle .icon-sun  { display: block; }
+body.light .theme-toggle .icon-moon { display: none; }
+
+/* Light mode scrollbar */
+body.light ::-webkit-scrollbar-track { background: var(--bg); }
+body.light ::-webkit-scrollbar-thumb { background: var(--border); }
+body.light ::-webkit-scrollbar-thumb:hover { background: var(--border-light); }
 
 /* ── Mobile hamburger ── */
 .nav-toggle {
@@ -414,7 +492,7 @@ html  { scroll-padding-top: calc(var(--nav-h) + 36px + 16px); }
 }
 
 .topic-section:hover .section-glow {
-  opacity: 0.09;
+  opacity: var(--glow-opacity);
 }
 
 #stocks .section-glow  { background: #2962ff; }
@@ -503,7 +581,7 @@ html  { scroll-padding-top: calc(var(--nav-h) + 36px + 16px); }
 .card:hover {
   border-color: var(--border-light);
   transform: translateY(-2px);
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+  box-shadow: 0 8px 32px var(--card-shadow);
 }
 .card:hover::before {
   height: 100%;
