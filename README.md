@@ -38,15 +38,19 @@ https://www.kaggle.com/datasets/jacksoncrow/stock-market-dataset
 ### ❓ Problematic
 
 Existing platforms (Bloomberg, Yahoo Finance, Trade Republic) are built for experienced investors dense, jargon-heavy, and intimidating for beginners.
-**Target audience:** students aged 18–25 with no financial background and more
+
+**Target audience:** students aged 18–25 with no financial background and more.
+
 **Core questions:**
 * What investment strategies exist, and what risk/reward does each carry?
 * How have companies or sectors evolved on the NASDAQ over time?
 * What would €1,000 invested in Apple in 2010 look like today?
 * How do ETFs compare to individual stocks?
 * What tools help users go further once they know the basics?
+
 **StocksWise** guides beginners through investing via data storytelling.
-**Core narrative:** "You have €1,000 what do you do?" The platform grows with the user through a two-mode architecture
+
+**Core narrative:** "You have €1,000 what do you do?" The platform grows with the user through a two-mode architecture.
 
 ### 🔍 Exploratory Data Analysis
 
