@@ -2,6 +2,21 @@
    StockWise — Main JS
    ══════════════════════════════════════════════ */
 
+/* ── Theme Toggle ── */
+(function initTheme() {
+  const saved = localStorage.getItem("sw-theme");
+  if (saved === "light") document.body.classList.add("light");
+
+  const btn = document.getElementById("theme-toggle");
+  if (!btn) return;
+
+  btn.addEventListener("click", () => {
+    document.body.classList.toggle("light");
+    const isLight = document.body.classList.contains("light");
+    localStorage.setItem("sw-theme", isLight ? "light" : "dark");
+  });
+})();
+
 /* ── Ticker Tape ── */
 (function initTicker() {
   const track = document.getElementById("ticker-track");
