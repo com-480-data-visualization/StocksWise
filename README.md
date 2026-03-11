@@ -16,15 +16,13 @@ https://com-480-data-visualization.github.io/StocksWise/
 
 ## 🚀 Project Milestones
 
-- **Milestone 1** → [#milestone1]  
-- **Milestone 2** → [#milestone2]  
-- **Milestone 3** → [#milestone3]
+[**Milestone 1**](#milestone-1) - [**Milestone 2**](#milestone-2) - [**Milestone 3**](#milestone-3)
 
 # Exploring the World of Finance
 
 ---
 
-## 📊 Milestone 1  
+## Milestone 1  
 **Deadline:** Friday, April 3rd – 17:00
 
 ### Dataset
@@ -88,16 +86,15 @@ Existing platforms (Bloomberg, Yahoo Finance, Trade Republic) are built for expe
 - The "€1,000" narrative makes abstract concepts personal and memorable.
 
 ### 🔗 References
+- [Information Is Beautiful](https://informationisbeautiful.net/)  
+- [Flourish](https://flourish.studio/blog/visualizing-financial-data/)  
+- [Public](https://public.com)  
+- [The Pudding](https://pudding.cool)  
+- [Our World in Data](https://ourworldindata.org)  
+- [Morningstar](https://www.morningstar.com)  
+- [TradingView](https://fr.tradingview.com)
 
-- InformationIsBeautiful[https://informationisbeautiful.net/]  
-- Flourish[https://flourish.studio/blog/visualizing-financial-data/]  
-- Public[https://public.com]
-- The Pudding[https://pudding.cool]
-- Our World in Data[https://ourworldindata.org]
-- Morningstar[https://www.morningstar.com]
-- TradingView[https://fr.tradingview.com]
-
-## 📊 Milestone 2
+## Milestone 2
 
 
-## 📊 Milestone 3
+## Milestone 3
