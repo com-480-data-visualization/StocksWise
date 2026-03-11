@@ -30,8 +30,20 @@ https://com-480-data-visualization.github.io/StocksWise/
 **Main dataset**  
 https://www.kaggle.com/datasets/jacksoncrow/stock-market-dataset
 
+Back in the early 1980s, a vast financial record began taking shape. Sourced through Yahoo Finance and compiled by Oleh Onyshchak (Kaggle user jacksoncrow), the NASDAQ Stock Market Dataset tracks daily price movements for all NASDAQ-listed securities. Each ticker comes with structured CSV entries: Date, Open, High, Low, Close, Adjusted Close, and Volume. Coverage runs up to April 2020. We plan to extend it to 2025 by forking and re-executing the original collection script. The dataset is very complete, and all rows are relevant. This update will include critical market phases the 2022 sell-off triggered by rate hikes, and the surge in 2023,2024 fueled by AI enthusiasm. It’s a necessary step. Markets evolve. So should the data.
+
 **Extended dataset**  
-*(To be added)*
+| Source | What it adds | How |
+|---|---|---|
+| FinanceDatabase | Sector & industry tags | CSV join on ticker |
+| yfinance API | Company name, description | Python queries |
+| FRED | Fed interest rates | Free API |
+| VIX | Market fear index | Yahoo Finance |
+
+**Data quality**
+* Consistent CSV format (simple for parse)
+* Missing values handled with forward-fill or row drop depending on gap size
+* Adj Close mandatory for long-term comparisons (e.g. Apple's 2020 4-for-1 split distorts raw prices).
 
 ### ❓ Problematic
 
