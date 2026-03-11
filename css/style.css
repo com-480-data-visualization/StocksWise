@@ -300,7 +300,7 @@ html  { scroll-padding-top: calc(var(--nav-h) + 36px + 16px); }
 
 .subtitle {
   font-size: 1.1rem;
-  color: var(--text-muted);
+  color: var(--text-strong);
   max-width: 520px;
   margin: 0 auto 2.5rem;
   line-height: 1.7;
