@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>StockWise — Investing Made Clear</title>
+  <title>StocksWise — Investing Made Clear</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
@@ -15,7 +15,7 @@
   <nav id="topnav">
     <a href="./" class="logo">
       <span class="logo-dot"></span>
-      StockWise
+      StocksWise
     </a>
     <button class="nav-toggle" id="nav-toggle" aria-label="Toggle menu">
       <span></span><span></span><span></span>
@@ -26,7 +26,6 @@
         <li><a href="#etfs">ETFs</a></li>
         <li><a href="#risks">Risks</a></li>
         <li><a href="#simulation">Simulation</a></li>
-        <li><a href="#quiz">Quiz</a></li>
       </ul>
       <button class="theme-toggle" id="theme-toggle" aria-label="Toggle theme">
         <svg class="icon-moon" viewBox="0 0 24 24"><path d="M21 12.79A9 9 0 1 1 11.21 3a7 7 0 0 0 9.79 9.79z"/></svg>
@@ -79,6 +78,7 @@
             <span class="section-number">Module 01</span>
             <h2>Stocks</h2>
             <p class="section-desc">The building blocks of investing. Understand what you're buying before you buy it.</p>
+            <span class="module-badge" id="badge-stocks"></span>
           </div>
         </div>
         <div class="topic-detail">
@@ -93,6 +93,7 @@
           <div class="card reveal">
             <h3><span class="card-icon">⚖️</span> How are prices set?</h3>
             <p>Prices move with <strong>supply and demand</strong>. If more people want to buy a stock than sell it, the price rises. If more want to sell, it drops. Company earnings, news, and market sentiment all influence demand.</p>
+            <div class="chart-wrapper"><canvas id="chart-price-movement"></canvas></div>
           </div>
           <div class="card reveal">
             <h3><span class="card-icon">📖</span> Key terms</h3>
@@ -103,6 +104,7 @@
               <li><strong>Adj Close</strong> — closing price adjusted for splits and dividends, essential for long-term comparison.</li>
             </ul>
           </div>
+          <button class="btn-quiz" data-module="stocks">Take Quiz</button>
         </div>
       </div>
     </section>
@@ -116,6 +118,7 @@
             <span class="section-number">Module 02</span>
             <h2>ETFs</h2>
             <p class="section-desc">Diversification in a single trade. The easiest way to start investing.</p>
+            <span class="module-badge" id="badge-etfs"></span>
           </div>
         </div>
         <div class="topic-detail">
@@ -149,6 +152,7 @@
                 </ul>
               </div>
             </div>
+            <div class="chart-wrapper"><canvas id="chart-etf-vs-stock"></canvas></div>
           </div>
           <div class="card reveal">
             <h3><span class="card-icon">⭐</span> Popular NASDAQ ETFs</h3>
@@ -158,6 +162,7 @@
               <li><strong>ARKK</strong> — ARK Innovation, focused on disruptive tech.</li>
             </ul>
           </div>
+          <button class="btn-quiz" data-module="etfs">Take Quiz</button>
         </div>
       </div>
     </section>
@@ -171,6 +176,7 @@
             <span class="section-number">Module 03</span>
             <h2>Risks</h2>
             <p class="section-desc">Every return comes with a price. Learn to measure and manage risk.</p>
+            <span class="module-badge" id="badge-risks"></span>
           </div>
         </div>
         <div class="topic-detail">
@@ -181,6 +187,7 @@
           <div class="card reveal">
             <h3><span class="card-icon">🌊</span> Volatility</h3>
             <p><strong>Volatility</strong> measures how much a price swings up and down. NVIDIA moved ±5% in a single day dozens of times in 2023. A savings account has near-zero volatility. Higher volatility = higher potential reward, but also higher potential loss.</p>
+            <div class="chart-wrapper"><canvas id="chart-volatility"></canvas></div>
           </div>
           <div class="card reveal">
             <h3><span class="card-icon">📊</span> Key risk metrics</h3>
@@ -189,11 +196,13 @@
               <li><strong>Sharpe ratio</strong> — return per unit of risk. Higher is better. Above 1.0 is considered good.</li>
               <li><strong>VIX</strong> — the "fear index." When VIX spikes, markets are panicking.</li>
             </ul>
+            <div class="chart-wrapper"><canvas id="chart-drawdown"></canvas></div>
           </div>
           <div class="card reveal">
             <h3><span class="card-icon">🔑</span> The golden rule</h3>
             <p><em>"Never invest money you can't afford to lose."</em> Diversification, long time horizons, and emotional discipline are your best defenses. Historically, the NASDAQ has returned ~10% annually over 20+ year periods — but short-term swings can be brutal.</p>
           </div>
+          <button class="btn-quiz" data-module="risks">Take Quiz</button>
         </div>
       </div>
     </section>
@@ -207,6 +216,7 @@
             <span class="section-number">Module 04</span>
             <h2>Our Simulation</h2>
             <p class="section-desc">Travel back in time and see what your money could have done.</p>
+            <span class="module-badge" id="badge-simulation"></span>
           </div>
         </div>
         <div class="topic-detail">
@@ -219,31 +229,7 @@
               <li>Explore the impact of major events: the 2008 crash, COVID, the AI boom.</li>
             </ul>
             <a href="pages/simulation.html" class="btn-sim">Launch Simulator <span>→</span></a>
-          </div>
-        </div>
-      </div>
-    </section>
-
-    <!-- QUIZ -->
-    <section id="quiz" class="topic-section">
-      <div class="section-glow"></div>
-      <div class="topic-section-inner">
-        <div class="topic-label">
-          <div class="sticky-label">
-            <span class="section-number">Module 05</span>
-            <h2>Quiz</h2>
-            <p class="section-desc">Test what you've learned and discover your investor profile.</p>
-          </div>
-        </div>
-        <div class="topic-detail">
-          <div class="card reveal" id="quiz-container">
-            <h3><span class="card-icon">🧠</span> Test your knowledge</h3>
-            <p class="quiz-intro">Answer these quick questions to see what you've learned — and discover your investor profile.</p>
-            <div id="quiz-body"></div>
-            <div id="quiz-result" class="hidden">
-              <h3 id="result-title"></h3>
-              <p id="result-text"></p>
-            </div>
+            <button class="btn-quiz" data-module="simulation">Take Quiz</button>
           </div>
         </div>
       </div>
@@ -251,11 +237,25 @@
 
   </main>
 
+  <!-- ───────── QUIZ MODAL ───────── -->
+  <div class="quiz-overlay" id="quiz-overlay">
+    <div class="quiz-modal">
+      <button class="quiz-close" id="quiz-close">&times;</button>
+      <h3 class="quiz-modal-title" id="quiz-modal-title"></h3>
+      <div id="quiz-modal-body"></div>
+      <div id="quiz-modal-result" class="hidden"></div>
+      <button class="btn-quiz-submit" id="quiz-modal-submit">Check Answers</button>
+    </div>
+  </div>
+
   <!-- ───────── FOOTER ───────── -->
   <footer>
-    <p>StockWise — EPFL COM-480 Data Visualization 2025 · This is not financial advice.</p>
+    <p>StocksWise — EPFL COM-480 Data Visualization 2025 · This is not financial advice.</p>
   </footer>
 
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4/dist/chart.umd.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-annotation@3/dist/chartjs-plugin-annotation.min.js"></script>
+  <script src="js/charts.js"></script>
   <script src="js/main.js"></script>
 </body>
 </html>
