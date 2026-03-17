@@ -11,7 +11,7 @@ https://com-480-data-visualization.github.io/StocksWise/
 | Name | SCIPER |
 |-----|-----|
 | Gustave Lapierre | |
-| Youssef Seddik | |
+| Youssef Seddik |346488 |
 | Maxime Garambois | 346526 |
 
 ## 🚀 Project Milestones
