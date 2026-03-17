@@ -81,7 +81,7 @@ Existing platforms (Bloomberg, Yahoo Finance, Trade Republic) are built for expe
 
 
 **Key observations:**
-* Prices range from 1 to 500 dollars — normalization mandatory
+* Prices range from 1 to 500 dollars —> normalization mandatory
 * Volume spikes mark major crises: dot-com 2000, 2008, COVID 2020, rate hikes 2022.
 * Tech (Apple, NVIDIA, Microsoft, Amazon, Meta, Alphabet) dominates by market cap and return.
 * ETFs like QQQ are far smoother than individual growth stocks (Tesla, NVIDIA)
