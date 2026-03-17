@@ -47,7 +47,7 @@ Back in the early 1980s, a vast financial record began taking shape. Sourced thr
 
 ### ❓ Problematic
 
-Existing platforms (Bloomberg, Yahoo Finance, Trade Republic) are built for experienced investors dense, jargon-heavy, and intimidating for beginners.
+Existing platforms (Bloomberg, Yahoo Finance, Trade Republic) are built for experienced investors dense, jargon-heavy, and intimidating for beginners.  Financial literacy is rarely taught in school, yet young adults are increasingly expected to make consequential money decisions: student loans, savings, first investments. The gap between "I have some money" and "I know what to do with it" has never been wider.
 
 **Target audience:** students aged 18–25 with no financial background and more.
 
@@ -58,7 +58,7 @@ Existing platforms (Bloomberg, Yahoo Finance, Trade Republic) are built for expe
 * How do ETFs compare to individual stocks?
 * What tools help users go further once they know the basics?
 
-**StocksWise** guides beginners through investing via data storytelling.
+**StocksWise** guides beginners through investing via data storytelling.  Rather than overwhelming users with raw numbers, it builds intuition progressively turning price charts into stories, and abstract percentages into personal outcomes.
 
 **Core narrative:** "You have €1,000 what do you do?" The platform grows with the user through a two-mode architecture.
 
