@@ -63,7 +63,7 @@ Existing platforms (Bloomberg, Yahoo Finance, Trade Republic) are built for expe
 **Core narrative:** "You have €1,000 what do you do?" The platform grows with the user through a two-mode architecture.
 | **Beginner Mode** | **Advanced Mode** |
 |---|---|
-| Guided step-by-step narrative | Multi-ticker exploration |
+| Guided step-by-step narrative | Advanced Concepts |
 | Strategy simulator | Technical indicators (MA, RSI, Sharpe) |
 | Plain-language explanations | Advanced risk / return scatter plot |
 | Risk quiz → personalized recommendation | ML clustering: stock risk profiles |
