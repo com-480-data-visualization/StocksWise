@@ -379,6 +379,10 @@
         <svg class="icon-moon" viewBox="0 0 24 24"><path d="M21 12.79A9 9 0 1 1 11.21 3a7 7 0 0 0 9.79 9.79z"/></svg>
         <svg class="icon-sun" viewBox="0 0 24 24"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg>
       </button>
+      <button class="expert-toggle" id="expert-toggle" aria-label="Toggle expert mode">
+        <span class="expert-toggle-switch"></span>
+        <span class="expert-toggle-label">Beginner</span>
+      </button>
     </div>
   </nav>
 
@@ -391,11 +395,192 @@
   <div class="sim-layout">
     <div class="sim-header">
       <a href="../index.html" class="back-link">← Back to Guide</a>
-      <h1>Investment Simulator</h1>
-      <p>Pick a stock, a starting date, and an amount — see what would have happened.</p>
+      <h1 class="beginner-content">Investment Simulator</h1>
+      <h1 class="expert-content">Simulation Lab</h1>
+      <p class="beginner-content">Pick a stock, a starting date, and an amount — see what would have happened.</p>
+      <p class="expert-content">Advanced backtesting, portfolio construction, and crisis stress testing with real historical data.</p>
     </div>
 
-    <div class="sim-controls">
+    <!-- EXPERT: Simulation tabs -->
+    <div class="expert-content">
+      <div class="sim-tabs">
+        <button class="sim-tab active" data-panel="panel-backtest">Strategy Backtester</button>
+        <button class="sim-tab" data-panel="panel-portfolio">Portfolio Builder</button>
+        <button class="sim-tab" data-panel="panel-stress">Crisis Stress Test</button>
+      </div>
+
+      <!-- TOOL 1: Strategy Backtester -->
+      <div class="sim-tool-panel active" id="panel-backtest">
+        <div class="sim-controls">
+          <div class="sim-field">
+            <label>Step 1 — Pick Asset</label>
+            <select id="bt-ticker">
+              <option value="AAPL">AAPL — Apple</option><option value="MSFT">MSFT — Microsoft</option>
+              <option value="NVDA">NVDA — NVIDIA</option><option value="AMZN">AMZN — Amazon</option>
+              <option value="TSLA">TSLA — Tesla</option><option value="GOOG">GOOG — Alphabet</option>
+              <option value="QQQ">QQQ — NASDAQ-100</option><option value="AMD">AMD — AMD</option>
+            </select>
+          </div>
+          <div class="sim-field">
+            <label>Start Date</label>
+            <input type="date" id="bt-start" value="2018-01-02">
+          </div>
+          <div class="sim-field">
+            <label>End Date</label>
+            <input type="date" id="bt-end" value="2024-12-31">
+          </div>
+          <div class="sim-field">
+            <label>Capital (€)</label>
+            <input type="number" id="bt-capital" value="1000" min="1">
+          </div>
+        </div>
+
+        <div class="sim-controls" style="flex-direction:column;align-items:stretch;">
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:1.25rem;">
+            <div>
+              <label style="font-size:0.72rem;font-weight:700;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.06em;">Step 2 — Entry Rule (When to BUY)</label>
+              <div style="display:flex;flex-direction:column;gap:0.35rem;margin-top:0.5rem;">
+                <label style="display:flex;align-items:center;gap:0.5rem;font-size:0.85rem;color:var(--text-muted);cursor:pointer;">
+                  <input type="radio" name="bt-entry" value="rsi30" checked style="accent-color:var(--accent);"> RSI crosses below 30
+                </label>
+                <label style="display:flex;align-items:center;gap:0.5rem;font-size:0.85rem;color:var(--text-muted);cursor:pointer;">
+                  <input type="radio" name="bt-entry" value="sma50" style="accent-color:var(--accent);"> Price crosses above SMA 50
+                </label>
+                <label style="display:flex;align-items:center;gap:0.5rem;font-size:0.85rem;color:var(--text-muted);cursor:pointer;">
+                  <input type="radio" name="bt-entry" value="macd" style="accent-color:var(--accent);"> MACD crosses above signal line
+                </label>
+              </div>
+            </div>
+            <div>
+              <label style="font-size:0.72rem;font-weight:700;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.06em;">Step 3 — Exit Rule (When to SELL)</label>
+              <div style="display:flex;flex-direction:column;gap:0.35rem;margin-top:0.5rem;">
+                <label style="display:flex;align-items:center;gap:0.5rem;font-size:0.85rem;color:var(--text-muted);cursor:pointer;">
+                  <input type="radio" name="bt-exit" value="rsi70" checked style="accent-color:var(--accent);"> RSI crosses above 70
+                </label>
+                <label style="display:flex;align-items:center;gap:0.5rem;font-size:0.85rem;color:var(--text-muted);cursor:pointer;">
+                  <input type="radio" name="bt-exit" value="sma50down" style="accent-color:var(--accent);"> Price crosses below SMA 50
+                </label>
+                <label style="display:flex;align-items:center;gap:0.5rem;font-size:0.85rem;color:var(--text-muted);cursor:pointer;">
+                  <input type="radio" name="bt-exit" value="days" style="accent-color:var(--accent);"> After <input type="number" id="bt-exit-days" value="20" min="1" max="252" style="width:60px;padding:0.3rem 0.5rem;background:var(--bg);border:1px solid var(--border);border-radius:4px;color:var(--text-strong);font-family:var(--font-mono);font-size:0.82rem;"> days
+                </label>
+              </div>
+            </div>
+          </div>
+          <button class="sim-run" id="bt-run" style="align-self:flex-start;margin-top:0.75rem;">Run Backtest</button>
+        </div>
+
+        <div class="chart-container">
+          <div class="chart-area" id="bt-chart" style="height:380px;">
+            <div class="chart-placeholder">Configure your strategy above and press <strong>Run Backtest</strong>.</div>
+          </div>
+        </div>
+        <div class="backtest-stats" id="bt-stats"></div>
+      </div>
+
+      <!-- TOOL 2: Portfolio Builder -->
+      <div class="sim-tool-panel" id="panel-portfolio">
+        <div class="sim-controls" style="flex-direction:column;align-items:stretch;">
+          <div style="display:flex;gap:0.75rem;align-items:flex-end;flex-wrap:wrap;">
+            <div class="sim-field">
+              <label>Step 1 — Add Tickers (3–6)</label>
+              <select id="pb-add-ticker">
+                <option value="AAPL">AAPL</option><option value="MSFT">MSFT</option><option value="NVDA">NVDA</option>
+                <option value="AMZN">AMZN</option><option value="TSLA">TSLA</option><option value="GOOG">GOOG</option>
+                <option value="META">META</option><option value="NFLX">NFLX</option><option value="AMD">AMD</option>
+                <option value="QQQ">QQQ</option>
+              </select>
+            </div>
+            <button class="expert-btn" id="pb-add-btn">+ Add</button>
+            <div class="sim-field">
+              <label>Start Date</label>
+              <input type="date" id="pb-start" value="2018-01-02">
+            </div>
+            <div class="sim-field">
+              <label>End Date</label>
+              <input type="date" id="pb-end" value="2024-12-31">
+            </div>
+            <div class="sim-field">
+              <label>Capital (€)</label>
+              <input type="number" id="pb-capital" value="10000" min="1">
+            </div>
+          </div>
+          <div style="margin-top:1rem;">
+            <label style="font-size:0.72rem;font-weight:700;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.06em;">Step 2 — Allocate Weights</label>
+            <div class="weight-sliders" id="pb-sliders"></div>
+            <div class="weight-total" id="pb-total">Total: 0%</div>
+          </div>
+          <button class="sim-run" id="pb-run" style="align-self:flex-start;">Build Portfolio</button>
+        </div>
+
+        <div class="chart-container">
+          <div class="chart-area" id="pb-chart" style="height:350px;">
+            <div class="chart-placeholder">Add tickers, set weights, and press <strong>Build Portfolio</strong>.</div>
+          </div>
+        </div>
+        <div class="backtest-stats" id="pb-stats"></div>
+
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem;margin-top:1rem;">
+          <div class="chart-container">
+            <div class="chart-toolbar"><span class="chart-ticker-name">Correlation Heatmap</span></div>
+            <div class="chart-area" id="pb-corr" style="height:280px;"></div>
+          </div>
+          <div class="chart-container">
+            <div class="chart-toolbar"><span class="chart-ticker-name">Efficient Frontier</span></div>
+            <div class="chart-area" id="pb-frontier" style="height:320px;"></div>
+          </div>
+        </div>
+        <div id="pb-optimal" style="display:none;margin-top:0.75rem;padding:1rem;background:var(--green-bg);border:1px solid var(--green);border-radius:var(--radius);color:var(--green);font-size:0.85rem;font-weight:600;"></div>
+      </div>
+
+      <!-- TOOL 3: Crisis Stress Test -->
+      <div class="sim-tool-panel" id="panel-stress">
+        <div class="sim-controls" style="flex-direction:column;align-items:stretch;">
+          <div style="display:flex;gap:0.75rem;align-items:flex-end;flex-wrap:wrap;">
+            <div class="sim-field">
+              <label>Step 1 — Build Your Portfolio</label>
+              <select id="st-add-ticker">
+                <option value="AAPL">AAPL</option><option value="MSFT">MSFT</option><option value="NVDA">NVDA</option>
+                <option value="AMZN">AMZN</option><option value="TSLA">TSLA</option><option value="GOOG">GOOG</option>
+                <option value="META">META</option><option value="QQQ">QQQ</option>
+              </select>
+            </div>
+            <button class="expert-btn" id="st-add-btn">+ Add</button>
+          </div>
+          <div class="weight-sliders" id="st-sliders" style="margin-top:0.75rem;"></div>
+          <div class="weight-total" id="st-total">Total: 0%</div>
+
+          <label style="font-size:0.72rem;font-weight:700;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.06em;margin-top:1rem;">Step 2 — Pick a Crisis</label>
+          <div class="crisis-options">
+            <div class="crisis-option" onclick="selectCrisis(0)">
+              <div class="crisis-name">Dot-com Bubble</div>
+              <div class="crisis-dates">Mar 2000 — Oct 2002</div>
+            </div>
+            <div class="crisis-option" onclick="selectCrisis(1)">
+              <div class="crisis-name">2008 Financial Crisis</div>
+              <div class="crisis-dates">Oct 2007 — Mar 2009</div>
+            </div>
+            <div class="crisis-option" onclick="selectCrisis(2)">
+              <div class="crisis-name">COVID Crash</div>
+              <div class="crisis-dates">Feb 2020 — Apr 2020</div>
+            </div>
+            <div class="crisis-option" onclick="selectCrisis(3)">
+              <div class="crisis-name">2022 Rate Hike Selloff</div>
+              <div class="crisis-dates">Jan 2022 — Dec 2022</div>
+            </div>
+          </div>
+          <button class="sim-run" id="st-run" style="align-self:flex-start;margin-top:0.75rem;">Run Stress Test</button>
+        </div>
+
+        <div class="chart-container">
+          <div class="chart-area" id="st-chart" style="height:380px;">
+            <div class="chart-placeholder">Build your portfolio, pick a crisis, and press <strong>Run Stress Test</strong>.</div>
+          </div>
+        </div>
+        <div class="backtest-stats" id="st-stats"></div>
+      </div>
+    </div>
+
+    <div class="sim-controls beginner-content">
       <div class="sim-field">
         <label>Ticker</label>
         <select id="sim-ticker">
@@ -418,7 +603,7 @@
       <button class="sim-run" id="sim-run">Run Simulation</button>
     </div>
 
-    <div class="chart-container">
+    <div class="chart-container beginner-content">
       <div class="chart-toolbar">
         <div class="chart-toolbar-left">
           <span class="chart-ticker-name" id="chart-ticker-name">—</span>
@@ -437,7 +622,7 @@
       </div>
     </div>
 
-    <div class="sim-results" id="sim-results"></div>
+    <div class="sim-results beginner-content" id="sim-results"></div>
 
     <div class="disclaimer">
       <strong>Disclaimer:</strong> This simulator uses synthetic placeholder data for prototype purposes.
@@ -445,6 +630,9 @@
     </div>
   </div>
 
+  <script src="https://cdn.plot.ly/plotly-2.27.0.min.js"></script>
+  <script src="../js/data-loader.js"></script>
+  <script src="../js/expert-sim.js"></script>
   <script>
     /* ── Theme Toggle ── */
     (function initTheme() {
@@ -455,6 +643,22 @@
       btn.addEventListener("click", () => {
         document.body.classList.toggle("light");
         localStorage.setItem("sw-theme", document.body.classList.contains("light") ? "light" : "dark");
+      });
+    })();
+
+    /* ── Expert Mode Toggle ── */
+    (function initExpertMode() {
+      const saved = localStorage.getItem("sw-mode");
+      if (saved === "expert") document.body.classList.add("expert");
+      const toggle = document.getElementById("expert-toggle");
+      if (!toggle) return;
+      const label = toggle.querySelector(".expert-toggle-label");
+      if (label) label.textContent = saved === "expert" ? "Expert" : "Beginner";
+      toggle.addEventListener("click", () => {
+        document.body.classList.toggle("expert");
+        const isExpert = document.body.classList.contains("expert");
+        localStorage.setItem("sw-mode", isExpert ? "expert" : "beginner");
+        if (label) label.textContent = isExpert ? "Expert" : "Beginner";
       });
     })();
 

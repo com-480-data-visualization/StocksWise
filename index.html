@@ -22,14 +22,18 @@
     </button>
     <div style="display:flex;align-items:center;gap:0.25rem;">
       <ul id="nav-links">
-        <li><a href="#stocks">Stocks</a></li>
-        <li><a href="#etfs">ETFs</a></li>
-        <li><a href="#risks">Risks</a></li>
-        <li><a href="#simulation">Simulation</a></li>
+        <li><a href="#stocks" data-beginner="Stocks" data-expert="Technical">Stocks</a></li>
+        <li><a href="#etfs" data-beginner="ETFs" data-expert="Portfolio">ETFs</a></li>
+        <li><a href="#risks" data-beginner="Risks" data-expert="Risk Metrics">Risks</a></li>
+        <li><a href="#simulation" data-beginner="Simulation" data-expert="History">Simulation</a></li>
       </ul>
       <button class="theme-toggle" id="theme-toggle" aria-label="Toggle theme">
         <svg class="icon-moon" viewBox="0 0 24 24"><path d="M21 12.79A9 9 0 1 1 11.21 3a7 7 0 0 0 9.79 9.79z"/></svg>
         <svg class="icon-sun" viewBox="0 0 24 24"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg>
+      </button>
+      <button class="expert-toggle" id="expert-toggle" aria-label="Toggle expert mode">
+        <span class="expert-toggle-switch"></span>
+        <span class="expert-toggle-label">Beginner</span>
       </button>
     </div>
   </nav>
@@ -44,7 +48,8 @@
     <div class="hero-content">
       <span class="hero-badge"><span class="hero-badge-dot"></span> EPFL Data Visualization 2025</span>
       <h1>You have <span class="accent">€1,000</span>.<br>What do you do?</h1>
-      <p class="subtitle">A beginner-friendly, data-driven guide to investing on the NASDAQ. Learn concepts, explore real market data, and simulate your own strategies.</p>
+      <p class="subtitle beginner-content">A beginner-friendly, data-driven guide to investing on the NASDAQ. Learn concepts, explore real market data, and simulate your own strategies.</p>
+      <p class="subtitle expert-content">Advanced technical analysis, portfolio construction, and risk management with real NASDAQ data. Toggle expert mode for deeper insights.</p>
       <div class="hero-actions">
         <a href="#stocks" class="cta">Start Learning <span>→</span></a>
         <a href="pages/simulation.html" class="cta cta-secondary">Open Simulator</a>
@@ -69,19 +74,23 @@
   <!-- ───────── SECTIONS ───────── -->
   <main id="content">
 
-    <!-- STOCKS -->
+    <!-- STOCKS / TECHNICAL ANALYSIS -->
     <section id="stocks" class="topic-section">
       <div class="section-glow"></div>
       <div class="topic-section-inner">
         <div class="topic-label">
           <div class="sticky-label">
             <span class="section-number">Module 01</span>
-            <h2>Stocks</h2>
-            <p class="section-desc">The building blocks of investing. Understand what you're buying before you buy it.</p>
+            <h2 class="beginner-content">Stocks</h2>
+            <h2 class="expert-content">Technical Analysis</h2>
+            <p class="section-desc beginner-content">The building blocks of investing. Understand what you're buying before you buy it.</p>
+            <p class="section-desc expert-content">Read price charts like a pro. Candlesticks, moving averages, RSI, and support/resistance levels.</p>
             <span class="module-badge" id="badge-stocks"></span>
           </div>
         </div>
-        <div class="topic-detail">
+
+        <!-- BEGINNER CONTENT -->
+        <div class="topic-detail beginner-content">
           <div class="card reveal">
             <h3><span class="card-icon">📄</span> What is a stock?</h3>
             <p>A <strong>stock</strong> (or share) is a tiny piece of ownership in a company. When you buy one share of Apple, you literally own a fraction of everything Apple has — its cash, buildings, patents, and future profits.</p>
@@ -106,22 +115,93 @@
           </div>
           <button class="btn-quiz" data-module="stocks">Take Quiz</button>
         </div>
+
+        <!-- EXPERT CONTENT -->
+        <div class="topic-detail expert-content">
+          <div class="card reveal">
+            <h3><span class="card-icon">🕯</span> Candlestick Charts</h3>
+            <p>Each candle shows four prices for one time period: <strong>Open</strong> (where it started), <strong>Close</strong> (where it ended), <strong>High</strong> (the peak), and <strong>Low</strong> (the bottom). A green candle means the price closed higher than it opened; red means it closed lower.</p>
+            <div class="expert-controls">
+              <div class="expert-field">
+                <label>Ticker</label>
+                <select id="ta-ticker">
+                  <option value="AAPL">AAPL</option><option value="MSFT">MSFT</option><option value="NVDA">NVDA</option>
+                  <option value="AMZN">AMZN</option><option value="TSLA">TSLA</option><option value="GOOG">GOOG</option>
+                  <option value="META">META</option><option value="AMD">AMD</option><option value="QQQ">QQQ</option>
+                </select>
+              </div>
+              <div class="expert-field">
+                <label>Period</label>
+                <select id="ta-period">
+                  <option value="6m">6 Months</option><option value="1y" selected>1 Year</option>
+                  <option value="3y">3 Years</option><option value="5y">5 Years</option><option value="all">All</option>
+                </select>
+              </div>
+              <button class="expert-btn" id="ta-load">Load Chart</button>
+            </div>
+            <div class="expert-chart" id="ta-chart">
+              <div class="chart-loading">Select a ticker and click <strong>Load Chart</strong></div>
+            </div>
+          </div>
+
+          <div class="card reveal">
+            <h3><span class="card-icon">📈</span> Moving Averages (SMA / EMA)</h3>
+            <p>A stock's daily price is noisy — it jumps up and down every day. A <strong>moving average</strong> smooths it out so you can see the real trend underneath.</p>
+            <ul class="term-list">
+              <li><strong>SMA (Simple Moving Average)</strong> — just the average closing price over the last N days. Every day counts equally.</li>
+              <li><strong>EMA (Exponential Moving Average)</strong> — same idea as SMA, but recent prices count more than older ones. Reacts faster to new information.</li>
+            </ul>
+            <p style="margin-top:0.75rem; font-size:0.85rem; color:var(--text-muted);">When price crosses <strong>above</strong> a moving average, it's often a bullish signal. When it crosses <strong>below</strong>, bearish. Toggle the indicators below:</p>
+            <div class="indicator-toggles">
+              <label class="indicator-toggle"><input type="checkbox" id="ta-sma20"><span>SMA 20</span></label>
+              <label class="indicator-toggle"><input type="checkbox" id="ta-sma50"><span>SMA 50</span></label>
+              <label class="indicator-toggle"><input type="checkbox" id="ta-sma200"><span>SMA 200</span></label>
+              <label class="indicator-toggle"><input type="checkbox" id="ta-ema20"><span>EMA 20</span></label>
+            </div>
+          </div>
+
+          <div class="card reveal">
+            <h3><span class="card-icon">📊</span> RSI (Relative Strength Index)</h3>
+            <p>RSI is a number between 0 and 100 that answers one question: <em>"Is this stock being bought too aggressively or sold too aggressively right now?"</em></p>
+            <p style="margin-top:0.5rem;">It measures the speed and size of recent price movements. Not where the price is, but how fast it's been moving up or down.</p>
+            <ul class="term-list">
+              <li><strong>Above 70 = Overbought</strong> — the stock may have risen too fast. A pullback could be coming.</li>
+              <li><strong>Below 30 = Oversold</strong> — the stock may have dropped too aggressively. A bounce could be coming.</li>
+            </ul>
+            <div class="expert-chart" id="ta-rsi-chart">
+              <div class="chart-loading">Load a chart above to see the RSI indicator</div>
+            </div>
+          </div>
+
+          <div class="card reveal">
+            <h3><span class="card-icon">🧱</span> Support & Resistance</h3>
+            <p><strong>Support</strong> — a price floor: a level where the stock keeps stopping its fall and bouncing back up. When a stock drops to $150 and bounces 3 times, traders remember. Next time it approaches $150, they think "this is a good buying opportunity," so they buy — pushing the price back up. It becomes a self-fulfilling prophecy.</p>
+            <p style="margin-top:0.75rem;"><strong>Resistance</strong> — a price ceiling: a level where the stock keeps stopping its rise and falling back down. Traders who bought at $200 and watched it fall are waiting to "get out even." When price approaches $200 again, they all sell — supply overwhelms demand — price falls again.</p>
+            <div class="indicator-toggles" style="margin-top:0.75rem;">
+              <label class="indicator-toggle"><input type="checkbox" id="ta-sr"><span>Show Support & Resistance</span></label>
+            </div>
+          </div>
+        </div>
       </div>
     </section>
 
-    <!-- ETFs -->
+    <!-- ETFs / PORTFOLIO CONSTRUCTION -->
     <section id="etfs" class="topic-section">
       <div class="section-glow"></div>
       <div class="topic-section-inner">
         <div class="topic-label">
           <div class="sticky-label">
             <span class="section-number">Module 02</span>
-            <h2>ETFs</h2>
-            <p class="section-desc">Diversification in a single trade. The easiest way to start investing.</p>
+            <h2 class="beginner-content">ETFs</h2>
+            <h2 class="expert-content">Portfolio Construction</h2>
+            <p class="section-desc beginner-content">Diversification in a single trade. The easiest way to start investing.</p>
+            <p class="section-desc expert-content">Don't just pick one stock — build a combination of assets that reduces risk without sacrificing return.</p>
             <span class="module-badge" id="badge-etfs"></span>
           </div>
         </div>
-        <div class="topic-detail">
+
+        <!-- BEGINNER CONTENT -->
+        <div class="topic-detail beginner-content">
           <div class="card reveal">
             <h3><span class="card-icon">📦</span> What is an ETF?</h3>
             <p>An <strong>Exchange-Traded Fund</strong> bundles many stocks into one tradable product. Instead of buying 100 companies individually, you buy one ETF that holds all of them. It trades on the stock market just like a regular share.</p>
@@ -164,22 +244,90 @@
           </div>
           <button class="btn-quiz" data-module="etfs">Take Quiz</button>
         </div>
+
+        <!-- EXPERT CONTENT -->
+        <div class="topic-detail expert-content">
+          <div class="card reveal">
+            <h3><span class="card-icon">🔀</span> Diversification</h3>
+            <p>Holding multiple <strong>uncorrelated assets</strong> reduces risk. When one stock drops, others may hold steady or rise. The math is powerful: a portfolio of 5 uncorrelated assets can have the same expected return as a single stock with significantly less volatility.</p>
+            <div class="chart-pair">
+              <div class="chart-pair-item">
+                <h4>Portfolio A: 100% Tesla (volatile)</h4>
+                <div class="expert-chart" id="divers-single"><div class="chart-loading">Click Load below</div></div>
+              </div>
+              <div class="chart-pair-item">
+                <h4>Portfolio B: 5 Stocks (smoother)</h4>
+                <div class="expert-chart" id="divers-portfolio"><div class="chart-loading">Click Load below</div></div>
+              </div>
+            </div>
+            <button class="expert-btn" style="margin-top:1rem;" onclick="loadDiversificationChart()">Load Comparison</button>
+          </div>
+
+          <div class="card reveal">
+            <h3><span class="card-icon">🔥</span> Correlation</h3>
+            <p>Correlation ranges from <strong>-1</strong> (perfect inverse) to <strong>+1</strong> (move in lockstep). For diversification, you want assets with <strong>low or negative correlation</strong>. Two stocks that always rise and fall together give you no diversification benefit.</p>
+            <div class="ticker-checkboxes">
+              <label class="ticker-checkbox"><input type="checkbox" class="corr-ticker" value="AAPL" checked><span>AAPL</span></label>
+              <label class="ticker-checkbox"><input type="checkbox" class="corr-ticker" value="MSFT" checked><span>MSFT</span></label>
+              <label class="ticker-checkbox"><input type="checkbox" class="corr-ticker" value="NVDA" checked><span>NVDA</span></label>
+              <label class="ticker-checkbox"><input type="checkbox" class="corr-ticker" value="AMZN" checked><span>AMZN</span></label>
+              <label class="ticker-checkbox"><input type="checkbox" class="corr-ticker" value="TSLA"><span>TSLA</span></label>
+              <label class="ticker-checkbox"><input type="checkbox" class="corr-ticker" value="GOOG" checked><span>GOOG</span></label>
+              <label class="ticker-checkbox"><input type="checkbox" class="corr-ticker" value="META"><span>META</span></label>
+              <label class="ticker-checkbox"><input type="checkbox" class="corr-ticker" value="AMD"><span>AMD</span></label>
+            </div>
+            <button class="expert-btn" id="corr-load">Generate Heatmap</button>
+            <div class="expert-chart" id="corr-heatmap" style="margin-top:0.75rem;">
+              <div class="chart-loading">Select tickers and click <strong>Generate Heatmap</strong></div>
+            </div>
+          </div>
+
+          <div class="card reveal">
+            <h3><span class="card-icon">🥧</span> Sector Allocation</h3>
+            <p>Spreading across <strong>different sectors</strong> matters because industries are affected by different economic forces. A tech crash won't necessarily hurt energy or healthcare stocks. A balanced NASDAQ portfolio allocates across sectors:</p>
+            <div class="expert-chart" id="sector-pie" style="margin-top:0.75rem;">
+              <div class="chart-loading">Loading sector chart...</div>
+            </div>
+            <script>document.addEventListener("DOMContentLoaded", () => { if (document.body.classList.contains("expert")) setTimeout(loadSectorAllocation, 500); document.addEventListener("sw-mode-change", (e) => { if (e.detail.expert) setTimeout(loadSectorAllocation, 300); }); });</script>
+          </div>
+
+          <div class="card reveal">
+            <h3><span class="card-icon">📐</span> Efficient Frontier</h3>
+            <p>For every level of risk, there's a <strong>maximum possible return</strong>. The efficient frontier is the curve connecting the best portfolios — you can't do better without taking more risk. Portfolios below the frontier are suboptimal.</p>
+            <div class="ticker-checkboxes">
+              <label class="ticker-checkbox"><input type="checkbox" class="frontier-ticker" value="AAPL" checked><span>AAPL</span></label>
+              <label class="ticker-checkbox"><input type="checkbox" class="frontier-ticker" value="MSFT" checked><span>MSFT</span></label>
+              <label class="ticker-checkbox"><input type="checkbox" class="frontier-ticker" value="NVDA" checked><span>NVDA</span></label>
+              <label class="ticker-checkbox"><input type="checkbox" class="frontier-ticker" value="AMZN"><span>AMZN</span></label>
+              <label class="ticker-checkbox"><input type="checkbox" class="frontier-ticker" value="GOOG" checked><span>GOOG</span></label>
+              <label class="ticker-checkbox"><input type="checkbox" class="frontier-ticker" value="QQQ"><span>QQQ</span></label>
+            </div>
+            <button class="expert-btn" id="frontier-load">Generate Frontier</button>
+            <div class="expert-chart" id="frontier-chart" style="margin-top:0.75rem;">
+              <div class="chart-loading">Select tickers and click <strong>Generate Frontier</strong></div>
+            </div>
+          </div>
+        </div>
       </div>
     </section>
 
-    <!-- RISKS -->
+    <!-- RISKS / RISK METRICS DEEP -->
     <section id="risks" class="topic-section">
       <div class="section-glow"></div>
       <div class="topic-section-inner">
         <div class="topic-label">
           <div class="sticky-label">
             <span class="section-number">Module 03</span>
-            <h2>Risks</h2>
-            <p class="section-desc">Every return comes with a price. Learn to measure and manage risk.</p>
+            <h2 class="beginner-content">Risks</h2>
+            <h2 class="expert-content">Risk Metrics Deep</h2>
+            <p class="section-desc beginner-content">Every return comes with a price. Learn to measure and manage risk.</p>
+            <p class="section-desc expert-content">Measure and quantify risk precisely. Volatility, Sharpe ratios, drawdowns, and strategy comparison.</p>
             <span class="module-badge" id="badge-risks"></span>
           </div>
         </div>
-        <div class="topic-detail">
+
+        <!-- BEGINNER CONTENT -->
+        <div class="topic-detail beginner-content">
           <div class="card reveal">
             <h3><span class="card-icon">📉</span> Why do prices go down?</h3>
             <p>Markets react to <strong>uncertainty</strong>. Bad earnings, interest rate hikes, geopolitical crises, or simple panic can trigger sell-offs. In March 2020, the NASDAQ dropped 30% in three weeks due to COVID-19 fears — then recovered within five months.</p>
@@ -204,22 +352,111 @@
           </div>
           <button class="btn-quiz" data-module="risks">Take Quiz</button>
         </div>
+
+        <!-- EXPERT CONTENT -->
+        <div class="topic-detail expert-content">
+          <div class="card reveal">
+            <h3><span class="card-icon">🌊</span> Volatility (Annualized)</h3>
+            <div class="formula-block">Annualized Volatility = std(daily returns) × √252</div>
+            <p>Volatility is the standard deviation of daily returns, scaled to a year (252 trading days). A stock with 40% annualized volatility can swing ±40% in a typical year. The chart below shows price on top with 30-day rolling volatility underneath — notice how volatility spikes during crises.</p>
+            <div class="expert-controls">
+              <div class="expert-field">
+                <label>Ticker</label>
+                <select id="vol-ticker">
+                  <option value="NVDA">NVDA</option><option value="AAPL">AAPL</option><option value="TSLA">TSLA</option>
+                  <option value="MSFT">MSFT</option><option value="QQQ">QQQ</option><option value="AMD">AMD</option>
+                </select>
+              </div>
+              <div class="expert-field">
+                <label>Period</label>
+                <select id="vol-period">
+                  <option value="1y">1 Year</option><option value="3y">3 Years</option>
+                  <option value="5y" selected>5 Years</option><option value="all">All</option>
+                </select>
+              </div>
+              <button class="expert-btn" id="vol-load">Load</button>
+            </div>
+            <div class="expert-chart" id="vol-price-chart"><div class="chart-loading">Click Load</div></div>
+            <div class="expert-chart" id="vol-deep-chart" style="margin-top:0.5rem;"><div class="chart-loading">30-day rolling volatility appears here</div></div>
+          </div>
+
+          <div class="card reveal">
+            <h3><span class="card-icon">⚡</span> Sharpe Ratio</h3>
+            <div class="formula-block">Sharpe = (Annualized Return − Risk-Free Rate) / Annualized Volatility</div>
+            <p>The Sharpe ratio measures <strong>return per unit of risk</strong>. A Sharpe of 1.0 means you earn 1% of excess return for every 1% of volatility. Higher is better.</p>
+            <div class="expert-controls">
+              <div class="expert-field">
+                <label>Ticker</label>
+                <select id="sharpe-ticker">
+                  <option value="AAPL">AAPL</option><option value="MSFT">MSFT</option><option value="NVDA">NVDA</option>
+                  <option value="TSLA">TSLA</option><option value="QQQ">QQQ</option><option value="AMZN">AMZN</option>
+                </select>
+              </div>
+              <div class="expert-field">
+                <label>Period</label>
+                <select id="sharpe-period">
+                  <option value="1y">1 Year</option><option value="3y" selected>3 Years</option><option value="5y">5 Years</option>
+                </select>
+              </div>
+              <button class="expert-btn" id="sharpe-calc">Calculate</button>
+            </div>
+            <div class="sharpe-display">
+              <div class="sharpe-number" id="sharpe-value">—</div>
+              <div class="sharpe-interp" id="sharpe-interp">Select a ticker and click Calculate</div>
+            </div>
+          </div>
+
+          <div class="card reveal">
+            <h3><span class="card-icon">📉</span> Max Drawdown</h3>
+            <p>Max drawdown is the <strong>worst peak-to-trough drop</strong> over a period. It shows how much money you would have lost at the worst possible entry point. The red shaded area below marks the largest drawdown period.</p>
+            <div class="expert-controls">
+              <div class="expert-field">
+                <label>Ticker</label>
+                <select id="dd-ticker">
+                  <option value="TSLA">TSLA</option><option value="NVDA">NVDA</option><option value="AAPL">AAPL</option>
+                  <option value="META">META</option><option value="AMD">AMD</option><option value="QQQ">QQQ</option>
+                </select>
+              </div>
+              <button class="expert-btn" id="dd-load">Show Drawdown</button>
+            </div>
+            <div class="expert-chart" id="dd-deep-chart" style="margin-top:0.75rem;">
+              <div class="chart-loading">Select a ticker and click <strong>Show Drawdown</strong></div>
+            </div>
+          </div>
+
+          <div class="card reveal">
+            <h3><span class="card-icon">🏁</span> Strategies Comparison</h3>
+            <ul class="term-list">
+              <li><strong>Value</strong> — buy stocks trading below their true worth. Patient, contrarian. Example: Intel (INTC).</li>
+              <li><strong>Growth</strong> — buy companies growing revenue fast, even if expensive. Example: Amazon (AMZN).</li>
+              <li><strong>Momentum</strong> — buy stocks that have been rising recently, betting the trend continues. Example: NVIDIA (NVDA).</li>
+            </ul>
+            <div class="expert-chart" id="strategies-chart" style="margin-top:0.75rem;">
+              <div class="chart-loading">Loading comparison...</div>
+            </div>
+            <script>document.addEventListener("DOMContentLoaded", () => { if (document.body.classList.contains("expert")) setTimeout(loadStrategiesComparison, 800); document.addEventListener("sw-mode-change", (e) => { if (e.detail.expert) setTimeout(loadStrategiesComparison, 500); }); });</script>
+          </div>
+        </div>
       </div>
     </section>
 
-    <!-- SIMULATION -->
+    <!-- SIMULATION / MARKET HISTORY & PSYCHOLOGY -->
     <section id="simulation" class="topic-section">
       <div class="section-glow"></div>
       <div class="topic-section-inner">
         <div class="topic-label">
           <div class="sticky-label">
             <span class="section-number">Module 04</span>
-            <h2>Our Simulation</h2>
-            <p class="section-desc">Travel back in time and see what your money could have done.</p>
+            <h2 class="beginner-content">Our Simulation</h2>
+            <h2 class="expert-content">Market History & Psychology</h2>
+            <p class="section-desc beginner-content">Travel back in time and see what your money could have done.</p>
+            <p class="section-desc expert-content">Markets are driven by humans, and we are irrational. Understanding past crises and cognitive biases separates emotional investors from disciplined ones.</p>
             <span class="module-badge" id="badge-simulation"></span>
           </div>
         </div>
-        <div class="topic-detail">
+
+        <!-- BEGINNER CONTENT -->
+        <div class="topic-detail beginner-content">
           <div class="card card-highlight reveal">
             <h3><span class="card-icon">🚀</span> What if you had invested?</h3>
             <p>Our simulator lets you travel back in time. Pick a company, choose a date, enter an amount, and watch how your investment would have grown (or shrunk) using real historical data.</p>
@@ -230,6 +467,64 @@
             </ul>
             <a href="pages/simulation.html" class="btn-sim">Launch Simulator <span>→</span></a>
             <button class="btn-quiz" data-module="simulation">Take Quiz</button>
+          </div>
+        </div>
+
+        <!-- EXPERT CONTENT -->
+        <div class="topic-detail expert-content">
+          <div class="card reveal">
+            <h3><span class="card-icon">📜</span> The Annotated NASDAQ Timeline</h3>
+            <p>An interactive timeline of the NASDAQ-100 (QQQ) from its inception to today. Click on events or use the buttons below to zoom into key crisis periods.</p>
+            <div class="timeline-events">
+              <button class="timeline-event-btn" data-event="0">1987 Black Monday</button>
+              <button class="timeline-event-btn" data-event="1">2000 Dot-com Bubble</button>
+              <button class="timeline-event-btn" data-event="2">2008 Financial Crisis</button>
+              <button class="timeline-event-btn" data-event="3">2020 COVID Crash</button>
+              <button class="timeline-event-btn" data-event="4">2022 Rate Hike Selloff</button>
+            </div>
+            <div class="expert-chart" id="nasdaq-timeline"><div class="chart-loading">Loading NASDAQ history...</div></div>
+            <div class="timeline-info" id="timeline-info"></div>
+            <script>document.addEventListener("DOMContentLoaded", () => { if (document.body.classList.contains("expert")) setTimeout(loadNasdaqTimeline, 600); document.addEventListener("sw-mode-change", (e) => { if (e.detail.expert) setTimeout(loadNasdaqTimeline, 400); }); });</script>
+          </div>
+
+          <div class="card reveal">
+            <h3><span class="card-icon">🧠</span> Cognitive Biases</h3>
+            <p>Understanding these psychological traps can save you from costly mistakes:</p>
+            <div class="bias-cards">
+              <div class="bias-card">
+                <span class="bias-tag danger">Danger</span>
+                <h4>FOMO (Fear Of Missing Out)</h4>
+                <p>Buying at the top because everyone else is. "NVIDIA is up 200% this year, I need to get in now!" You buy at the peak and watch it drop 30% the next month.</p>
+              </div>
+              <div class="bias-card">
+                <span class="bias-tag warning">Trap</span>
+                <h4>Anchoring</h4>
+                <p>Fixating on the price you paid instead of current value. "I bought Tesla at $400, I can't sell at $200." The price you paid is irrelevant — only the future matters.</p>
+              </div>
+              <div class="bias-card">
+                <span class="bias-tag warning">Trap</span>
+                <h4>Confirmation Bias</h4>
+                <p>Only reading news that confirms your existing position. You own AMZN, so you only read bullish articles and ignore warnings. You miss the red flags.</p>
+              </div>
+              <div class="bias-card">
+                <span class="bias-tag danger">Danger</span>
+                <h4>Loss Aversion</h4>
+                <p>Feeling losses twice as strongly as equivalent gains. Losing $100 hurts more than gaining $100 feels good. This leads to holding losers too long and selling winners too early.</p>
+              </div>
+            </div>
+          </div>
+
+          <div class="card reveal">
+            <h3><span class="card-icon">⚡</span> Volatility Clustering</h3>
+            <p>Big swings tend to follow big swings. After a large move (up or down), the next few days are more likely to also have large moves. This is <strong>volatility clustering</strong> — visible in the daily returns chart below as "bursts" of activity.</p>
+            <div class="expert-chart" id="vol-clustering-chart"><div class="chart-loading">Loading daily returns...</div></div>
+            <script>document.addEventListener("DOMContentLoaded", () => { if (document.body.classList.contains("expert")) setTimeout(loadVolatilityClustering, 900); document.addEventListener("sw-mode-change", (e) => { if (e.detail.expert) setTimeout(loadVolatilityClustering, 600); }); });</script>
+          </div>
+
+          <div class="card card-highlight reveal">
+            <h3><span class="card-icon">🚀</span> Simulation Lab</h3>
+            <p>Put your knowledge to the test. The expert simulation lab includes a <strong>Strategy Backtester</strong>, <strong>Portfolio Builder</strong>, and <strong>Crisis Stress Test</strong>.</p>
+            <a href="pages/simulation.html" class="btn-sim">Launch Simulation Lab <span>→</span></a>
           </div>
         </div>
       </div>
@@ -255,7 +550,10 @@
 
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4/dist/chart.umd.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-annotation@3/dist/chartjs-plugin-annotation.min.js"></script>
+  <script src="https://cdn.plot.ly/plotly-2.27.0.min.js"></script>
+  <script src="js/data-loader.js"></script>
   <script src="js/charts.js"></script>
   <script src="js/main.js"></script>
+  <script src="js/expert.js"></script>
 </body>
 </html>
