@@ -364,11 +364,12 @@
     }
     .disclaimer strong { color: var(--text); }
 
-    /* Expert tools full width */
-    .sim-tool-panel { width: 100%; }
-    .sim-tool-panel .sim-controls { width: 100%; }
-    .sim-tool-panel .chart-area { width: 100%; }
-    .sim-tool-panel .backtest-stats { width: 100%; }
+    /* Expert tools full width — override flex centering so Plotly charts stretch */
+    .sim-tool-panel .chart-area {
+      display: block;
+      height: auto;
+      min-height: 200px;
+    }
   </style>
 </head>
 <body>
