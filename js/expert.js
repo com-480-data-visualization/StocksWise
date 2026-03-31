@@ -4,9 +4,10 @@
    Uses Plotly.js for advanced charts, Chart.js for simpler ones.
    ══════════════════════════════════════════════ */
 
-/* ── Expert Mode Toggle ── */
+/* ── Expert Mode Toggle (independent per page) ── */
 (function initExpertMode() {
-  const saved = localStorage.getItem("sw-mode");
+  const pageKey = window.location.pathname.includes("/pages/") ? "sw-mode-sim" : "sw-mode-main";
+  const saved = localStorage.getItem(pageKey);
   if (saved === "expert") document.body.classList.add("expert");
 
   // Set initial label text
@@ -21,7 +22,7 @@
     if (!btn) return;
     document.body.classList.toggle("expert");
     const isExpert = document.body.classList.contains("expert");
-    localStorage.setItem("sw-mode", isExpert ? "expert" : "beginner");
+    localStorage.setItem(pageKey, isExpert ? "expert" : "beginner");
     btn.querySelector(".expert-toggle-label").textContent = isExpert ? "Expert" : "Beginner";
     document.dispatchEvent(new CustomEvent("sw-mode-change", { detail: { expert: isExpert } }));
     updateNavLabels(isExpert);

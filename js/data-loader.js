@@ -18,8 +18,8 @@ const StockData = (() => {
 
     const base = detectBasePath();
     const paths = [
-      `${base}data-science-stuff/data/stocks/${key}.csv`,
-      `${base}data-science-stuff/data/etfs/${key}.csv`,
+      `${base}data/stocks/${key}.csv`,
+      `${base}data/etfs/${key}.csv`,
     ];
 
     for (const url of paths) {
