@@ -5,21 +5,15 @@
 
 const StockData = (() => {
   const cache = {};
-
-  function detectBasePath() {
-    const path = window.location.pathname;
-    if (path.includes("/pages/")) return "../";
-    return "";
-  }
+  const DATA_BASE = "https://raw.githubusercontent.com/com-480-data-visualization/StocksWise/data";
 
   async function loadTicker(ticker) {
     const key = ticker.toUpperCase();
     if (cache[key]) return cache[key];
 
-    const base = detectBasePath();
     const paths = [
-      `${base}data/stocks/${key}.csv`,
-      `${base}data/etfs/${key}.csv`,
+      `${DATA_BASE}/stocks/${key}.csv`,
+      `${DATA_BASE}/etfs/${key}.csv`,
     ];
 
     for (const url of paths) {
@@ -36,6 +30,29 @@ const StockData = (() => {
     }
     console.warn(`Could not load data for ${key}`);
     return null;
+  }
+
+  let metaCache = null;
+  async function loadMeta() {
+    if (metaCache) return metaCache;
+    try {
+      const res = await fetch(`${DATA_BASE}/symbols_valid_meta.csv`);
+      if (!res.ok) return [];
+      const text = await res.text();
+      const lines = text.trim().split("\n");
+      const headers = lines[0].split(",");
+      const symbolIdx = headers.indexOf("Symbol") !== -1 ? headers.indexOf("Symbol") : headers.indexOf("NASDAQ Symbol");
+      const nameIdx = headers.indexOf("Security Name") !== -1 ? headers.indexOf("Security Name") : 1;
+      const rows = [];
+      for (let i = 1; i < lines.length; i++) {
+        const cols = lines[i].split(",");
+        if (cols.length > Math.max(symbolIdx, nameIdx)) {
+          rows.push({ symbol: cols[symbolIdx]?.trim(), name: cols[nameIdx]?.trim() });
+        }
+      }
+      metaCache = rows.filter(r => r.symbol && r.symbol.length > 0);
+      return metaCache;
+    } catch (e) { return []; }
   }
 
   function parseCSV(text) {
@@ -365,6 +382,7 @@ const StockData = (() => {
     dailyReturns,
     detectSupportResistance,
     computePortfolioValue,
+    loadMeta,
     daysBetween,
   };
 })();

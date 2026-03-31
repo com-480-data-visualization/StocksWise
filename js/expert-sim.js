@@ -3,6 +3,25 @@
    Strategy Backtester, Portfolio Builder, Crisis Stress Test
    ══════════════════════════════════════════════ */
 
+/* ── Populate all ticker-select dropdowns with full dataset ── */
+(async function populateTickerSelects() {
+  const meta = await StockData.loadMeta();
+  if (!meta || meta.length === 0) return;
+  document.querySelectorAll("select.ticker-select").forEach(select => {
+    const current = select.value;
+    const existing = new Set(Array.from(select.options).map(o => o.value));
+    meta.forEach(t => {
+      if (!existing.has(t.symbol)) {
+        const opt = document.createElement("option");
+        opt.value = t.symbol;
+        opt.textContent = `${t.symbol} — ${t.name}`;
+        select.appendChild(opt);
+      }
+    });
+    if (current) select.value = current;
+  });
+})();
+
 /* ── Helper: Plotly layout/config reused from expert.js ── */
 function simPlotlyLayout(overrides = {}) {
   const cs = getComputedStyle(document.documentElement);

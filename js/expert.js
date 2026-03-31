@@ -39,19 +39,25 @@ function updateNavLabels(isExpert) {
   });
 }
 
-/* ── Available tickers for expert mode ── */
-const EXPERT_TICKERS = [
-  { value: "AAPL", label: "AAPL — Apple" },
-  { value: "MSFT", label: "MSFT — Microsoft" },
-  { value: "NVDA", label: "NVDA — NVIDIA" },
-  { value: "AMZN", label: "AMZN — Amazon" },
-  { value: "TSLA", label: "TSLA — Tesla" },
-  { value: "GOOG", label: "GOOG — Alphabet" },
-  { value: "META", label: "META — Meta" },
-  { value: "NFLX", label: "NFLX — Netflix" },
-  { value: "AMD",  label: "AMD — AMD" },
-  { value: "QQQ",  label: "QQQ — NASDAQ-100 ETF" },
-];
+/* ── Ticker autocomplete: populates all <select> with class "ticker-select" ── */
+(async function populateTickerSelects() {
+  const meta = await StockData.loadMeta();
+  if (!meta || meta.length === 0) return;
+  document.querySelectorAll("select.ticker-select").forEach(select => {
+    const current = select.value;
+    // Keep any existing options as defaults, then append the rest
+    const existing = new Set(Array.from(select.options).map(o => o.value));
+    meta.forEach(t => {
+      if (!existing.has(t.symbol)) {
+        const opt = document.createElement("option");
+        opt.value = t.symbol;
+        opt.textContent = `${t.symbol} — ${t.name}`;
+        select.appendChild(opt);
+      }
+    });
+    if (current) select.value = current;
+  });
+})();
 
 /* ── Plotly theme helper ── */
 function plotlyLayout(overrides = {}) {
