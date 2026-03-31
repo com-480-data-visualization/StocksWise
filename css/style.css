@@ -1062,10 +1062,10 @@ body.expert .expert-toggle-switch::after {
 }
 
 /* ── Show/Hide Content ── */
-.beginner-content { display: block; }
-.expert-content { display: none; }
-body.expert .beginner-content { display: none; }
-body.expert .expert-content { display: block; }
+.expert-content { display: none !important; }
+body.expert .beginner-content { display: none !important; }
+body.expert .expert-content { display: block !important; }
+body.expert .topic-detail.expert-content { display: flex !important; }
 
 /* Expert section accent colors */
 body.expert #stocks .section-number { color: #ff9800; background: rgba(255, 152, 0, 0.1); }
