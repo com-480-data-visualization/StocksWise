@@ -130,5 +130,6 @@ Individual growth stocks (NVIDIA, Tesla) exhibit 2–4x the volatility of the QQ
 
 ## Milestone 2
 
+See PDF "Milestone 2"
 
 ## Milestone 3
