@@ -7,13 +7,20 @@ const StockData = (() => {
   const cache = {};
   const DATA_BASE = "https://raw.githubusercontent.com/com-480-data-visualization/StocksWise/data";
 
+  // Map display tickers to the filename actually present in the dataset.
+  // Meta rebranded from FB → META in Oct 2021; the historical file is still FB.
+  const TICKER_ALIASES = {
+    META: "FB",
+  };
+
   async function loadTicker(ticker) {
     const key = ticker.toUpperCase();
-    if (cache[key]) return cache[key];
+    const fileKey = TICKER_ALIASES[key] || key;
+    if (cache[fileKey]) return cache[fileKey];
 
     const paths = [
-      `${DATA_BASE}/stocks/${key}.csv`,
-      `${DATA_BASE}/etfs/${key}.csv`,
+      `${DATA_BASE}/stocks/${fileKey}.csv`,
+      `${DATA_BASE}/etfs/${fileKey}.csv`,
     ];
 
     for (const url of paths) {
@@ -23,12 +30,12 @@ const StockData = (() => {
         const text = await res.text();
         const data = parseCSV(text);
         if (data.length > 0) {
-          cache[key] = data;
+          cache[fileKey] = data;
           return data;
         }
       } catch (e) { /* try next path */ }
     }
-    console.warn(`Could not load data for ${key}`);
+    console.warn(`Could not load data for ${ticker}`);
     return null;
   }
 

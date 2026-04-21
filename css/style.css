@@ -935,15 +935,59 @@ html  { scroll-padding-top: calc(var(--nav-h) + 36px + 16px); }
 
 /* ══════════════════════════════════════════════
    SCROLL REVEAL ANIMATION
+   Cards fade + lift + unblur as they enter the viewport,
+   and ease back out on exit so the module "breathes" while
+   the sticky label holds its position on the left.
    ══════════════════════════════════════════════ */
 .reveal {
   opacity: 0;
-  transform: translateY(30px);
-  transition: opacity 0.6s ease, transform 0.6s ease;
+  transform: translateY(60px) scale(0.95);
+  filter: blur(8px);
+  /* Exit transition: a shorter, crisper easing so a fast scroll
+     doesn't leave a trail of half-visible cards behind. */
+  transition:
+    opacity 0.45s cubic-bezier(0.55, 0, 0.75, 0),
+    transform 0.45s cubic-bezier(0.55, 0, 0.75, 0),
+    filter 0.45s cubic-bezier(0.55, 0, 0.75, 0);
+  will-change: opacity, transform, filter;
 }
 .reveal.visible {
   opacity: 1;
-  transform: translateY(0);
+  transform: translateY(0) scale(1);
+  filter: blur(0);
+  /* Entry transition: long, generous ease-out-expo for drama. */
+  transition:
+    opacity 0.95s cubic-bezier(0.22, 1, 0.36, 1),
+    transform 0.95s cubic-bezier(0.22, 1, 0.36, 1),
+    filter 0.95s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .reveal {
+    transition-duration: 0.2s;
+    transform: none;
+    filter: none;
+  }
+}
+
+/* Breathing room: bigger gaps between cards + deeper section padding so the
+   sticky label stays pinned on the left while each card gets its own moment
+   on the right before the next one takes over. */
+.topic-section-inner {
+  padding: 7rem clamp(1rem, 3vw, 3rem) 11rem;
+  gap: 4rem;
+}
+.topic-detail {
+  gap: 3rem;
+}
+
+/* Sticky label gains a soft lift when its section is active. */
+.sticky-label .section-number {
+  transition: transform 0.4s cubic-bezier(0.22, 1, 0.36, 1), box-shadow 0.4s ease;
+}
+.topic-section.in-view .sticky-label .section-number {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 16px var(--accent-glow);
 }
 
 /* ══════════════════════════════════════════════

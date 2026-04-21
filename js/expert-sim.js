@@ -31,9 +31,9 @@ function simPlotlyLayout(overrides = {}) {
     plot_bgcolor: "rgba(0,0,0,0)",
     font: { family: "Inter, sans-serif", color: g("--text-muted"), size: 11 },
     margin: { l: 55, r: 20, t: 10, b: 40 },
-    xaxis: { gridcolor: g("--border"), zerolinecolor: g("--border") },
-    yaxis: { gridcolor: g("--border"), zerolinecolor: g("--border") },
-    dragmode: "zoom",
+    xaxis: { gridcolor: g("--border"), zerolinecolor: g("--border"), fixedrange: true },
+    yaxis: { gridcolor: g("--border"), zerolinecolor: g("--border"), fixedrange: true },
+    dragmode: false,
     hovermode: "x unified",
   };
   for (const key of Object.keys(overrides)) {
@@ -47,7 +47,7 @@ function simPlotlyLayout(overrides = {}) {
 }
 
 function simPlotlyConfig() {
-  return { responsive: true, displayModeBar: false, scrollZoom: true };
+  return { responsive: true, displayModeBar: false, scrollZoom: false };
 }
 
 const SIM_TICKERS = ["AAPL", "MSFT", "NVDA", "AMZN", "TSLA", "GOOG", "META", "NFLX", "AMD", "QQQ"];

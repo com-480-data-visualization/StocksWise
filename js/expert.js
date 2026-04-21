@@ -14,7 +14,7 @@
   const toggle = document.getElementById("expert-toggle");
   if (toggle) {
     const label = toggle.querySelector(".expert-toggle-label");
-    if (label) label.textContent = saved === "expert" ? "Expert" : "Beginner";
+    if (label) label.textContent = saved === "expert" ? "Advanced" : "Beginner";
   }
 
   document.addEventListener("click", (e) => {
@@ -23,7 +23,7 @@
     document.body.classList.toggle("expert");
     const isExpert = document.body.classList.contains("expert");
     localStorage.setItem(pageKey, isExpert ? "expert" : "beginner");
-    btn.querySelector(".expert-toggle-label").textContent = isExpert ? "Expert" : "Beginner";
+    btn.querySelector(".expert-toggle-label").textContent = isExpert ? "Advanced" : "Beginner";
     document.dispatchEvent(new CustomEvent("sw-mode-change", { detail: { expert: isExpert } }));
     updateNavLabels(isExpert);
     if (isExpert) initExpertCharts();
@@ -68,9 +68,11 @@ function plotlyLayout(overrides = {}) {
     plot_bgcolor: "rgba(0,0,0,0)",
     font: { family: "Inter, sans-serif", color: g("--text-muted"), size: 11 },
     margin: { l: 50, r: 20, t: 10, b: 40 },
-    xaxis: { gridcolor: g("--border"), zerolinecolor: g("--border"), tickfont: { size: 10 } },
-    yaxis: { gridcolor: g("--border"), zerolinecolor: g("--border"), tickfont: { size: 10 } },
-    dragmode: "zoom",
+    // fixedrange locks the axis against user pan/zoom; programmatic relayout
+    // (used by the timeline crisis buttons) still works.
+    xaxis: { gridcolor: g("--border"), zerolinecolor: g("--border"), tickfont: { size: 10 }, fixedrange: true },
+    yaxis: { gridcolor: g("--border"), zerolinecolor: g("--border"), tickfont: { size: 10 }, fixedrange: true },
+    dragmode: false,
     hovermode: "x unified",
   };
   return deepMerge(base, overrides);
@@ -89,7 +91,7 @@ function deepMerge(target, source) {
 }
 
 function plotlyConfig() {
-  return { responsive: true, displayModeBar: false, scrollZoom: true };
+  return { responsive: true, displayModeBar: false, scrollZoom: false };
 }
 
 function getAccentColor() {
@@ -107,7 +109,30 @@ let expertInitialized = false;
 function initExpertCharts() {
   if (expertInitialized) return;
   expertInitialized = true;
-  // Charts are initialized lazily when the user interacts
+  loadAllExpertCharts();
+}
+
+// Load every expert chart with its current default selections.
+// Staggered so we don't kick off a dozen parallel fetches at once (and so
+// the UI feels alive rather than freezing on a single "loading" flash).
+function loadAllExpertCharts() {
+  const queue = [
+    loadTechnicalAnalysis,
+    loadDiversificationChart,
+    loadCorrelationHeatmap,
+    loadSectorAllocation,
+    loadEfficientFrontier,
+    loadVolatilityDeep,
+    computeSharpeDisplay,
+    loadMaxDrawdownDeep,
+    loadStrategiesComparison,
+    loadNasdaqTimeline,
+    loadVolatilityClustering,
+  ];
+  queue.forEach((fn, i) => {
+    if (typeof fn !== "function") return;
+    setTimeout(() => { try { fn(); } catch (e) { console.warn(e); } }, i * 80);
+  });
 }
 
 /* ══════════════════════════════════════════════
@@ -243,11 +268,9 @@ async function loadTechnicalAnalysis() {
   }
 }
 
-// Bind TA controls
+// Bind TA controls — any change reloads the chart (no manual button).
 document.addEventListener("DOMContentLoaded", () => {
-  const taBtn = document.getElementById("ta-load");
-  if (taBtn) taBtn.addEventListener("click", loadTechnicalAnalysis);
-  document.querySelectorAll("#ta-sma20, #ta-sma50, #ta-sma200, #ta-ema20, #ta-sr").forEach(el => {
+  document.querySelectorAll("#ta-ticker, #ta-period, #ta-sma20, #ta-sma50, #ta-sma200, #ta-ema20, #ta-sr").forEach(el => {
     el?.addEventListener("change", loadTechnicalAnalysis);
   });
 });
@@ -771,17 +794,21 @@ async function loadVolatilityClustering() {
 document.addEventListener("DOMContentLoaded", () => {
   setupTimelineButtons();
 
-  // Bind Module 02 controls
-  document.getElementById("corr-load")?.addEventListener("click", loadCorrelationHeatmap);
-  document.getElementById("frontier-load")?.addEventListener("click", loadEfficientFrontier);
+  // Module 02 — checkboxes reload their chart automatically on toggle.
+  document.querySelectorAll(".corr-ticker").forEach(cb => cb.addEventListener("change", loadCorrelationHeatmap));
+  document.querySelectorAll(".frontier-ticker").forEach(cb => cb.addEventListener("change", loadEfficientFrontier));
 
-  // Bind Module 03 controls
-  document.getElementById("vol-load")?.addEventListener("click", loadVolatilityDeep);
-  document.getElementById("sharpe-calc")?.addEventListener("click", computeSharpeDisplay);
-  document.getElementById("dd-load")?.addEventListener("click", loadMaxDrawdownDeep);
+  // Module 03 — selects reload their chart automatically on change.
+  document.querySelectorAll("#vol-ticker, #vol-period").forEach(el => el.addEventListener("change", loadVolatilityDeep));
+  document.querySelectorAll("#sharpe-ticker, #sharpe-period").forEach(el => el.addEventListener("change", computeSharpeDisplay));
+  document.getElementById("dd-ticker")?.addEventListener("change", loadMaxDrawdownDeep);
 
-  // Auto-load if already in expert mode
+  // Auto-load when entering advanced mode (or now, if we're already there).
+  // Default selections populate charts immediately so nothing waits on a button click.
   if (document.body.classList.contains("expert")) {
-    expertInitialized = true;
+    initExpertCharts();
   }
+  document.addEventListener("sw-mode-change", (e) => {
+    if (e.detail && e.detail.expert) initExpertCharts();
+  });
 });

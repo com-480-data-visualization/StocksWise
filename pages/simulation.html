@@ -387,7 +387,7 @@
         <svg class="icon-moon" viewBox="0 0 24 24"><path d="M21 12.79A9 9 0 1 1 11.21 3a7 7 0 0 0 9.79 9.79z"/></svg>
         <svg class="icon-sun" viewBox="0 0 24 24"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg>
       </button>
-      <button class="expert-toggle" id="expert-toggle" aria-label="Toggle expert mode">
+      <button class="expert-toggle" id="expert-toggle" aria-label="Toggle advanced mode">
         <span class="expert-toggle-switch"></span>
         <span class="expert-toggle-label">Beginner</span>
       </button>
@@ -452,8 +452,8 @@
     <div class="sim-results" id="sim-results"></div>
 
     <div class="disclaimer">
-      <strong>Disclaimer:</strong> This simulator uses synthetic placeholder data for prototype purposes.
-      The final version will use real historical prices. This is not financial advice.
+      <strong>Disclaimer:</strong> This simulator uses real historical NASDAQ close prices.
+      Past performance is not indicative of future results. This is not financial advice.
     </div>
 
     <!-- ── Expert Tools (visible only in expert mode, below the main sim) ── -->
@@ -657,12 +657,12 @@
       const toggle = document.getElementById("expert-toggle");
       if (!toggle) return;
       const label = toggle.querySelector(".expert-toggle-label");
-      if (label) label.textContent = saved === "expert" ? "Expert" : "Beginner";
+      if (label) label.textContent = saved === "expert" ? "Advanced" : "Beginner";
       toggle.addEventListener("click", () => {
         document.body.classList.toggle("expert");
         const isExpert = document.body.classList.contains("expert");
         localStorage.setItem(pageKey, isExpert ? "expert" : "beginner");
-        if (label) label.textContent = isExpert ? "Expert" : "Beginner";
+        if (label) label.textContent = isExpert ? "Advanced" : "Beginner";
       });
     })();
 
@@ -675,36 +675,15 @@
       });
     }
 
-    /* ── Synthetic data generator ── */
-    const profiles = {
-      AAPL: { annual: 0.25, vol: 0.22, name: "Apple Inc." },
-      MSFT: { annual: 0.22, vol: 0.20, name: "Microsoft Corp." },
-      NVDA: { annual: 0.45, vol: 0.45, name: "NVIDIA Corp." },
-      AMZN: { annual: 0.20, vol: 0.28, name: "Amazon.com Inc." },
-      TSLA: { annual: 0.35, vol: 0.55, name: "Tesla Inc." },
-      QQQ:  { annual: 0.14, vol: 0.15, name: "Invesco QQQ Trust" },
+    /* ── Ticker name lookup for the chart toolbar ── */
+    const tickerNames = {
+      AAPL: "Apple Inc.",
+      MSFT: "Microsoft Corp.",
+      NVDA: "NVIDIA Corp.",
+      AMZN: "Amazon.com Inc.",
+      TSLA: "Tesla Inc.",
+      QQQ:  "Invesco QQQ Trust",
     };
-
-    function generateSynthetic(ticker, startDate, endDate) {
-      const prof = profiles[ticker];
-      const dailyReturn = prof.annual / 252;
-      const dailyVol = prof.vol / Math.sqrt(252);
-      const points = [];
-      let price = 100;
-      const d = new Date(startDate);
-      const end = new Date(endDate);
-
-      while (d <= end) {
-        if (d.getDay() !== 0 && d.getDay() !== 6) {
-          const shock = (Math.random() - 0.5) * 2 * dailyVol + dailyReturn;
-          price *= 1 + shock;
-          if (price < 1) price = 1;
-          points.push({ date: new Date(d), price });
-        }
-        d.setDate(d.getDate() + 1);
-      }
-      return points;
-    }
 
     /* ── SVG Chart ── */
     function drawChart(container, data, amount) {
@@ -937,26 +916,43 @@
       container.appendChild(svg);
     }
 
-    /* ── Run simulation ── */
-    document.getElementById("sim-run")?.addEventListener("click", () => {
+    /* ── Run simulation against real historical data ── */
+    async function runSimulation() {
       const ticker = document.getElementById("sim-ticker").value;
       const startDate = document.getElementById("sim-date").value;
       const amount = parseFloat(document.getElementById("sim-amount").value) || 1000;
-      const endDate = "2025-03-01";
 
-      const data = generateSynthetic(ticker, startDate, endDate);
-      if (data.length < 2) return;
+      const chartArea = document.getElementById("chart-area");
+      const nameEl = document.getElementById("chart-ticker-name");
+      const resultsEl = document.getElementById("sim-results");
 
-      // Update toolbar
-      document.getElementById("chart-ticker-name").textContent =
-        `${ticker} · ${profiles[ticker].name}`;
+      chartArea.innerHTML = '<div class="chart-placeholder">Loading real market data…</div>';
+      resultsEl.innerHTML = "";
+      nameEl.textContent = `${ticker} · ${tickerNames[ticker] || ticker}`;
+
+      const raw = await StockData.loadTicker(ticker);
+      if (!raw || raw.length === 0) {
+        chartArea.innerHTML = `<div class="chart-placeholder">Could not load data for <strong>${ticker}</strong>.</div>`;
+        return;
+      }
+      const filtered = StockData.filterByDate(raw, startDate);
+      if (filtered.length < 2) {
+        chartArea.innerHTML = `<div class="chart-placeholder">No data available for <strong>${ticker}</strong> from ${startDate}.</div>`;
+        return;
+      }
+
+      // Shape for drawChart: { date: Date, price: Number }.
+      // Use close (not adjClose) so the chart matches the prices users see elsewhere.
+      const data = filtered.map((d) => ({ date: new Date(d.date), price: d.close }));
+
+      drawChart(chartArea, data, amount);
 
       const startPrice = data[0].price;
       const endPrice = data[data.length - 1].price;
       const finalValue = (endPrice / startPrice) * amount;
       const totalReturn = ((finalValue - amount) / amount) * 100;
       const years = (data[data.length - 1].date - data[0].date) / (365.25 * 86400000);
-      const cagr = (Math.pow(finalValue / amount, 1 / years) - 1) * 100;
+      const cagr = years > 0 ? (Math.pow(finalValue / amount, 1 / years) - 1) * 100 : 0;
 
       let peak = -Infinity;
       let maxDD = 0;
@@ -967,10 +963,8 @@
         if (dd > maxDD) maxDD = dd;
       });
 
-      drawChart(document.getElementById("chart-area"), data, amount);
-
       const positive = finalValue >= amount;
-      document.getElementById("sim-results").innerHTML = `
+      resultsEl.innerHTML = `
         <div class="result-card">
           <div class="label">Final Value</div>
           <div class="value ${positive ? "positive" : "negative"}">€${Math.round(finalValue).toLocaleString()}</div>
@@ -988,7 +982,11 @@
           <div class="value negative">-${(maxDD * 100).toFixed(1)}%</div>
         </div>
       `;
-    });
+    }
+
+    document.getElementById("sim-run")?.addEventListener("click", runSimulation);
+    // Auto-run with the default selections so the page shows a real chart on load.
+    runSimulation();
   </script>
 
 </body>

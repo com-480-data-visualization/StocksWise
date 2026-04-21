@@ -1,5 +1,5 @@
 """
-StockWise — Exploratory Data Analysis
+StocksWise — Exploratory Data Analysis
 Generates charts for the README EDA section.
 Output: data-science-stuff/figures/
 """
@@ -290,7 +290,7 @@ def chart_risk_return():
 # RUN ALL
 # ═══════════════════════════════════════════════════════
 if __name__ == "__main__":
-    print("StockWise EDA — generating figures...\n")
+    print("StocksWise EDA — generating figures...\n")
     chart_growth()
     chart_coverage()
     chart_volume_crises()

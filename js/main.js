@@ -94,23 +94,54 @@
   sections.forEach((s) => observer.observe(s));
 })();
 
-/* ── Scroll reveal animation ── */
+/* ── Scroll reveal animation ──
+   Two-way: cards bloom in when they enter the focus band and gracefully
+   fall back out when they leave it, so the module feels alive as you
+   scroll through it instead of all cards piling up statically. */
 (function initReveal() {
   const reveals = document.querySelectorAll(".reveal");
 
   const observer = new IntersectionObserver(
     (entries) => {
       entries.forEach((entry) => {
-        if (entry.isIntersecting) {
-          entry.target.classList.add("visible");
-          observer.unobserve(entry.target);
-        }
+        entry.target.classList.toggle("visible", entry.isIntersecting);
       });
     },
-    { threshold: 0.1, rootMargin: "0px 0px -40px 0px" }
+    // Shrink the viewport observer box: cards become "visible" only when
+    // they're well inside the reading area, which keeps the in-focus card
+    // feeling centered while neighbours blur on the edges.
+    { threshold: 0.15, rootMargin: "-8% 0px -18% 0px" }
   );
 
   reveals.forEach((el) => observer.observe(el));
+})();
+
+/* ── Active-section highlight on the sticky label ── */
+(function initActiveSection() {
+  const sections = document.querySelectorAll(".topic-section");
+  if (!sections.length) return;
+
+  function update() {
+    const viewH = window.innerHeight;
+    sections.forEach((section) => {
+      const rect = section.getBoundingClientRect();
+      const inView = rect.top < viewH * 0.6 && rect.bottom > viewH * 0.35;
+      section.classList.toggle("in-view", inView);
+    });
+  }
+
+  let ticking = false;
+  window.addEventListener(
+    "scroll",
+    () => {
+      if (ticking) return;
+      ticking = true;
+      requestAnimationFrame(() => { update(); ticking = false; });
+    },
+    { passive: true }
+  );
+  window.addEventListener("resize", update);
+  update();
 })();
 
 /* ── Mouse-following glow ── */

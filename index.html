@@ -31,7 +31,7 @@
         <svg class="icon-moon" viewBox="0 0 24 24"><path d="M21 12.79A9 9 0 1 1 11.21 3a7 7 0 0 0 9.79 9.79z"/></svg>
         <svg class="icon-sun" viewBox="0 0 24 24"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg>
       </button>
-      <button class="expert-toggle" id="expert-toggle" aria-label="Toggle expert mode">
+      <button class="expert-toggle" id="expert-toggle" aria-label="Toggle advanced mode">
         <span class="expert-toggle-switch"></span>
         <span class="expert-toggle-label">Beginner</span>
       </button>
@@ -49,7 +49,7 @@
       <span class="hero-badge"><span class="hero-badge-dot"></span> EPFL Data Visualization 2025</span>
       <h1>You have <span class="accent">€1,000</span>.<br>What do you do?</h1>
       <p class="subtitle beginner-content">A beginner-friendly, data-driven guide to investing on the NASDAQ. Learn concepts, explore real market data, and simulate your own strategies.</p>
-      <p class="subtitle expert-content">Advanced technical analysis, portfolio construction, and risk management with real NASDAQ data. Toggle expert mode for deeper insights.</p>
+      <p class="subtitle expert-content">Advanced technical analysis, portfolio construction, and risk management with real NASDAQ data. Toggle advanced mode for deeper insights.</p>
       <div class="hero-actions">
         <a href="#stocks" class="cta">Start Learning <span>→</span></a>
         <a href="pages/simulation.html" class="cta cta-secondary">Open Simulator</a>
@@ -137,10 +137,9 @@
                   <option value="3y">3 Years</option><option value="5y">5 Years</option><option value="all">All</option>
                 </select>
               </div>
-              <button class="expert-btn" id="ta-load">Load Chart</button>
             </div>
             <div class="expert-chart" id="ta-chart">
-              <div class="chart-loading">Select a ticker and click <strong>Load Chart</strong></div>
+              <div class="chart-loading">Loading…</div>
             </div>
           </div>
 
@@ -169,7 +168,7 @@
               <li><strong>Below 30 = Oversold</strong> — the stock may have dropped too aggressively. A bounce could be coming.</li>
             </ul>
             <div class="expert-chart" id="ta-rsi-chart">
-              <div class="chart-loading">Load a chart above to see the RSI indicator</div>
+              <div class="chart-loading">Loading…</div>
             </div>
           </div>
 
@@ -253,14 +252,13 @@
             <div class="chart-pair">
               <div class="chart-pair-item">
                 <h4>Portfolio A: 100% Tesla (volatile)</h4>
-                <div class="expert-chart" id="divers-single"><div class="chart-loading">Click Load below</div></div>
+                <div class="expert-chart" id="divers-single"><div class="chart-loading">Loading…</div></div>
               </div>
               <div class="chart-pair-item">
                 <h4>Portfolio B: 5 Stocks (smoother)</h4>
-                <div class="expert-chart" id="divers-portfolio"><div class="chart-loading">Click Load below</div></div>
+                <div class="expert-chart" id="divers-portfolio"><div class="chart-loading">Loading…</div></div>
               </div>
             </div>
-            <button class="expert-btn" style="margin-top:1rem;" onclick="loadDiversificationChart()">Load Comparison</button>
           </div>
 
           <div class="card reveal">
@@ -276,9 +274,8 @@
               <label class="ticker-checkbox"><input type="checkbox" class="corr-ticker" value="META"><span>META</span></label>
               <label class="ticker-checkbox"><input type="checkbox" class="corr-ticker" value="AMD"><span>AMD</span></label>
             </div>
-            <button class="expert-btn" id="corr-load">Generate Heatmap</button>
             <div class="expert-chart" id="corr-heatmap" style="margin-top:0.75rem;">
-              <div class="chart-loading">Select tickers and click <strong>Generate Heatmap</strong></div>
+              <div class="chart-loading">Loading…</div>
             </div>
           </div>
 
@@ -302,9 +299,8 @@
               <label class="ticker-checkbox"><input type="checkbox" class="frontier-ticker" value="GOOG" checked><span>GOOG</span></label>
               <label class="ticker-checkbox"><input type="checkbox" class="frontier-ticker" value="QQQ"><span>QQQ</span></label>
             </div>
-            <button class="expert-btn" id="frontier-load">Generate Frontier</button>
             <div class="expert-chart" id="frontier-chart" style="margin-top:0.75rem;">
-              <div class="chart-loading">Select tickers and click <strong>Generate Frontier</strong></div>
+              <div class="chart-loading">Loading…</div>
             </div>
           </div>
         </div>
@@ -374,10 +370,9 @@
                   <option value="5y" selected>5 Years</option><option value="all">All</option>
                 </select>
               </div>
-              <button class="expert-btn" id="vol-load">Load</button>
             </div>
-            <div class="expert-chart" id="vol-price-chart"><div class="chart-loading">Click Load</div></div>
-            <div class="expert-chart" id="vol-deep-chart" style="margin-top:0.5rem;"><div class="chart-loading">30-day rolling volatility appears here</div></div>
+            <div class="expert-chart" id="vol-price-chart"><div class="chart-loading">Loading…</div></div>
+            <div class="expert-chart" id="vol-deep-chart" style="margin-top:0.5rem;"><div class="chart-loading">Loading…</div></div>
           </div>
 
           <div class="card reveal">
@@ -398,11 +393,10 @@
                   <option value="1y">1 Year</option><option value="3y" selected>3 Years</option><option value="5y">5 Years</option>
                 </select>
               </div>
-              <button class="expert-btn" id="sharpe-calc">Calculate</button>
             </div>
             <div class="sharpe-display">
               <div class="sharpe-number" id="sharpe-value">—</div>
-              <div class="sharpe-interp" id="sharpe-interp">Select a ticker and click Calculate</div>
+              <div class="sharpe-interp" id="sharpe-interp">Calculating…</div>
             </div>
           </div>
 
@@ -417,10 +411,9 @@
                   <option value="META">META</option><option value="AMD">AMD</option><option value="QQQ">QQQ</option>
                 </select>
               </div>
-              <button class="expert-btn" id="dd-load">Show Drawdown</button>
             </div>
             <div class="expert-chart" id="dd-deep-chart" style="margin-top:0.75rem;">
-              <div class="chart-loading">Select a ticker and click <strong>Show Drawdown</strong></div>
+              <div class="chart-loading">Loading…</div>
             </div>
           </div>
 
