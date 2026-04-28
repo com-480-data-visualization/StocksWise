@@ -404,10 +404,11 @@
     <div class="sim-header">
       <a href="../index.html" class="back-link">← Back to Guide</a>
       <h1>Investment Simulator</h1>
-      <p>Pick a stock, a starting date, and an amount — see what would have happened.</p>
+      <p class="beginner-content">Pick a stock, a starting date, and an amount — see what would have happened.</p>
+      <p class="expert-content">Backtest strategies, build portfolios, and stress-test them against historical crises.</p>
     </div>
 
-    <div class="sim-controls">
+    <div class="sim-controls beginner-content">
       <div class="sim-field">
         <label>Ticker</label>
         <select id="sim-ticker" class="ticker-select">
@@ -430,7 +431,7 @@
       <button class="sim-run" id="sim-run">Run Simulation</button>
     </div>
 
-    <div class="chart-container">
+    <div class="chart-container beginner-content">
       <div class="chart-toolbar">
         <div class="chart-toolbar-left">
           <span class="chart-ticker-name" id="chart-ticker-name">—</span>
@@ -449,24 +450,124 @@
       </div>
     </div>
 
-    <div class="sim-results" id="sim-results"></div>
+    <div class="sim-results beginner-content" id="sim-results"></div>
 
-    <div class="disclaimer">
+    <div class="disclaimer beginner-content">
       <strong>Disclaimer:</strong> This simulator uses real historical NASDAQ close prices.
       Past performance is not indicative of future results. This is not financial advice.
     </div>
 
-    <!-- ── Expert Tools (visible only in expert mode, below the main sim) ── -->
-    <div class="expert-content" style="margin-top:2rem;">
-      <h2 style="font-size:1.4rem;font-weight:800;color:var(--text-strong);margin-bottom:1.25rem;letter-spacing:-0.03em;">Advanced Tools</h2>
-
-      <div class="sim-tabs">
-        <button class="sim-tab active" data-panel="panel-backtest">Strategy Backtester</button>
-        <button class="sim-tab" data-panel="panel-portfolio">Portfolio Builder</button>
-        <button class="sim-tab" data-panel="panel-stress">Crisis Stress Test</button>
+    <!-- ══════════════════════════════════════════════
+         ADVANCED SIMULATOR (visible in advanced mode)
+         ══════════════════════════════════════════════ -->
+    <div class="expert-content adv-sim">
+      <!-- Portfolio type pills — each opens its modal -->
+      <div class="adv-portfolio-types" role="tablist" aria-label="Portfolio type">
+        <button class="adv-portfolio-pill active" data-type="premade">
+          <span class="adv-pill-icon">📦</span> Pre-made
+        </button>
+        <button class="adv-portfolio-pill" data-type="custom">
+          <span class="adv-pill-icon">🎯</span> Custom
+        </button>
+        <button class="adv-portfolio-pill" data-type="random">
+          <span class="adv-pill-icon">🎲</span> Random
+        </button>
+        <span class="adv-portfolio-current" id="adv-portfolio-current"></span>
       </div>
 
+      <!-- Two-column: sidebar + chart -->
+      <div class="adv-grid">
+        <aside class="adv-sidebar">
+          <div class="adv-card">
+            <h4 class="adv-card-title">Strategy</h4>
+            <div class="adv-field">
+              <label>Intensity</label>
+              <div class="adv-radios">
+                <label><input type="radio" name="adv-strategy" value="soft"><span>Soft</span></label>
+                <label><input type="radio" name="adv-strategy" value="medium" checked><span>Medium</span></label>
+                <label><input type="radio" name="adv-strategy" value="high"><span>High</span></label>
+              </div>
+            </div>
+            <div class="adv-field">
+              <label>Long term <output id="adv-term-out">5Y</output></label>
+              <input type="range" id="adv-term" min="6" max="120" value="60" step="6">
+              <div class="adv-range-ticks"><span>6M</span><span>10Y</span></div>
+            </div>
+            <div class="adv-field">
+              <label>Start date</label>
+              <input type="date" id="adv-start" value="2015-04-01" max="2020-03-31">
+            </div>
+            <div class="adv-field">
+              <label>Amount (€)</label>
+              <input type="number" id="adv-amount" value="1000" min="1">
+            </div>
+          </div>
+
+          <div class="adv-card">
+            <h4 class="adv-card-title">Test through crisis</h4>
+            <select id="adv-crisis" class="adv-select">
+              <option value="">No crisis overlay</option>
+              <option value="dotcom">Dot-com Bubble (2000)</option>
+              <option value="2008">2008 Financial Crisis</option>
+              <option value="covid">COVID Crash (2020)</option>
+              <option value="rate">2022 Rate Hike</option>
+            </select>
+            <p class="adv-hint">Replaces the date range with the crisis window so you can see how your portfolio fared.</p>
+          </div>
+        </aside>
+
+        <div class="adv-chart-wrap">
+          <div class="chart-toolbar">
+            <div class="chart-toolbar-left">
+              <span class="chart-ticker-name" id="adv-chart-name">Portfolio</span>
+            </div>
+            <div class="chart-timeframe" id="adv-timeframe">
+              <button class="active" data-tf="all">ALL</button>
+              <button data-tf="5y">5Y</button>
+              <button data-tf="1y">1Y</button>
+              <button data-tf="6m">6M</button>
+            </div>
+          </div>
+          <div class="chart-area" id="adv-chart-area">
+            <div class="chart-placeholder">Loading…</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Stats row — clickable for definitions -->
+      <div class="adv-stats">
+        <button class="adv-stat-card" data-info="stocks">
+          <div class="adv-stat-label">Stocks selected</div>
+          <div class="adv-stat-value" id="stat-stocks">—</div>
+        </button>
+        <button class="adv-stat-card" data-info="final">
+          <div class="adv-stat-label">Final value</div>
+          <div class="adv-stat-value" id="stat-final">—</div>
+        </button>
+        <button class="adv-stat-card" data-info="return">
+          <div class="adv-stat-label">Total return</div>
+          <div class="adv-stat-value" id="stat-return">—</div>
+        </button>
+        <button class="adv-stat-card" data-info="cagr">
+          <div class="adv-stat-label">CAGR</div>
+          <div class="adv-stat-value" id="stat-cagr">—</div>
+        </button>
+      </div>
+
+      <!-- Locked "Pro" tiles -->
+      <div class="adv-locked-row">
+        <div class="adv-locked-tile"><span class="adv-lock">🔒</span><span class="adv-locked-name">Sharpe Ratio</span><span class="adv-pro">Pro</span></div>
+        <div class="adv-locked-tile"><span class="adv-lock">🔒</span><span class="adv-locked-name">Max Drawdown</span><span class="adv-pro">Pro</span></div>
+        <div class="adv-locked-tile"><span class="adv-lock">🔒</span><span class="adv-locked-name">Volatility</span><span class="adv-pro">Pro</span></div>
+      </div>
+
+      <!-- Existing research tools, kept as collapsible cards below -->
+      <div class="adv-research">
+        <h3 class="adv-research-title">Research tools</h3>
+
       <!-- TOOL 1: Strategy Backtester -->
+      <details class="adv-tool-card">
+        <summary class="adv-tool-summary"><span class="adv-tool-icon">🔬</span> Strategy Backtester <span class="adv-tool-hint">test entry/exit rules on a single asset</span></summary>
       <div class="sim-tool-panel active" id="panel-backtest">
         <div class="sim-controls">
           <div class="sim-field">
@@ -531,9 +632,12 @@
         </div>
         <div class="backtest-stats" id="bt-stats"></div>
       </div>
+      </details>
 
       <!-- TOOL 2: Portfolio Builder -->
-      <div class="sim-tool-panel" id="panel-portfolio">
+      <details class="adv-tool-card">
+        <summary class="adv-tool-summary"><span class="adv-tool-icon">🧪</span> Portfolio Builder <span class="adv-tool-hint">weight tickers, see correlation + efficient frontier</span></summary>
+      <div class="sim-tool-panel active" id="panel-portfolio">
         <div class="sim-controls" style="flex-direction:column;align-items:stretch;">
           <div style="display:flex;gap:0.75rem;align-items:flex-end;flex-wrap:wrap;">
             <div class="sim-field">
@@ -584,9 +688,12 @@
         </div>
         <div id="pb-optimal" style="display:none;margin-top:0.75rem;padding:1rem;background:var(--green-bg);border:1px solid var(--green);border-radius:var(--radius);color:var(--green);font-size:0.85rem;font-weight:600;"></div>
       </div>
+      </details>
 
       <!-- TOOL 3: Crisis Stress Test -->
-      <div class="sim-tool-panel" id="panel-stress">
+      <details class="adv-tool-card">
+        <summary class="adv-tool-summary"><span class="adv-tool-icon">⚠️</span> Crisis Stress Test <span class="adv-tool-hint">overlay a portfolio against historical drawdowns</span></summary>
+      <div class="sim-tool-panel active" id="panel-stress">
         <div class="sim-controls" style="flex-direction:column;align-items:stretch;">
           <div style="display:flex;gap:0.75rem;align-items:flex-end;flex-wrap:wrap;">
             <div class="sim-field">
@@ -629,6 +736,53 @@
         </div>
         <div class="backtest-stats" id="st-stats"></div>
       </div>
+      </details>
+
+      </div><!-- /.adv-research -->
+
+      <!-- ── Modals ── -->
+      <div class="adv-modal" id="modal-premade" role="dialog" aria-hidden="true">
+        <div class="adv-modal-content">
+          <button class="adv-modal-close" data-close aria-label="Close">×</button>
+          <h3>Pick a pre-made portfolio</h3>
+          <p class="adv-modal-sub">Curated baskets of NASDAQ tickers for common strategies.</p>
+          <div class="adv-premade-options" id="adv-premade-options"></div>
+        </div>
+      </div>
+
+      <div class="adv-modal" id="modal-custom" role="dialog" aria-hidden="true">
+        <div class="adv-modal-content">
+          <button class="adv-modal-close" data-close aria-label="Close">×</button>
+          <h3>Build a custom portfolio</h3>
+          <p class="adv-modal-sub">Search NASDAQ tickers and pick up to 8.</p>
+          <input type="text" id="adv-custom-search" class="adv-modal-input" placeholder="Search ticker (AAPL, GOOG…)">
+          <div class="adv-custom-results" id="adv-custom-results"></div>
+          <div class="adv-custom-selected-wrap">
+            <div class="adv-custom-selected-label">Selected (<span id="adv-custom-count">0</span>/8)</div>
+            <div class="adv-custom-selected" id="adv-custom-selected"></div>
+          </div>
+          <button class="adv-modal-apply" id="adv-custom-apply">Apply portfolio</button>
+        </div>
+      </div>
+
+      <div class="adv-modal" id="modal-random" role="dialog" aria-hidden="true">
+        <div class="adv-modal-content">
+          <button class="adv-modal-close" data-close aria-label="Close">×</button>
+          <h3>Random portfolio</h3>
+          <p class="adv-modal-sub">Five NASDAQ tickers picked at random. Reshuffle until you find one you like.</p>
+          <div class="adv-random-preview" id="adv-random-preview"></div>
+          <div class="adv-modal-actions">
+            <button class="adv-modal-shuffle" id="adv-random-shuffle">🎲 Shuffle</button>
+            <button class="adv-modal-apply" id="adv-random-apply">Apply portfolio</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Stat info popover -->
+      <div class="adv-stat-popover" id="adv-stat-popover" hidden>
+        <div class="adv-popover-title"></div>
+        <div class="adv-popover-desc"></div>
+      </div>
     </div>
 
   </div>
@@ -649,7 +803,7 @@
       });
     })();
 
-    /* ── Expert Mode Toggle (independent per page) ── */
+    /* ── Advanced Mode Toggle (independent per page) ── */
     (function initExpertMode() {
       const pageKey = "sw-mode-sim";
       const saved = localStorage.getItem(pageKey);
@@ -663,6 +817,14 @@
         const isExpert = document.body.classList.contains("expert");
         localStorage.setItem(pageKey, isExpert ? "expert" : "beginner");
         if (label) label.textContent = isExpert ? "Advanced" : "Beginner";
+
+        // First time the user reveals the beginner sim, render it.
+        // (The auto-run on load is skipped when starting in advanced mode
+        // because drawChart needs a non-zero clientWidth.)
+        if (!isExpert) {
+          const placeholder = document.querySelector("#chart-area .chart-placeholder");
+          if (placeholder && typeof runSimulation === "function") runSimulation();
+        }
       });
     })();
 
@@ -985,8 +1147,10 @@
     }
 
     document.getElementById("sim-run")?.addEventListener("click", runSimulation);
-    // Auto-run with the default selections so the page shows a real chart on load.
-    runSimulation();
+    // Auto-run with the default selections — but only if the beginner sim
+    // is actually visible. Drawing into a display:none container fails
+    // because clientWidth is 0.
+    if (!document.body.classList.contains("expert")) runSimulation();
   </script>
 
 </body>

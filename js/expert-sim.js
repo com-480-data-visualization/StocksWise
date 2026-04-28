@@ -708,3 +708,440 @@ document.addEventListener("DOMContentLoaded", () => {
     renderSTSliders();
   }
 });
+
+/* ══════════════════════════════════════════════
+   ADVANCED SIMULATOR (unified portfolio + chart + stats)
+   ══════════════════════════════════════════════ */
+
+// The bundled NASDAQ dataset stops at 2020-04-01 (last common trading day in
+// the Kaggle source). All term/start-date math is anchored here so defaults
+// always land inside the available history.
+const ADV_DATA_END = "2020-04-01";
+
+const ADV_PREMADE = [
+  { id: "tech",     name: "Tech Giants",       desc: "Mega-cap technology — high growth, concentrated.",
+    tickers: ["AAPL", "MSFT", "NVDA", "GOOG", "AMZN"] },
+  { id: "balanced", name: "Balanced Index",    desc: "Broad market ETFs blended with stable large caps.",
+    tickers: ["QQQ", "SPY", "AAPL", "MSFT"] },
+  { id: "growth",   name: "High Growth",       desc: "Higher volatility, higher expected return.",
+    tickers: ["NVDA", "TSLA", "AMD", "NFLX", "AMZN"] },
+  { id: "defensive",name: "Defensive Classic", desc: "Slow-mover dividend payers. Lower drawdowns.",
+    tickers: ["KO", "PEP", "WMT", "JNJ", "PG"] },
+];
+
+const ADV_CRISES = [
+  { id: "dotcom", name: "Dot-com Bubble",       start: "1999-09-01", end: "2003-04-01" },
+  { id: "2008",   name: "2008 Financial Crisis",start: "2007-04-01", end: "2009-09-01" },
+  { id: "covid",  name: "COVID Crash",          start: "2019-08-01", end: "2020-10-01" },
+  { id: "rate",   name: "2022 Rate Hike",       start: "2021-07-01", end: "2023-06-30" },
+];
+
+const ADV_STAT_INFO = {
+  stocks: { title: "Stocks selected",
+    desc: "Number of distinct stocks in your portfolio. More stocks = more diversification, each gets a smaller share." },
+  final:  { title: "Final value",
+    desc: "What your initial investment is worth at the end of the period — based on real historical close prices, equally weighted across selected stocks." },
+  return: { title: "Total return",
+    desc: "Percentage change from start to end of the simulated period. Includes price changes only (no dividends)." },
+  cagr:   { title: "CAGR",
+    desc: "Compound Annual Growth Rate. The constant yearly rate that would turn your start value into your end value over the same number of years." },
+};
+
+const advState = {
+  type: "premade",
+  premadeId: "tech",
+  tickers: ["AAPL", "MSFT", "NVDA", "GOOG", "AMZN"],
+  weights: [0.2, 0.2, 0.2, 0.2, 0.2],
+};
+
+function advFormatTerm(months) {
+  if (months >= 12 && months % 12 === 0) return (months / 12) + "Y";
+  if (months >= 12) return (months / 12).toFixed(1) + "Y";
+  return months + "M";
+}
+
+function advSetTickers(tickers) {
+  advState.tickers = tickers;
+  advState.weights = tickers.map(() => 1 / tickers.length);
+  advRenderCurrent();
+  advScheduleRun();
+}
+
+function advRenderCurrent() {
+  const el = document.getElementById("adv-portfolio-current");
+  if (!el) return;
+  const typeLabel = { premade: "Pre-made", custom: "Custom", random: "Random" }[advState.type] || advState.type;
+  el.innerHTML = `<strong>${advState.tickers.length}</strong> stocks · ${typeLabel}` +
+    (advState.tickers.length ? ` · <span style="color:var(--text-strong)">${advState.tickers.slice(0,5).join(", ")}${advState.tickers.length > 5 ? "…" : ""}</span>` : "");
+}
+
+function advUpdatePillState() {
+  document.querySelectorAll(".adv-portfolio-pill").forEach(p => {
+    p.classList.toggle("active", p.dataset.type === advState.type);
+  });
+}
+
+/* ── Modal helpers ── */
+function advOpenModal(id) {
+  const modal = document.getElementById(id);
+  if (!modal) return;
+  modal.classList.add("open");
+  document.body.style.overflow = "hidden";
+}
+function advCloseModal(id) {
+  const modal = document.getElementById(id);
+  if (!modal) return;
+  modal.classList.remove("open");
+  document.body.style.overflow = "";
+}
+
+/* ── Pre-made modal ── */
+function advRenderPremadeOptions() {
+  const root = document.getElementById("adv-premade-options");
+  if (!root) return;
+  root.innerHTML = ADV_PREMADE.map(p => `
+    <button class="adv-premade-option" data-id="${p.id}">
+      <h4>${p.name}</h4>
+      <p>${p.desc}</p>
+      <div class="adv-premade-tickers">${p.tickers.map(t => `<span>${t}</span>`).join("")}</div>
+    </button>
+  `).join("");
+  root.querySelectorAll(".adv-premade-option").forEach(btn => {
+    btn.addEventListener("click", () => {
+      const preset = ADV_PREMADE.find(p => p.id === btn.dataset.id);
+      if (!preset) return;
+      advState.type = "premade";
+      advState.premadeId = preset.id;
+      advUpdatePillState();
+      advSetTickers([...preset.tickers]);
+      advCloseModal("modal-premade");
+    });
+  });
+}
+
+/* ── Custom modal ── */
+let advCustomWorking = [];
+
+function advRenderCustomSelected() {
+  const root = document.getElementById("adv-custom-selected");
+  const count = document.getElementById("adv-custom-count");
+  if (!root) return;
+  root.innerHTML = advCustomWorking.map(t => `
+    <span class="adv-portfolio-chip">${t}<button data-rm="${t}" aria-label="Remove ${t}">×</button></span>
+  `).join("");
+  root.querySelectorAll("button[data-rm]").forEach(b => {
+    b.addEventListener("click", () => {
+      advCustomWorking = advCustomWorking.filter(t => t !== b.dataset.rm);
+      advRenderCustomSelected();
+    });
+  });
+  if (count) count.textContent = String(advCustomWorking.length);
+  const apply = document.getElementById("adv-custom-apply");
+  if (apply) apply.disabled = advCustomWorking.length === 0;
+}
+
+let advCustomSearchTimer = null;
+async function advRunCustomSearch() {
+  const input = document.getElementById("adv-custom-search");
+  const results = document.getElementById("adv-custom-results");
+  if (!input || !results) return;
+  const q = input.value.trim().toUpperCase();
+  if (!q) { results.innerHTML = ""; return; }
+  const meta = await StockData.loadMeta();
+  if (!meta) { results.innerHTML = ""; return; }
+  const matches = meta
+    .filter(m => m.symbol && m.symbol.toUpperCase().startsWith(q))
+    .slice(0, 12);
+  results.innerHTML = matches.map(m => {
+    const taken = advCustomWorking.includes(m.symbol);
+    const full = advCustomWorking.length >= 8 && !taken;
+    const cls = taken || full ? "adv-custom-result disabled" : "adv-custom-result";
+    return `<button class="${cls}" data-add="${m.symbol}" ${taken || full ? "disabled" : ""}>${m.symbol}${m.name ? " — " + m.name : ""}</button>`;
+  }).join("");
+  results.querySelectorAll("button[data-add]:not([disabled])").forEach(btn => {
+    btn.addEventListener("click", () => {
+      const t = btn.dataset.add;
+      if (!advCustomWorking.includes(t) && advCustomWorking.length < 8) {
+        advCustomWorking.push(t);
+        advRenderCustomSelected();
+        advRunCustomSearch();
+      }
+    });
+  });
+}
+
+/* ── Random modal ── */
+let advRandomWorking = [];
+async function advShuffleRandom() {
+  const meta = await StockData.loadMeta();
+  const preview = document.getElementById("adv-random-preview");
+  if (!meta || !meta.length || !preview) return;
+  // Limit to short alphabetic symbols to skip exotic instruments.
+  const pool = meta.filter(m => m.symbol && /^[A-Z]{1,5}$/.test(m.symbol));
+  const picked = [];
+  const seen = new Set();
+  let guard = 0;
+  while (picked.length < 5 && guard++ < 200 && pool.length > 0) {
+    const m = pool[Math.floor(Math.random() * pool.length)];
+    if (seen.has(m.symbol)) continue;
+    seen.add(m.symbol);
+    picked.push(m.symbol);
+  }
+  advRandomWorking = picked;
+  preview.innerHTML = picked.map(t => `<span>${t}</span>`).join("");
+  const apply = document.getElementById("adv-random-apply");
+  if (apply) apply.disabled = picked.length === 0;
+}
+
+/* ── Term ↔ start date sync (anchored on ADV_DATA_END, not today) ── */
+function advSetTermFromMonths(months) {
+  const m = Math.max(6, Math.min(120, Math.round(months / 6) * 6));
+  const slider = document.getElementById("adv-term");
+  const out = document.getElementById("adv-term-out");
+  if (slider) slider.value = m;
+  if (out) out.textContent = advFormatTerm(m);
+  const ref = new Date(ADV_DATA_END);
+  ref.setMonth(ref.getMonth() - m);
+  const dateInput = document.getElementById("adv-start");
+  if (dateInput) dateInput.value = ref.toISOString().slice(0, 10);
+}
+
+function advSyncTermFromDate() {
+  const dateInput = document.getElementById("adv-start");
+  if (!dateInput || !dateInput.value) return;
+  const start = new Date(dateInput.value);
+  const ref = new Date(ADV_DATA_END);
+  const months = Math.max(1, Math.round((ref - start) / (1000 * 60 * 60 * 24 * 30.44)));
+  const clamped = Math.max(6, Math.min(120, Math.round(months / 6) * 6));
+  const slider = document.getElementById("adv-term");
+  const out = document.getElementById("adv-term-out");
+  if (slider) slider.value = clamped;
+  if (out) out.textContent = advFormatTerm(clamped);
+}
+
+/* ── Run + draw ── */
+let advRunTimer = null;
+function advScheduleRun() {
+  clearTimeout(advRunTimer);
+  advRunTimer = setTimeout(runAdvancedSim, 80);
+}
+
+async function runAdvancedSim() {
+  const chartArea = document.getElementById("adv-chart-area");
+  const nameEl = document.getElementById("adv-chart-name");
+  if (!chartArea) return;
+
+  const startInput = document.getElementById("adv-start").value;
+  const amount = parseFloat(document.getElementById("adv-amount").value) || 1000;
+  const crisisId = document.getElementById("adv-crisis").value;
+  const crisis = ADV_CRISES.find(c => c.id === crisisId);
+
+  let startDate = startInput;
+  let endDate = null;
+  let label = `Portfolio · ${advState.tickers.length} stocks`;
+  if (crisis) {
+    startDate = crisis.start;
+    endDate = crisis.end;
+    label += ` · ${crisis.name}`;
+  }
+  if (nameEl) nameEl.textContent = label;
+
+  if (!advState.tickers.length) {
+    chartArea.innerHTML = '<div class="chart-placeholder">Pick a portfolio to begin.</div>';
+    advClearStats();
+    return;
+  }
+
+  chartArea.innerHTML = '<div class="chart-placeholder">Loading real market data…</div>';
+
+  const datasets = await Promise.all(advState.tickers.map(t => StockData.loadTicker(t)));
+  const okIdx = datasets.map((d, i) => d ? i : -1).filter(i => i >= 0);
+  if (okIdx.length === 0) {
+    chartArea.innerHTML = '<div class="chart-placeholder">Could not load price data for any selected ticker.</div>';
+    advClearStats();
+    return;
+  }
+  // Drop tickers that failed to load and rebalance equal weights.
+  const okTickers = okIdx.map(i => advState.tickers[i]);
+  const okData = okIdx.map(i => datasets[i]);
+  const weights = okTickers.map(() => 1 / okTickers.length);
+
+  const filtered = okData.map(d => StockData.filterByDate(d, startDate, endDate));
+  const portfolio = StockData.computePortfolioValue(filtered, weights, amount);
+  if (portfolio.length < 2) {
+    chartArea.innerHTML = '<div class="chart-placeholder">Not enough overlapping data for this period. Try an earlier start date.</div>';
+    advClearStats();
+    return;
+  }
+
+  // Reuse the inline drawChart from simulation.html.
+  const data = portfolio.map(p => ({ date: new Date(p.date), price: p.value }));
+  if (typeof drawChart === "function") drawChart(chartArea, data, amount);
+
+  advUpdateStats(data, amount, okTickers.length);
+}
+
+function advClearStats() {
+  ["stat-stocks", "stat-final", "stat-return", "stat-cagr"].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) { el.textContent = "—"; el.className = "adv-stat-value"; }
+  });
+}
+
+function advUpdateStats(data, amount, numStocks) {
+  const finalValue = data[data.length - 1].price;
+  const totalReturn = ((finalValue - amount) / amount) * 100;
+  const years = (data[data.length - 1].date - data[0].date) / (365.25 * 86400000);
+  const cagr = years > 0 ? (Math.pow(finalValue / amount, 1 / years) - 1) * 100 : 0;
+  const positive = finalValue >= amount;
+  const set = (id, text, cls) => {
+    const el = document.getElementById(id);
+    if (!el) return;
+    el.textContent = text;
+    el.className = "adv-stat-value" + (cls ? " " + cls : "");
+  };
+  set("stat-stocks", String(numStocks));
+  set("stat-final", "€" + Math.round(finalValue).toLocaleString(), positive ? "positive" : "negative");
+  set("stat-return", (totalReturn >= 0 ? "+" : "") + totalReturn.toFixed(1) + "%", positive ? "positive" : "negative");
+  set("stat-cagr", cagr.toFixed(1) + "%");
+}
+
+/* ── Stat info popover ── */
+function advSetupStatPopover() {
+  const popover = document.getElementById("adv-stat-popover");
+  if (!popover) return;
+  const titleEl = popover.querySelector(".adv-popover-title");
+  const descEl = popover.querySelector(".adv-popover-desc");
+
+  document.querySelectorAll(".adv-stat-card[data-info]").forEach(card => {
+    card.addEventListener("click", (e) => {
+      e.stopPropagation();
+      const info = ADV_STAT_INFO[card.dataset.info];
+      if (!info) return;
+      titleEl.textContent = info.title;
+      descEl.textContent = info.desc;
+      // Position relative to the .sim-layout (positioned ancestor).
+      const layout = document.querySelector(".sim-layout");
+      if (!layout) return;
+      const lr = layout.getBoundingClientRect();
+      const cr = card.getBoundingClientRect();
+      let left = cr.left - lr.left;
+      const top  = cr.bottom - lr.top + 8;
+      // Clamp so popover stays within layout horizontally.
+      const popW = 280;
+      const layoutW = layout.clientWidth;
+      if (left + popW > layoutW - 8) left = layoutW - popW - 8;
+      popover.style.left = Math.max(8, left) + "px";
+      popover.style.top = top + "px";
+      popover.hidden = false;
+    });
+  });
+
+  document.addEventListener("click", (e) => {
+    if (popover.hidden) return;
+    if (popover.contains(e.target) || e.target.closest(".adv-stat-card")) return;
+    popover.hidden = true;
+  });
+  document.addEventListener("keydown", (e) => {
+    if (e.key === "Escape") popover.hidden = true;
+  });
+}
+
+/* ── Init ── */
+document.addEventListener("DOMContentLoaded", () => {
+  if (!document.querySelector(".adv-sim")) return;
+
+  advRenderPremadeOptions();
+  advRenderCurrent();
+  advUpdatePillState();
+  advSetupStatPopover();
+
+  // Pill clicks open the corresponding modal.
+  document.querySelectorAll(".adv-portfolio-pill").forEach(pill => {
+    pill.addEventListener("click", () => {
+      const type = pill.dataset.type;
+      if (type === "custom") {
+        advCustomWorking = [...advState.tickers];
+        advRenderCustomSelected();
+        const search = document.getElementById("adv-custom-search");
+        if (search) { search.value = ""; document.getElementById("adv-custom-results").innerHTML = ""; }
+      } else if (type === "random") {
+        advShuffleRandom();
+      }
+      advOpenModal(`modal-${type}`);
+    });
+  });
+
+  // Modal close: × button + backdrop + Escape.
+  document.querySelectorAll(".adv-modal").forEach(modal => {
+    modal.addEventListener("click", (e) => {
+      if (e.target === modal || e.target.matches("[data-close]")) advCloseModal(modal.id);
+    });
+  });
+  document.addEventListener("keydown", (e) => {
+    if (e.key === "Escape") {
+      document.querySelectorAll(".adv-modal.open").forEach(m => advCloseModal(m.id));
+    }
+  });
+
+  // Custom search input (debounced).
+  const customSearch = document.getElementById("adv-custom-search");
+  if (customSearch) {
+    customSearch.addEventListener("input", () => {
+      clearTimeout(advCustomSearchTimer);
+      advCustomSearchTimer = setTimeout(advRunCustomSearch, 120);
+    });
+  }
+  document.getElementById("adv-custom-apply")?.addEventListener("click", () => {
+    if (!advCustomWorking.length) return;
+    advState.type = "custom";
+    advUpdatePillState();
+    advSetTickers([...advCustomWorking]);
+    advCloseModal("modal-custom");
+  });
+
+  // Random buttons.
+  document.getElementById("adv-random-shuffle")?.addEventListener("click", advShuffleRandom);
+  document.getElementById("adv-random-apply")?.addEventListener("click", () => {
+    if (!advRandomWorking.length) return;
+    advState.type = "random";
+    advUpdatePillState();
+    advSetTickers([...advRandomWorking]);
+    advCloseModal("modal-random");
+  });
+
+  // Strategy controls — every change re-runs.
+  document.getElementById("adv-term")?.addEventListener("input", () => {
+    const m = parseInt(document.getElementById("adv-term").value, 10);
+    advSetTermFromMonths(m);
+    advScheduleRun();
+  });
+  document.getElementById("adv-start")?.addEventListener("change", () => {
+    advSyncTermFromDate();
+    advScheduleRun();
+  });
+  document.getElementById("adv-amount")?.addEventListener("input", advScheduleRun);
+  document.getElementById("adv-crisis")?.addEventListener("change", advScheduleRun);
+  document.querySelectorAll("input[name='adv-strategy']").forEach(r => r.addEventListener("change", advScheduleRun));
+
+  // Timeframe pills above the chart.
+  document.getElementById("adv-timeframe")?.addEventListener("click", (e) => {
+    const btn = e.target.closest("button[data-tf]");
+    if (!btn) return;
+    document.querySelectorAll("#adv-timeframe button").forEach(b => b.classList.remove("active"));
+    btn.classList.add("active");
+    const map = { all: 120, "5y": 60, "1y": 12, "6m": 6 };
+    advSetTermFromMonths(map[btn.dataset.tf] || 60);
+    advScheduleRun();
+  });
+
+  // Run on entering advanced mode (or now if we're already there).
+  if (document.body.classList.contains("expert")) {
+    advScheduleRun();
+  }
+  document.getElementById("expert-toggle")?.addEventListener("click", () => {
+    setTimeout(() => {
+      if (document.body.classList.contains("expert")) advScheduleRun();
+    }, 60);
+  });
+});

@@ -273,6 +273,34 @@ document.addEventListener("DOMContentLoaded", () => {
   document.querySelectorAll("#ta-ticker, #ta-period, #ta-sma20, #ta-sma50, #ta-sma200, #ta-ema20, #ta-sr").forEach(el => {
     el?.addEventListener("change", loadTechnicalAnalysis);
   });
+
+  // Candle anatomy → chart fuse. Drives a CSS --fuse variable (0..1) from
+  // the chart's distance to the viewport top, so the demo candles shrink
+  // and sink into the chart area as the user scrolls toward it.
+  const anatomy = document.querySelector(".candle-anatomy");
+  const chart = document.getElementById("ta-chart");
+  if (anatomy && chart) {
+    const clamp01 = (v) => Math.max(0, Math.min(1, v));
+    const updateFuse = () => {
+      const rect = chart.getBoundingClientRect();
+      const viewH = window.innerHeight || 720;
+      // Fuse begins when the chart top is ~75% down the viewport and
+      // completes by the time it reaches ~25% down.
+      const start = viewH * 0.75;
+      const end   = viewH * 0.25;
+      const progress = clamp01((start - rect.top) / (start - end));
+      anatomy.style.setProperty("--fuse", progress.toFixed(3));
+    };
+    let ticking = false;
+    window.addEventListener("scroll", () => {
+      if (ticking) return;
+      ticking = true;
+      requestAnimationFrame(() => { updateFuse(); ticking = false; });
+    }, { passive: true });
+    window.addEventListener("resize", updateFuse);
+    document.addEventListener("sw-mode-change", updateFuse);
+    updateFuse();
+  }
 });
 
 /* ══════════════════════════════════════════════
