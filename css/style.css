@@ -484,7 +484,11 @@ html  { scroll-padding-top: calc(var(--nav-h) + 36px + 16px); }
 
 /* ── Mouse-following glow per section ── */
 .section-glow {
-  position: absolute;
+  /* position: fixed (rather than absolute) so the 600px blur halo doesn't
+     contribute to document scroll height when the cursor sits near a
+     section's bottom edge - that was padding the page out below the footer.
+     JS now sets left/top directly from clientX/Y. */
+  position: fixed;
   width: 600px; height: 600px;
   border-radius: 50%;
   pointer-events: none;

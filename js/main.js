@@ -145,42 +145,22 @@
 })();
 
 /* ── Mouse-following glow ──
-   The glow is absolute-positioned inside each section. Mousemove alone isn't
-   enough: if the user scrolls without moving the mouse, the section slides
-   under the cursor and the glow stays stuck at its old offset. Track the
-   last viewport mouse coords and refresh on scroll too. */
+   .section-glow is position: fixed (so it doesn't contribute to document
+   scroll height with its 600px blur halo). With fixed, left/top are
+   viewport coords - we just set them directly from clientX/Y, and only
+   the section currently under :hover ever shows. No scroll handler needed
+   because position: fixed already keeps the glow at the cursor without
+   moving relative to the viewport when the page scrolls. */
 (function initGlow() {
-  const sections = document.querySelectorAll(".topic-section");
-  if (!sections.length) return;
-
-  let mouseX = -9999, mouseY = -9999;
-
-  function refresh() {
-    sections.forEach((section) => {
-      const glow = section.querySelector(".section-glow");
-      if (!glow) return;
-      const rect = section.getBoundingClientRect();
-      glow.style.left = (mouseX - rect.left) + "px";
-      glow.style.top  = (mouseY - rect.top)  + "px";
-    });
-  }
+  const glows = document.querySelectorAll(".section-glow");
+  if (!glows.length) return;
 
   document.addEventListener("mousemove", (e) => {
-    mouseX = e.clientX;
-    mouseY = e.clientY;
-    refresh();
+    glows.forEach((g) => {
+      g.style.left = e.clientX + "px";
+      g.style.top  = e.clientY + "px";
+    });
   });
-
-  let ticking = false;
-  window.addEventListener(
-    "scroll",
-    () => {
-      if (ticking) return;
-      ticking = true;
-      requestAnimationFrame(() => { refresh(); ticking = false; });
-    },
-    { passive: true }
-  );
 })();
 
 /* ── Nav background on scroll ── */
