@@ -1,5 +1,5 @@
 /* ══════════════════════════════════════════════
-   StocksWise — Main JS
+   StocksWise - Main JS
    ══════════════════════════════════════════════ */
 
 /* ── Theme Toggle ── */
@@ -144,18 +144,43 @@
   update();
 })();
 
-/* ── Mouse-following glow ── */
+/* ── Mouse-following glow ──
+   The glow is absolute-positioned inside each section. Mousemove alone isn't
+   enough: if the user scrolls without moving the mouse, the section slides
+   under the cursor and the glow stays stuck at its old offset. Track the
+   last viewport mouse coords and refresh on scroll too. */
 (function initGlow() {
-  document.querySelectorAll(".topic-section").forEach((section) => {
-    const glow = section.querySelector(".section-glow");
-    if (!glow) return;
+  const sections = document.querySelectorAll(".topic-section");
+  if (!sections.length) return;
 
-    section.addEventListener("mousemove", (e) => {
+  let mouseX = -9999, mouseY = -9999;
+
+  function refresh() {
+    sections.forEach((section) => {
+      const glow = section.querySelector(".section-glow");
+      if (!glow) return;
       const rect = section.getBoundingClientRect();
-      glow.style.left = (e.clientX - rect.left) + "px";
-      glow.style.top = (e.clientY - rect.top) + "px";
+      glow.style.left = (mouseX - rect.left) + "px";
+      glow.style.top  = (mouseY - rect.top)  + "px";
     });
+  }
+
+  document.addEventListener("mousemove", (e) => {
+    mouseX = e.clientX;
+    mouseY = e.clientY;
+    refresh();
   });
+
+  let ticking = false;
+  window.addEventListener(
+    "scroll",
+    () => {
+      if (ticking) return;
+      ticking = true;
+      requestAnimationFrame(() => { refresh(); ticking = false; });
+    },
+    { passive: true }
+  );
 })();
 
 /* ── Nav background on scroll ── */
@@ -184,7 +209,7 @@
 (function initModuleQuizzes() {
   const moduleQuizzes = {
     stocks: {
-      title: "Stocks — Module Quiz",
+      title: "Stocks - Module Quiz",
       questions: [
         {
           q: "What does a stock represent?",
@@ -199,7 +224,7 @@
       ],
     },
     etfs: {
-      title: "ETFs — Module Quiz",
+      title: "ETFs - Module Quiz",
       questions: [
         {
           q: "What is the main advantage of an ETF over a single stock?",
@@ -214,7 +239,7 @@
       ],
     },
     risks: {
-      title: "Risks — Module Quiz",
+      title: "Risks - Module Quiz",
       questions: [
         {
           q: "What does the Sharpe ratio measure?",
@@ -229,7 +254,7 @@
       ],
     },
     simulation: {
-      title: "Simulation — Module Quiz",
+      title: "Simulation - Module Quiz",
       questions: [
         {
           q: "What is Dollar-Cost Averaging?",
@@ -345,11 +370,11 @@
 
     resultEl.classList.remove("hidden", "fail");
     if (passed) {
-      resultEl.textContent = `${score}/${total} — Module completed!`;
+      resultEl.textContent = `${score}/${total} - Module completed!`;
       markCompleted(currentModule);
     } else {
       resultEl.classList.add("fail");
-      resultEl.textContent = `${score}/${total} — Not quite! Close and try again.`;
+      resultEl.textContent = `${score}/${total} - Not quite! Close and try again.`;
     }
   });
 })();

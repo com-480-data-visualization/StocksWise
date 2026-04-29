@@ -1,5 +1,5 @@
 /* ══════════════════════════════════════════════
-   StocksWise — Expert Simulation Tools
+   StocksWise - Expert Simulation Tools
    Strategy Backtester, Portfolio Builder, Crisis Stress Test
    ══════════════════════════════════════════════ */
 
@@ -14,7 +14,7 @@
       if (!existing.has(t.symbol)) {
         const opt = document.createElement("option");
         opt.value = t.symbol;
-        opt.textContent = `${t.symbol} — ${t.name}`;
+        opt.textContent = `${t.symbol} - ${t.name}`;
         select.appendChild(opt);
       }
     });
@@ -53,7 +53,7 @@ function simPlotlyConfig() {
 const SIM_TICKERS = ["AAPL", "MSFT", "NVDA", "AMZN", "TSLA", "GOOG", "META", "NFLX", "AMD", "QQQ"];
 
 /* ══════════════════════════════════════════════
-   TOOL 1 — Strategy Backtester
+   TOOL 1 - Strategy Backtester
    ══════════════════════════════════════════════ */
 async function runBacktest() {
   const ticker = document.getElementById("bt-ticker").value;
@@ -222,7 +222,7 @@ async function runBacktest() {
 }
 
 /* ══════════════════════════════════════════════
-   TOOL 2 — Portfolio Builder
+   TOOL 2 - Portfolio Builder
    ══════════════════════════════════════════════ */
 
 let pbTickers = [];
@@ -488,7 +488,7 @@ async function runPortfolioBuilder() {
 }
 
 /* ══════════════════════════════════════════════
-   TOOL 3 — Crisis Stress Test
+   TOOL 3 - Crisis Stress Test
    ══════════════════════════════════════════════ */
 
 const CRISES = [
@@ -719,7 +719,7 @@ document.addEventListener("DOMContentLoaded", () => {
 const ADV_DATA_END = "2020-04-01";
 
 const ADV_PREMADE = [
-  { id: "tech",     name: "Tech Giants",       desc: "Mega-cap technology — high growth, concentrated.",
+  { id: "tech",     name: "Tech Giants",       desc: "Mega-cap technology - high growth, concentrated.",
     tickers: ["AAPL", "MSFT", "NVDA", "GOOG", "AMZN"] },
   { id: "balanced", name: "Balanced Index",    desc: "Broad market ETFs blended with stable large caps.",
     tickers: ["QQQ", "SPY", "AAPL", "MSFT"] },
@@ -740,7 +740,7 @@ const ADV_STAT_INFO = {
   stocks: { title: "Stocks selected",
     desc: "Number of distinct stocks in your portfolio. More stocks = more diversification, each gets a smaller share." },
   final:  { title: "Final value",
-    desc: "What your initial investment is worth at the end of the period — based on real historical close prices, equally weighted across selected stocks." },
+    desc: "What your initial investment is worth at the end of the period - based on real historical close prices, equally weighted across selected stocks." },
   return: { title: "Total return",
     desc: "Percentage change from start to end of the simulated period. Includes price changes only (no dividends)." },
   cagr:   { title: "CAGR",
@@ -856,7 +856,7 @@ async function advRunCustomSearch() {
     const taken = advCustomWorking.includes(m.symbol);
     const full = advCustomWorking.length >= 8 && !taken;
     const cls = taken || full ? "adv-custom-result disabled" : "adv-custom-result";
-    return `<button class="${cls}" data-add="${m.symbol}" ${taken || full ? "disabled" : ""}>${m.symbol}${m.name ? " — " + m.name : ""}</button>`;
+    return `<button class="${cls}" data-add="${m.symbol}" ${taken || full ? "disabled" : ""}>${m.symbol}${m.name ? " - " + m.name : ""}</button>`;
   }).join("");
   results.querySelectorAll("button[data-add]:not([disabled])").forEach(btn => {
     btn.addEventListener("click", () => {
@@ -984,7 +984,7 @@ async function runAdvancedSim() {
 function advClearStats() {
   ["stat-stocks", "stat-final", "stat-return", "stat-cagr"].forEach(id => {
     const el = document.getElementById(id);
-    if (el) { el.textContent = "—"; el.className = "adv-stat-value"; }
+    if (el) { el.textContent = "-"; el.className = "adv-stat-value"; }
   });
 }
 
@@ -1110,7 +1110,7 @@ document.addEventListener("DOMContentLoaded", () => {
     advCloseModal("modal-random");
   });
 
-  // Strategy controls — every change re-runs.
+  // Strategy controls - every change re-runs.
   document.getElementById("adv-term")?.addEventListener("input", () => {
     const m = parseInt(document.getElementById("adv-term").value, 10);
     advSetTermFromMonths(m);

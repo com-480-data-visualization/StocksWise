@@ -1,5 +1,5 @@
 /* ══════════════════════════════════════════════
-   StocksWise — Expert Mode
+   StocksWise - Expert Mode
    All expert module charts and interactions.
    Uses Plotly.js for advanced charts, Chart.js for simpler ones.
    ══════════════════════════════════════════════ */
@@ -51,7 +51,7 @@ function updateNavLabels(isExpert) {
       if (!existing.has(t.symbol)) {
         const opt = document.createElement("option");
         opt.value = t.symbol;
-        opt.textContent = `${t.symbol} — ${t.name}`;
+        opt.textContent = `${t.symbol} - ${t.name}`;
         select.appendChild(opt);
       }
     });
@@ -136,7 +136,7 @@ function loadAllExpertCharts() {
 }
 
 /* ══════════════════════════════════════════════
-   MODULE 01 — Technical Analysis
+   MODULE 01 - Technical Analysis
    ══════════════════════════════════════════════ */
 
 async function loadTechnicalAnalysis() {
@@ -268,7 +268,7 @@ async function loadTechnicalAnalysis() {
   }
 }
 
-// Bind TA controls — any change reloads the chart (no manual button).
+// Bind TA controls - any change reloads the chart (no manual button).
 document.addEventListener("DOMContentLoaded", () => {
   document.querySelectorAll("#ta-ticker, #ta-period, #ta-sma20, #ta-sma50, #ta-sma200, #ta-ema20, #ta-sr").forEach(el => {
     el?.addEventListener("change", loadTechnicalAnalysis);
@@ -304,7 +304,7 @@ document.addEventListener("DOMContentLoaded", () => {
 });
 
 /* ══════════════════════════════════════════════
-   MODULE 02 — Portfolio Construction
+   MODULE 02 - Portfolio Construction
    ══════════════════════════════════════════════ */
 
 async function loadDiversificationChart() {
@@ -529,7 +529,7 @@ async function loadEfficientFrontier() {
 }
 
 /* ══════════════════════════════════════════════
-   MODULE 03 — Risk Metrics Deep
+   MODULE 03 - Risk Metrics Deep
    ══════════════════════════════════════════════ */
 
 async function loadVolatilityDeep() {
@@ -612,10 +612,10 @@ async function computeSharpeDisplay() {
   display.textContent = sharpe.toFixed(2);
 
   if (interp) {
-    if (sharpe < 0) { interp.textContent = "Negative — losing money"; interp.className = "sharpe-interp negative"; }
-    else if (sharpe < 1) { interp.textContent = "Below 1 — poor risk-adjusted return"; interp.className = "sharpe-interp warning"; }
-    else if (sharpe < 2) { interp.textContent = "1–2 — good risk-adjusted return"; interp.className = "sharpe-interp positive"; }
-    else { interp.textContent = "Above 2 — excellent risk-adjusted return"; interp.className = "sharpe-interp excellent"; }
+    if (sharpe < 0) { interp.textContent = "Negative - losing money"; interp.className = "sharpe-interp negative"; }
+    else if (sharpe < 1) { interp.textContent = "Below 1 - poor risk-adjusted return"; interp.className = "sharpe-interp warning"; }
+    else if (sharpe < 2) { interp.textContent = "1–2 - good risk-adjusted return"; interp.className = "sharpe-interp positive"; }
+    else { interp.textContent = "Above 2 - excellent risk-adjusted return"; interp.className = "sharpe-interp excellent"; }
   }
 }
 
@@ -698,7 +698,7 @@ async function loadStrategiesComparison() {
 }
 
 /* ══════════════════════════════════════════════
-   MODULE 04 — Market History & Psychology
+   MODULE 04 - Market History & Psychology
    ══════════════════════════════════════════════ */
 
 const MARKET_EVENTS = [
@@ -822,11 +822,11 @@ async function loadVolatilityClustering() {
 document.addEventListener("DOMContentLoaded", () => {
   setupTimelineButtons();
 
-  // Module 02 — checkboxes reload their chart automatically on toggle.
+  // Module 02 - checkboxes reload their chart automatically on toggle.
   document.querySelectorAll(".corr-ticker").forEach(cb => cb.addEventListener("change", loadCorrelationHeatmap));
   document.querySelectorAll(".frontier-ticker").forEach(cb => cb.addEventListener("change", loadEfficientFrontier));
 
-  // Module 03 — selects reload their chart automatically on change.
+  // Module 03 - selects reload their chart automatically on change.
   document.querySelectorAll("#vol-ticker, #vol-period").forEach(el => el.addEventListener("change", loadVolatilityDeep));
   document.querySelectorAll("#sharpe-ticker, #sharpe-period").forEach(el => el.addEventListener("change", computeSharpeDisplay));
   document.getElementById("dd-ticker")?.addEventListener("change", loadMaxDrawdownDeep);

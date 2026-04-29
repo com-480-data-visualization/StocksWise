@@ -1,5 +1,5 @@
 /* ══════════════════════════════════════════════
-   StocksWise — Inline Card Charts
+   StocksWise - Inline Card Charts
    Mock data today, real NASDAQ data in the future.
    ══════════════════════════════════════════════ */
 
@@ -45,7 +45,7 @@ function baseScales(colors) {
 }
 
 /* ══════════════════════════════════════════════
-   CHART 1 — Price Movement (supply & demand)
+   CHART 1 - Price Movement (supply & demand)
    ══════════════════════════════════════════════ */
 function initPriceMovementChart() {
   const canvas = document.getElementById("chart-price-movement");
@@ -148,7 +148,7 @@ function initPriceMovementChart() {
 }
 
 /* ══════════════════════════════════════════════
-   CHART 2 — ETF vs Individual Stock
+   CHART 2 - ETF vs Individual Stock
    ══════════════════════════════════════════════ */
 function initETFvsStockChart() {
   const canvas = document.getElementById("chart-etf-vs-stock");
@@ -220,7 +220,7 @@ function initETFvsStockChart() {
 }
 
 /* ══════════════════════════════════════════════
-   CHART 3 — Rolling Volatility Comparison
+   CHART 3 - Rolling Volatility Comparison
    ══════════════════════════════════════════════ */
 function initVolatilityChart() {
   const canvas = document.getElementById("chart-volatility");
@@ -315,7 +315,7 @@ function initVolatilityChart() {
 }
 
 /* ══════════════════════════════════════════════
-   CHART 4 — Max Drawdown
+   CHART 4 - Max Drawdown
    ══════════════════════════════════════════════ */
 function initDrawdownChart() {
   const canvas = document.getElementById("chart-drawdown");

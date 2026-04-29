@@ -1,5 +1,5 @@
 /* ══════════════════════════════════════════════
-   StocksWise — Data Loader & Financial Indicators
+   StocksWise - Data Loader & Financial Indicators
    Loads CSV stock/ETF data and computes technical indicators.
    ══════════════════════════════════════════════ */
 
