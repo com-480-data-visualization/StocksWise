@@ -574,9 +574,10 @@
               <button class="timeline-event-btn" data-event="3">2020 COVID Crash</button>
               <button class="timeline-event-btn" data-event="4">2022 Rate Hike Selloff</button>
             </div>
-            <div class="expert-chart" id="nasdaq-timeline"><div class="chart-loading">Loading NASDAQ history...</div></div>
-            <div class="timeline-info" id="timeline-info"></div>
-            <script>document.addEventListener("DOMContentLoaded", () => { if (document.body.classList.contains("expert")) setTimeout(loadNasdaqTimeline, 600); document.addEventListener("sw-mode-change", (e) => { if (e.detail.expert) setTimeout(loadNasdaqTimeline, 400); }); });</script>
+            <div class="timeline-events-description">
+              <h3>1987 Black Monday</h3>
+              <p>Small descritpion of the event and its consequence</p>
+            </div>
           </div>
 
           <div class="card reveal">
