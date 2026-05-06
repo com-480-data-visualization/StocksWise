@@ -73,7 +73,7 @@ function plotlyLayout(overrides = {}) {
     xaxis: { gridcolor: g("--border"), zerolinecolor: g("--border"), tickfont: { size: 10 }, fixedrange: true },
     yaxis: { gridcolor: g("--border"), zerolinecolor: g("--border"), tickfont: { size: 10 }, fixedrange: true },
     dragmode: false,
-    hovermode: "x unified",
+    hovermode: false,
   };
   return deepMerge(base, overrides);
 }
@@ -362,6 +362,12 @@ async function loadCorrelationHeatmap() {
 
   const checkboxes = document.querySelectorAll(".corr-ticker:checked");
   const selectedTickers = Array.from(checkboxes).map(cb => cb.value);
+  // Pin TSLA to the right edge of the heatmap when it's part of the selection.
+  const tslaIdx = selectedTickers.indexOf("TSLA");
+  if (tslaIdx !== -1) {
+    selectedTickers.splice(tslaIdx, 1);
+    selectedTickers.push("TSLA");
+  }
   if (selectedTickers.length < 2) {
     container.innerHTML = '<div class="chart-loading">Select at least 2 tickers</div>';
     return;

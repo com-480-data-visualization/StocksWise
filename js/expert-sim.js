@@ -34,7 +34,7 @@ function simPlotlyLayout(overrides = {}) {
     xaxis: { gridcolor: g("--border"), zerolinecolor: g("--border"), fixedrange: true },
     yaxis: { gridcolor: g("--border"), zerolinecolor: g("--border"), fixedrange: true },
     dragmode: false,
-    hovermode: "x unified",
+    hovermode: false,
   };
   for (const key of Object.keys(overrides)) {
     if (overrides[key] && typeof overrides[key] === "object" && !Array.isArray(overrides[key]) && base[key]) {

@@ -2297,3 +2297,10 @@ body.expert .expert-content.adv-sim {
   from { opacity: 0; transform: translateY(-6px); }
   to   { opacity: 1; transform: translateY(0); }
 }
+
+/* Suppress Plotly hover tooltips and crosshair lines on every chart */
+.js-plotly-plot .plotly .hoverlayer,
+.js-plotly-plot .plotly .crosslines,
+.js-plotly-plot .plotly .spikelines {
+  display: none !important;
+}

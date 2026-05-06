@@ -3,6 +3,14 @@
    Mock data today, real NASDAQ data in the future.
    ══════════════════════════════════════════════ */
 
+/* Disable Chart.js hover tooltips and point-hover effects globally. */
+if (typeof Chart !== "undefined") {
+  Chart.defaults.plugins.tooltip.enabled = false;
+  Chart.defaults.events = [];
+  Chart.defaults.interaction = { mode: null, intersect: true };
+  Chart.defaults.hover = { mode: null };
+}
+
 /* ── Theme colors from CSS variables ── */
 function getThemeColors() {
   const cs = getComputedStyle(document.documentElement);
@@ -158,9 +166,20 @@ function initETFvsStockChart() {
 
   const days = 252;
   const etf = [100], stock = [100];
+  const randStock = seededRandom(202);
+  // ETF: small steady drift, low daily noise -> smooth rising line
+  // Stock: regime-based drift (rally -> crash -> recovery -> pullback) plus
+  // large daily noise so the line clearly swings BOTH above and below the ETF.
   for (let i = 1; i < days; i++) {
-    etf.push(etf[i - 1] * (1 + (rand() - 0.48) * 0.012));
-    stock.push(stock[i - 1] * (1 + (rand() - 0.47) * 0.035));
+    etf.push(etf[i - 1] * (1 + 0.0004 + (rand() - 0.5) * 0.008));
+
+    let drift;
+    if (i < 25)        drift =  0.0050;  // brief early rally above ETF
+    else if (i < 120)  drift = -0.0070;  // deep, prolonged drawdown
+    else if (i < 215)  drift =  0.0040;  // partial recovery (still mostly below ETF)
+    else               drift = -0.0010;  // late fade
+    const shock = (randStock() - 0.5) * 0.040;
+    stock.push(stock[i - 1] * (1 + drift + shock));
   }
 
   const labels = Array.from({ length: days }, (_, i) => {

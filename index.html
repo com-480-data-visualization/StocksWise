@@ -102,7 +102,6 @@
           <div class="card reveal">
             <h3>How are prices set?</h3>
             <p>Prices move with <strong>supply and demand</strong>. If more people want to buy a stock than sell it, the price rises. If more want to sell, it drops. Company earnings, news, and market sentiment all influence demand.</p>
-            <div class="chart-wrapper"><canvas id="chart-price-movement"></canvas></div>
           </div>
           <div class="card reveal">
             <h3>Key terms</h3>
@@ -180,44 +179,61 @@
             <div class="expert-chart" id="ta-chart">
               <div class="chart-loading">Loading…</div>
             </div>
+            <div class="indicator-toggles">
+              <label class="indicator-toggle"><input type="checkbox" id="ta-sma20"><span>SMA 20</span></label>
+              <label class="indicator-toggle"><input type="checkbox" id="ta-sma50"><span>SMA 50</span></label>
+              <label class="indicator-toggle"><input type="checkbox" id="ta-sma200"><span>SMA 200</span></label>
+              <label class="indicator-toggle"><input type="checkbox" id="ta-ema20"><span>EMA 20</span></label>
+              <label class="indicator-toggle"><input type="checkbox" id="ta-sr"><span>Support & Resistance</span></label>
+            </div>
+            <p style="margin-top:0.5rem; font-size:0.85rem; color:var(--text-muted);">Toggle these overlays on the chart above - what each one means is explained right below.</p>
           </div>
 
           <div class="card reveal">
             <h3>Moving Averages (SMA / EMA)</h3>
             <p>A stock's daily price is noisy - it jumps up and down every day. A <strong>moving average</strong> smooths it out so you can see the real trend underneath.</p>
             <ul class="term-list">
-              <li><strong>SMA (Simple Moving Average)</strong> - just the average closing price over the last N days. Every day counts equally.</li>
+              <li><strong>SMA (Simple Moving Average)</strong> - the average closing price over the last N trading days. Every day counts equally.</li>
               <li><strong>EMA (Exponential Moving Average)</strong> - same idea as SMA, but recent prices count more than older ones. Reacts faster to new information.</li>
             </ul>
-            <p style="margin-top:0.75rem; font-size:0.85rem; color:var(--text-muted);">When price crosses <strong>above</strong> a moving average, it's often a bullish signal. When it crosses <strong>below</strong>, bearish. Toggle the indicators below:</p>
-            <div class="indicator-toggles">
-              <label class="indicator-toggle"><input type="checkbox" id="ta-sma20"><span>SMA 20</span></label>
-              <label class="indicator-toggle"><input type="checkbox" id="ta-sma50"><span>SMA 50</span></label>
-              <label class="indicator-toggle"><input type="checkbox" id="ta-sma200"><span>SMA 200</span></label>
-              <label class="indicator-toggle"><input type="checkbox" id="ta-ema20"><span>EMA 20</span></label>
-            </div>
+            <p style="margin-top:0.75rem; font-size:0.9rem;">The number after the abbreviation is the <strong>lookback window in trading days</strong> (markets trade ~21 days a month, ~252 a year):</p>
+            <ul class="term-list">
+              <li><strong>SMA 20</strong> - last ~1 month. Short-term trend; hugs the price closely and reacts quickly.</li>
+              <li><strong>SMA 50</strong> - last ~2.5 months. The classic medium-term trend line traders watch.</li>
+              <li><strong>SMA 200</strong> - last ~10 months. Long-term trend - many traders treat price above SMA 200 as a bullish regime, below as bearish.</li>
+              <li><strong>EMA 20</strong> - same ~1-month window as SMA 20, but weighted toward recent days, so it turns faster.</li>
+            </ul>
+            <p style="margin-top:0.75rem; font-size:0.85rem; color:var(--text-muted);">When price crosses <strong>above</strong> a moving average, it's often a bullish signal. When it crosses <strong>below</strong>, bearish.</p>
           </div>
 
           <div class="card reveal">
             <h3>RSI (Relative Strength Index)</h3>
             <p>RSI is a number between 0 and 100 that answers one question: <em>"Is this stock being bought too aggressively or sold too aggressively right now?"</em></p>
             <p style="margin-top:0.5rem;">It measures the speed and size of recent price movements. Not where the price is, but how fast it's been moving up or down.</p>
-            <ul class="term-list">
+            <p style="margin-top:0.75rem; font-size:0.9rem;">The standard window is <strong>14 trading days</strong>. Over that window we separate the up days from the down days, average each, and compare:</p>
+            <div class="formula-block">RS = avg(gains over last 14 days) / avg(losses over last 14 days)</div>
+            <div class="formula-block">RSI = 100 − 100 / (1 + RS)</div>
+            <ul class="term-list" style="margin-top:0.5rem;">
+              <li>If gains and losses are equal, RS = 1 → RSI = 50 (neutral).</li>
+              <li>If there are no losses, RS → ∞ → RSI → 100 (pure buying pressure).</li>
+              <li>If there are no gains, RS = 0 → RSI = 0 (pure selling pressure).</li>
+            </ul>
+            <ul class="term-list" style="margin-top:0.75rem;">
               <li><strong>Above 70 = Overbought</strong> - the stock may have risen too fast. A pullback could be coming.</li>
               <li><strong>Below 30 = Oversold</strong> - the stock may have dropped too aggressively. A bounce could be coming.</li>
+              <li><strong>Between 30 and 70</strong> - neutral territory; the trend is in motion but not stretched.</li>
             </ul>
             <div class="expert-chart" id="ta-rsi-chart">
               <div class="chart-loading">Loading…</div>
             </div>
+            <p style="margin-top:0.6rem; font-size:0.85rem; color:var(--text-muted);">The chart above plots RSI through time for the ticker selected at the top of this section. The dashed lines at <strong>70</strong> and <strong>30</strong> mark the overbought/oversold thresholds - watch how the line tends to reverse soon after it pokes through them. Look for <strong>divergences</strong> too: when price keeps making new highs but RSI peaks lower each time, momentum is fading even though the price isn't - often an early warning of a trend change.</p>
           </div>
 
           <div class="card reveal">
             <h3>Support & Resistance</h3>
             <p><strong>Support</strong> - a price floor: a level where the stock keeps stopping its fall and bouncing back up. When a stock drops to $150 and bounces 3 times, traders remember. Next time it approaches $150, they think "this is a good buying opportunity," so they buy - pushing the price back up. It becomes a self-fulfilling prophecy.</p>
             <p style="margin-top:0.75rem;"><strong>Resistance</strong> - a price ceiling: a level where the stock keeps stopping its rise and falling back down. Traders who bought at $200 and watched it fall are waiting to "get out even." When price approaches $200 again, they all sell - supply overwhelms demand - price falls again.</p>
-            <div class="indicator-toggles" style="margin-top:0.75rem;">
-              <label class="indicator-toggle"><input type="checkbox" id="ta-sr"><span>Show Support & Resistance</span></label>
-            </div>
+            <p style="margin-top:0.75rem; font-size:0.85rem; color:var(--text-muted);">Toggle <strong>Support &amp; Resistance</strong> under the candle chart at the top of this section to see these levels drawn on the price.</p>
           </div>
         </div>
       </div>
@@ -288,6 +304,14 @@
           <div class="card reveal">
             <h3>Diversification</h3>
             <p>Holding multiple <strong>uncorrelated assets</strong> reduces risk. When one stock drops, others may hold steady or rise. The math is powerful: a portfolio of 5 uncorrelated assets can have the same expected return as a single stock with significantly less volatility.</p>
+            <p style="margin-top:0.75rem; font-size:0.9rem;">Two assets are <strong>uncorrelated</strong> when their day-to-day returns don't move together in any reliable way. Formally, the metric is the <strong>correlation coefficient</strong> ρ, which sits between −1 and +1:</p>
+            <ul class="term-list">
+              <li><strong>ρ ≈ +1</strong> - assets rise and fall together (e.g. AAPL and MSFT both react to the same tech-sector news). Adding one to a portfolio of the other gives almost no risk reduction.</li>
+              <li><strong>ρ ≈ 0</strong> - returns are independent (e.g. a tech stock vs. a gold ETF). When one zigs, the other doesn't systematically zag - but it doesn't follow either. This is the sweet spot for diversification.</li>
+              <li><strong>ρ ≈ −1</strong> - assets move in opposite directions. Rare in practice; the cleanest hedge but you sacrifice expected return.</li>
+            </ul>
+            <p style="margin-top:0.75rem; font-size:0.85rem; color:var(--text-muted);">Why it works mathematically: portfolio variance ≈ Σ wᵢ² σᵢ² + ΣΣ wᵢ wⱼ σᵢ σⱼ ρᵢⱼ. When ρ is low, the cross-terms shrink, so the portfolio's overall volatility drops below the average volatility of its parts - <strong>risk that doesn't come at the cost of return</strong>. That is the only "free lunch" in finance.</p>
+            <p style="margin-top:0.75rem; font-size:0.85rem; color:var(--text-muted);">In practice, look for assets across <strong>different sectors</strong> (tech vs. healthcare vs. energy), <strong>different geographies</strong> (US vs. emerging markets), and <strong>different asset classes</strong> (stocks vs. bonds vs. commodities). The correlation heatmap below this card shows how tightly the major NASDAQ stocks actually move together.</p>
             <div class="chart-pair">
               <div class="chart-pair-item">
                 <h4>Portfolio A: 100% Tesla (volatile)</h4>
@@ -308,10 +332,10 @@
               <label class="ticker-checkbox"><input type="checkbox" class="corr-ticker" value="MSFT" checked><span>MSFT</span></label>
               <label class="ticker-checkbox"><input type="checkbox" class="corr-ticker" value="NVDA" checked><span>NVDA</span></label>
               <label class="ticker-checkbox"><input type="checkbox" class="corr-ticker" value="AMZN" checked><span>AMZN</span></label>
-              <label class="ticker-checkbox"><input type="checkbox" class="corr-ticker" value="TSLA"><span>TSLA</span></label>
               <label class="ticker-checkbox"><input type="checkbox" class="corr-ticker" value="GOOG" checked><span>GOOG</span></label>
               <label class="ticker-checkbox"><input type="checkbox" class="corr-ticker" value="META"><span>META</span></label>
               <label class="ticker-checkbox"><input type="checkbox" class="corr-ticker" value="AMD"><span>AMD</span></label>
+              <label class="ticker-checkbox"><input type="checkbox" class="corr-ticker" value="TSLA"><span>TSLA</span></label>
             </div>
             <div class="expert-chart" id="corr-heatmap" style="margin-top:0.75rem;">
               <div class="chart-loading">Loading…</div>
@@ -320,7 +344,17 @@
 
           <div class="card reveal">
             <h3>Sector Allocation</h3>
-            <p>Spreading across <strong>different sectors</strong> matters because industries are affected by different economic forces. A tech crash won't necessarily hurt energy or healthcare stocks. A balanced NASDAQ portfolio allocates across sectors:</p>
+            <p>Spreading across <strong>different sectors</strong> matters because industries are affected by different economic forces. A tech crash won't necessarily hurt energy or healthcare stocks. The pie below shows what a balanced <strong>NASDAQ-only</strong> portfolio looks like across sectors:</p>
+            <div style="margin-top:0.75rem; padding:0.85rem 1rem; border-left:3px solid var(--accent); background:rgba(41,98,255,0.06); border-radius:6px;">
+              <p style="margin:0; font-size:0.9rem;"><strong>Important:</strong> a truly diversified portfolio should <strong>not</strong> be limited to the NASDAQ. The NASDAQ is heavily skewed toward US tech and growth names - even its "non-tech" sectors (consumer, healthcare, finance) are dominated by large American companies that often move together during US-led shocks (2000 dot-com, 2022 rate hikes).</p>
+              <p style="margin:0.5rem 0 0 0; font-size:0.9rem;">For real diversification, layer on:</p>
+              <ul class="term-list" style="margin-top:0.4rem;">
+                <li><strong>Other equity markets</strong> - S&amp;P 500 (broader US), Russell 2000 (US small caps), MSCI EAFE (developed ex-US), MSCI Emerging Markets.</li>
+                <li><strong>Other asset classes</strong> - bonds (Treasuries, investment-grade, high-yield), real estate (REITs), commodities (gold, oil), and cash equivalents.</li>
+                <li><strong>Different currencies</strong> - non-USD exposure hedges against a falling dollar.</li>
+              </ul>
+              <p style="margin:0.5rem 0 0 0; font-size:0.9rem;">The pie below is a useful <em>starting point</em> for the equity slice of a portfolio, not the whole picture.</p>
+            </div>
             <div class="expert-chart" id="sector-pie" style="margin-top:0.75rem;">
               <div class="chart-loading">Loading sector chart...</div>
             </div>
@@ -379,7 +413,6 @@
               <li><strong>Sharpe ratio</strong> - return per unit of risk. Higher is better. Above 1.0 is considered good.</li>
               <li><strong>VIX</strong> - the "fear index." When VIX spikes, markets are panicking.</li>
             </ul>
-            <div class="chart-wrapper"><canvas id="chart-drawdown"></canvas></div>
           </div>
           <div class="card reveal">
             <h3>The golden rule</h3>
@@ -478,12 +511,10 @@
       <div class="topic-section-inner">
         <div class="topic-label">
           <div class="sticky-label">
-            <span class="section-number">Module 04</span>
             <h2 class="beginner-content">Our Simulation</h2>
             <h2 class="expert-content">Market History & Psychology</h2>
             <p class="section-desc beginner-content">Travel back in time and see what your money could have done.</p>
             <p class="section-desc expert-content">Markets are driven by humans, and we are irrational. Understanding past crises and cognitive biases separates emotional investors from disciplined ones.</p>
-            <span class="module-badge" id="badge-simulation"></span>
           </div>
         </div>
 
@@ -498,7 +529,6 @@
               <li>Explore the impact of major events: the 2008 crash, COVID, the AI boom.</li>
             </ul>
             <a href="pages/simulation.html" class="btn-sim">Launch Simulator <span>→</span></a>
-            <button class="btn-quiz" data-module="simulation">Take Quiz</button>
           </div>
         </div>
 
