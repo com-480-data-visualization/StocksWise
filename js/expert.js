@@ -707,47 +707,90 @@ async function loadStrategiesComparison() {
    MODULE 04 - Market History & Psychology
    ══════════════════════════════════════════════ */
 
-  const eventsData = [
-  {
-    title: "1987 Black Monday",
-    description: "A sudden global stock market crash where the Dow Jones fell over 22% in a single day. It exposed weaknesses in market structure and led to the introduction of circuit breakers."
-  },
-  {
-    title: "2000 Dot-com Bubble",
-    description: "Tech stocks reached extreme valuations before collapsing. Many internet companies failed, and the NASDAQ lost nearly 80% of its value over the following years."
-  },
-  {
-    title: "2008 Financial Crisis",
-    description: "Triggered by the collapse of the housing market and financial institutions. Massive sell-offs occurred, leading to a global recession and major regulatory reforms."
-  },
-  {
-    title: "2020 COVID Crash",
-    description: "Markets dropped sharply due to global lockdowns and uncertainty. Rapid intervention by central banks led to one of the fastest recoveries in history."
-  },
-  {
-    title: "2022 Rate Hike Selloff",
-    description: "Rising inflation forced central banks to increase interest rates. Growth stocks, especially tech, declined significantly due to higher discount rates."
-  }
+const MARKET_EVENTS = [
+  { date: "1987-10-19", label: "Black Monday", period: ["1987-08-01", "1988-03-01"], desc: "On October 19, 1987, the NASDAQ fell over 11% in a single day. Program trading and panic selling cascaded across global markets. The crash was triggered by rising interest rates and overvaluation concerns." },
+  { date: "2000-03-10", label: "Dot-com Peak", period: ["1999-06-01", "2002-12-01"], desc: "The NASDAQ peaked at 5,048 on March 10, 2000. Over the next 2.5 years, it lost 78% of its value as hundreds of internet companies with no profits went bankrupt." },
+  { date: "2008-09-15", label: "Financial Crisis", period: ["2007-10-01", "2009-06-01"], desc: "Lehman Brothers collapsed, triggering a global financial meltdown. The NASDAQ fell over 55% from its 2007 peak. Banks froze lending, and the housing market collapsed." },
+  { date: "2020-03-16", label: "COVID Crash", period: ["2020-02-01", "2020-06-01"], desc: "COVID-19 pandemic triggered the fastest bear market in history. The NASDAQ dropped 30% in three weeks. Unprecedented fiscal stimulus led to a V-shaped recovery." },
+  { date: "2022-01-03", label: "Rate Hike Selloff", period: ["2022-01-01", "2023-01-01"], desc: "The Federal Reserve began aggressively raising interest rates to fight inflation. Growth stocks were hit hardest as future earnings became less valuable. NASDAQ fell 33%." },
 ];
 
-const buttons = document.querySelectorAll(".timeline-event-btn");
-const titleEl = document.querySelector(".timeline-events-description h3");
-const descEl = document.querySelector(".timeline-events-description p");
+async function loadNasdaqTimeline() {
+  const container = document.getElementById("nasdaq-timeline");
+  const infoCard = document.getElementById("timeline-info");
+  if (!container) return;
+  container.innerHTML = '<div class="chart-loading">Loading NASDAQ history...</div>';
 
-buttons.forEach(btn => {
-  btn.addEventListener("click", () => {
-    const index = btn.dataset.event;
-    const event = eventsData[index];
+  const data = await StockData.loadTicker("QQQ");
+  if (!data) {
+    // Fallback: try ^IXIC or show message
+    container.innerHTML = '<div class="chart-loading">Loading QQQ as NASDAQ proxy...</div>';
+    return;
+  }
 
-    // Update content
-    titleEl.textContent = event.title;
-    descEl.textContent = event.description;
+  const dates = data.map(d => d.date);
+  const prices = data.map(d => d.close);
 
-    // Optional: active state
-    buttons.forEach(b => b.classList.remove("active"));
-    btn.classList.add("active");
+  const annotations = MARKET_EVENTS.filter(e => e.date >= data[0].date).map(event => ({
+    x: event.date, y: prices[dates.indexOf(event.date)] || prices[Math.max(0, dates.findIndex(d => d >= event.date))],
+    text: event.label, showarrow: true,
+    arrowhead: 2, arrowsize: 1, arrowwidth: 1.5,
+    arrowcolor: getRedColor(), ax: 0, ay: -40,
+    font: { size: 11, color: getAccentColor() },
+    bgcolor: "rgba(30,34,45,0.9)", borderpad: 4,
+    bordercolor: getAccentColor(), borderwidth: 1,
+  }));
+
+  container.innerHTML = "";
+  Plotly.newPlot(container, [{
+    x: dates, y: prices, type: "scatter", mode: "lines",
+    name: "QQQ (NASDAQ-100)", line: { color: getAccentColor(), width: 1.5 },
+    fill: "tozeroy", fillcolor: "rgba(41,98,255,0.06)",
+  }], plotlyLayout({
+    height: 400,
+    yaxis: { title: "Price ($)", type: "log" },
+    annotations,
+  }), plotlyConfig());
+
+  // Click handler for annotations
+  container.on("plotly_click", (eventData) => {
+    if (!infoCard) return;
+    const clickDate = eventData.points[0].x;
+    const event = MARKET_EVENTS.find(e => {
+      const d = new Date(clickDate);
+      const s = new Date(e.period[0]);
+      const en = new Date(e.period[1]);
+      return d >= s && d <= en;
+    });
+    if (event) {
+      infoCard.innerHTML = `<h4>${event.label}</h4><p>${event.desc}</p>`;
+      infoCard.style.display = "block";
+      // Zoom to period
+      Plotly.relayout(container, {
+        "xaxis.range": event.period,
+      });
+    }
   });
-});
+}
+
+function setupTimelineButtons() {
+  document.querySelectorAll(".timeline-event-btn").forEach(btn => {
+    btn.addEventListener("click", () => {
+      const idx = parseInt(btn.dataset.event);
+      const event = MARKET_EVENTS[idx];
+      if (!event) return;
+      const container = document.getElementById("nasdaq-timeline");
+      const infoCard = document.getElementById("timeline-info");
+      if (container) {
+        Plotly.relayout(container, { "xaxis.range": event.period });
+      }
+      if (infoCard) {
+        infoCard.innerHTML = `<h4>${event.label}</h4><p>${event.desc}</p>`;
+        infoCard.style.display = "block";
+      }
+    });
+  });
+}
 
 async function loadVolatilityClustering() {
   const container = document.getElementById("vol-clustering-chart");
