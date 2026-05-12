@@ -757,17 +757,6 @@ html  { scroll-padding-top: calc(var(--nav-h) + 36px + 16px); }
   transition: transform 0.2s, box-shadow 0.2s;
   box-shadow: 0 4px 16px var(--accent-glow);
 }
-button.btn-sim {
-  border: none;
-  background: var(--gradient-btn);
-  appearance: none;
-  -webkit-appearance: none;
-  font: inherit;
-  cursor: pointer;
-  color: #fff;
-  font-weight: 700;
-  font-size: 0.95rem;
-}
 .btn-sim:hover {
   transform: translateY(-2px);
   box-shadow: 0 8px 32px var(--accent-glow);

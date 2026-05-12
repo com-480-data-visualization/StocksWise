@@ -10,16 +10,15 @@
   const saved = localStorage.getItem(pageKey);
   if (saved === "expert") document.body.classList.add("expert");
 
-  // Up to date the label of the toggle
+  // Set initial label text
   const toggle = document.getElementById("expert-toggle");
-  // check if toggle exists
   if (toggle) {
     const label = toggle.querySelector(".expert-toggle-label");
     if (label) label.textContent = saved === "expert" ? "Advanced" : "Beginner";
   }
 
   document.addEventListener("click", (e) => {
-    const btn = e.target.closest(".expert-toggle-label");
+    const btn = e.target.closest("#expert-toggle");
     if (!btn) return;
     document.body.classList.toggle("expert");
     const isExpert = document.body.classList.contains("expert");
