@@ -46,10 +46,32 @@
   <!-- ───────── HERO ───────── -->
   <header id="hero">
     <div class="hero-content">
-      <span class="hero-badge"><span class="hero-badge-dot"></span> EPFL Data Visualization 2025</span>
-      <h1>You have <span class="accent">€1,000</span>.<br>What do you do?</h1>
-      <p class="subtitle beginner-content">A beginner-friendly, data-driven guide to investing on the NASDAQ. Learn concepts, explore real market data, and simulate your own strategies.</p>
-      <p class="subtitle expert-content">Advanced technical analysis, portfolio construction, and risk management with real NASDAQ data. Toggle advanced mode for deeper insights.</p>
+      <h1>StocksWise : complex finance concepts, <span class="accent">visually explained</span></h1>
+
+      <!-- TODO : REFAIRE LES GRAPHES -->
+
+      <div class="graphs-mosaic">
+        <a class="viz-card viz-card-large" href="modules.html#stocks">
+          <img src="data-science-stuff/figures/risk_return_scatter.png" alt="Risk and return scatter plot">
+          <span>Risk vs Return</span>
+        </a>
+        <a class="viz-card" href="modules.html#risks">
+          <img src="data-science-stuff/figures/volatility_comparison.png" alt="Volatility comparison chart">
+          <span>Volatility</span>
+        </a>
+        <a class="viz-card" href="modules.html#simulation">
+          <img src="data-science-stuff/figures/growth_of_1.png" alt="Growth of one dollar chart">
+          <span>Growth of $1</span>
+        </a>
+        <a class="viz-card" href="modules.html#stocks">
+          <img src="data-science-stuff/figures/volume_crises.png" alt="Trading volume during crises">
+          <span>Market Stress</span>
+        </a>
+        <a class="viz-card" href="modules.html#etfs">
+          <img src="data-science-stuff/figures/coverage_histogram.png" alt="Coverage histogram">
+          <span>Coverage</span>
+        </a>
+      </div>
       <div class="hero-actions">
         <a href="#stocks" class="cta">Start Learning <span>→</span></a>
         <a href="pages/simulation.html" class="cta cta-secondary">Open Simulator</a>
@@ -544,9 +566,10 @@
               <button class="timeline-event-btn" data-event="3">2020 COVID Crash</button>
               <button class="timeline-event-btn" data-event="4">2022 Rate Hike Selloff</button>
             </div>
-            <div class="expert-chart" id="nasdaq-timeline"><div class="chart-loading">Loading NASDAQ history...</div></div>
-            <div class="timeline-info" id="timeline-info"></div>
-            <script>document.addEventListener("DOMContentLoaded", () => { if (document.body.classList.contains("expert")) setTimeout(loadNasdaqTimeline, 600); document.addEventListener("sw-mode-change", (e) => { if (e.detail.expert) setTimeout(loadNasdaqTimeline, 400); }); });</script>
+            <div class="timeline-events-description">
+              <h3>1987 Black Monday</h3>
+              <p>Small descritpion of the event and its consequence</p>
+            </div>
           </div>
 
           <div class="card reveal">
