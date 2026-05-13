@@ -10,23 +10,42 @@
   const saved = localStorage.getItem(pageKey);
   if (saved === "expert") document.body.classList.add("expert");
 
-  // Set initial label text
+  // Up to date the label of the toggle
   const toggle = document.getElementById("expert-toggle");
+  // check if toggle exists
   if (toggle) {
     const label = toggle.querySelector(".expert-toggle-label");
     if (label) label.textContent = saved === "expert" ? "Advanced" : "Beginner";
   }
 
   document.addEventListener("click", (e) => {
-    const btn = e.target.closest("#expert-toggle");
+    const btn = e.target.closest(".expert-toggle-label");
     if (!btn) return;
-    document.body.classList.toggle("expert");
-    const isExpert = document.body.classList.contains("expert");
-    localStorage.setItem(pageKey, isExpert ? "expert" : "beginner");
-    btn.querySelector(".expert-toggle-label").textContent = isExpert ? "Advanced" : "Beginner";
-    document.dispatchEvent(new CustomEvent("sw-mode-change", { detail: { expert: isExpert } }));
-    updateNavLabels(isExpert);
-    if (isExpert) initExpertCharts();
+    // Apple-style cross-fade between modes. We tag <body> with a class that
+    // fades out content, swap the mode class on the next frame, then untag so
+    // it fades back in. Total ~360ms — matches the .sw-mode-fade CSS rule.
+    const FADE_OUT = 180;
+    document.body.classList.add("sw-mode-fade");
+    setTimeout(() => {
+      try {
+        document.body.classList.toggle("expert");
+        const isExpert = document.body.classList.contains("expert");
+        localStorage.setItem(pageKey, isExpert ? "expert" : "beginner");
+        // btn IS the .expert-toggle-label span (matched via closest), so set
+        // its textContent directly. The original code chained .querySelector
+        // here which silently returned null and threw.
+        btn.textContent = isExpert ? "Advanced" : "Beginner";
+        document.dispatchEvent(new CustomEvent("sw-mode-change", { detail: { expert: isExpert } }));
+        updateNavLabels(isExpert);
+        if (isExpert) initExpertCharts();
+      } finally {
+        // Always clear the fade class — otherwise an error would leave the
+        // page invisible.
+        // eslint-disable-next-line no-unused-expressions
+        document.body.offsetHeight; // force reflow before fading in
+        document.body.classList.remove("sw-mode-fade");
+      }
+    }, FADE_OUT);
   });
 
   // Update nav labels on load
@@ -102,6 +121,60 @@ function getGreenColor() {
 }
 function getRedColor() {
   return getComputedStyle(document.documentElement).getPropertyValue("--red").trim();
+}
+
+/* ── Apple-style smooth chart updates ──
+   Use Plotly.react() instead of Plotly.newPlot() so Plotly diffs the existing
+   chart and animates between states. The transition block uses an easing that
+   matches Apple's "ease-out-expo" feel — slow start tapering off softly. */
+const APPLE_EASE = "cubic-in-out"; // closest Plotly built-in to cubic-bezier(.22,1,.36,1)
+const APPLE_DUR = 650;             // matches the website hero animations
+
+function smoothPlot(container, traces, layout, config) {
+  if (!container) return;
+  // Inject a transition block so trace updates (ticker change, indicator toggle,
+  // period switch) morph instead of flash.
+  const animatedLayout = Object.assign({}, layout, {
+    transition: { duration: APPLE_DUR, easing: APPLE_EASE, ordering: "traces first" },
+  });
+  // First render: newPlot. Subsequent: react (diff-based, smooth).
+  if (container._fullLayout) {
+    Plotly.react(container, traces, animatedLayout, config);
+  } else {
+    Plotly.newPlot(container, traces, animatedLayout, config);
+  }
+}
+
+/* ── Smooth lerped scroll value ──
+   `lerpedScroll(target, key)` returns a value that eases toward `target` on
+   every animation frame instead of jumping. Each key gets its own state. */
+const _lerpState = new Map();
+function startLerpLoop() {
+  if (startLerpLoop._running) return;
+  startLerpLoop._running = true;
+  const tick = () => {
+    let active = false;
+    _lerpState.forEach((s) => {
+      const diff = s.target - s.current;
+      if (Math.abs(diff) > 0.0005) {
+        s.current += diff * 0.14; // smoothing factor (lower = smoother/slower)
+        active = true;
+      } else {
+        s.current = s.target;
+      }
+      if (s.onUpdate) s.onUpdate(s.current);
+    });
+    if (active) requestAnimationFrame(tick);
+    else startLerpLoop._running = false;
+  };
+  requestAnimationFrame(tick);
+}
+function lerpTo(key, target, onUpdate) {
+  let s = _lerpState.get(key);
+  if (!s) { s = { current: target, target, onUpdate }; _lerpState.set(key, s); }
+  s.target = target;
+  s.onUpdate = onUpdate;
+  startLerpLoop();
 }
 
 let expertInitialized = false;
@@ -231,16 +304,18 @@ async function loadTechnicalAnalysis() {
         line: { color: getRedColor(), width: 1.5, dash: "dash" },
       });
     });
-    container.innerHTML = "";
-    Plotly.newPlot(container, traces, plotlyLayout({
+    // smoothPlot keeps the existing chart and morphs it; clearing innerHTML
+    // would force a full re-render and kill the transition.
+    if (!container._fullLayout) container.innerHTML = "";
+    smoothPlot(container, traces, plotlyLayout({
       xaxis: { rangeslider: { visible: false } },
       yaxis: { title: "Price ($)" },
       shapes,
       height: 400,
     }), plotlyConfig());
   } else {
-    container.innerHTML = "";
-    Plotly.newPlot(container, traces, plotlyLayout({
+    if (!container._fullLayout) container.innerHTML = "";
+    smoothPlot(container, traces, plotlyLayout({
       xaxis: { rangeslider: { visible: false } },
       yaxis: { title: "Price ($)" },
       height: 400,
@@ -250,8 +325,8 @@ async function loadTechnicalAnalysis() {
   // RSI chart
   if (rsiContainer) {
     const rsi = StockData.computeRSI(filtered, 14);
-    rsiContainer.innerHTML = "";
-    Plotly.newPlot(rsiContainer, [{
+    if (!rsiContainer._fullLayout) rsiContainer.innerHTML = "";
+    smoothPlot(rsiContainer, [{
       x: dates, y: rsi, type: "scatter", mode: "lines",
       name: "RSI (14)", line: { color: getAccentColor(), width: 1.5 },
     }], plotlyLayout({
@@ -281,22 +356,24 @@ document.addEventListener("DOMContentLoaded", () => {
   const chart = document.getElementById("ta-chart");
   if (anatomy && chart) {
     const clamp01 = (v) => Math.max(0, Math.min(1, v));
-    const updateFuse = () => {
+    // Apple-style ease curve applied to the raw scroll progress. Without this,
+    // the candle scaling/sliding feels linear (= mechanical). With it the
+    // motion accelerates softly then settles.
+    const easeOutExpo = (t) => (t === 1 ? 1 : 1 - Math.pow(2, -10 * t));
+    const computeTarget = () => {
       const rect = chart.getBoundingClientRect();
       const viewH = window.innerHeight || 720;
-      // Fuse begins when the chart top is ~75% down the viewport and
-      // completes by the time it reaches ~25% down.
       const start = viewH * 0.75;
       const end   = viewH * 0.25;
-      const progress = clamp01((start - rect.top) / (start - end));
-      anatomy.style.setProperty("--fuse", progress.toFixed(3));
+      return clamp01((start - rect.top) / (start - end));
     };
-    let ticking = false;
-    window.addEventListener("scroll", () => {
-      if (ticking) return;
-      ticking = true;
-      requestAnimationFrame(() => { updateFuse(); ticking = false; });
-    }, { passive: true });
+    const applyFuse = (v) => {
+      // Apply easing once at write-time. The lerp loop already smooths jumps;
+      // the easing shapes the final curve.
+      anatomy.style.setProperty("--fuse", easeOutExpo(v).toFixed(4));
+    };
+    const updateFuse = () => lerpTo("candle-fuse", computeTarget(), applyFuse);
+    window.addEventListener("scroll", updateFuse, { passive: true });
     window.addEventListener("resize", updateFuse);
     document.addEventListener("sw-mode-change", updateFuse);
     updateFuse();
@@ -355,19 +432,44 @@ async function loadDiversificationChart() {
   }), plotlyConfig());
 }
 
+/* ── Hierarchical clustering for the correlation heatmap ──
+   Groups highly-correlated tickers together so the matrix reveals visible
+   "blocks" of similar names along the diagonal instead of showing them in
+   the order they were checked. Uses average-linkage agglomerative
+   clustering on distance = 1 − corr. Returns the reordered indices. */
+function hierarchicalOrder(corr) {
+  const n = corr.length;
+  if (n <= 2) return corr.map((_, i) => i);
+  const dist = corr.map(row => row.map(v => 1 - v));
+  const clusters = Array.from({ length: n }, (_, i) => [i]);
+  const clusterDist = (a, b) => {
+    let sum = 0;
+    for (const i of a) for (const j of b) sum += dist[i][j];
+    return sum / (a.length * b.length);
+  };
+  while (clusters.length > 1) {
+    let bestI = 0, bestJ = 1, bestD = Infinity;
+    for (let i = 0; i < clusters.length; i++) {
+      for (let j = i + 1; j < clusters.length; j++) {
+        const d = clusterDist(clusters[i], clusters[j]);
+        if (d < bestD) { bestD = d; bestI = i; bestJ = j; }
+      }
+    }
+    const merged = clusters[bestI].concat(clusters[bestJ]);
+    clusters.splice(bestJ, 1);
+    clusters.splice(bestI, 1);
+    clusters.push(merged);
+  }
+  return clusters[0];
+}
+
 async function loadCorrelationHeatmap() {
   const container = document.getElementById("corr-heatmap");
   if (!container) return;
   container.innerHTML = '<div class="chart-loading">Loading correlation data...</div>';
 
   const checkboxes = document.querySelectorAll(".corr-ticker:checked");
-  const selectedTickers = Array.from(checkboxes).map(cb => cb.value);
-  // Pin TSLA to the right edge of the heatmap when it's part of the selection.
-  const tslaIdx = selectedTickers.indexOf("TSLA");
-  if (tslaIdx !== -1) {
-    selectedTickers.splice(tslaIdx, 1);
-    selectedTickers.push("TSLA");
-  }
+  let selectedTickers = Array.from(checkboxes).map(cb => cb.value);
   if (selectedTickers.length < 2) {
     container.innerHTML = '<div class="chart-loading">Select at least 2 tickers</div>';
     return;
@@ -392,25 +494,76 @@ async function loadCorrelationHeatmap() {
   const minLen = Math.min(...returnSets.map(r => r.length));
   const aligned = returnSets.map(r => r.slice(r.length - minLen));
 
-  const matrix = StockData.computeCorrelationMatrix(aligned);
+  let matrix = StockData.computeCorrelationMatrix(aligned);
+
+  // ── Reorder rows & columns so correlated stocks form visible blocks ──
+  const order = hierarchicalOrder(matrix);
+  selectedTickers = order.map(i => selectedTickers[i]);
+  matrix = order.map(i => order.map(j => matrix[i][j]));
+
+  // ── Build per-cell annotations with adaptive text color ──
+  // Plotly's texttemplate uses one font for all cells, which leaves mid-value
+  // cells (light bg) with white text that disappears. Annotations let us pick
+  // a contrast color per cell based on |corr|. Diagonal cells get a dash —
+  // they're always 1.00 so the number adds no information.
+  const annotations = [];
+  for (let i = 0; i < matrix.length; i++) {
+    for (let j = 0; j < matrix[i].length; j++) {
+      const v = matrix[i][j];
+      const isDiag = i === j;
+      annotations.push({
+        x: selectedTickers[j],
+        y: selectedTickers[i],
+        text: isDiag ? "—" : (v >= 0 ? v.toFixed(2) : "−" + Math.abs(v).toFixed(2)),
+        showarrow: false,
+        font: {
+          family: "JetBrains Mono, monospace",
+          size: isDiag ? 14 : 13,
+          // Light cells (mid corr) → dark text; dark cells → white text
+          color: Math.abs(v) > 0.55 ? "#ffffff" : "#1e222d",
+        },
+      });
+    }
+  }
 
   container.innerHTML = "";
-  Plotly.newPlot(container, [{
+  smoothPlot(container, [{
     z: matrix,
     x: selectedTickers,
     y: selectedTickers,
     type: "heatmap",
-    colorscale: [[0, "#2962ff"], [0.5, "#1e222d"], [1, "#ef5350"]],
+    // Perceptually-balanced diverging palette: deep cobalt (−1) → cream (0)
+    // → deep red (+1). The cream band keeps mid-correlation cells legible
+    // against the dark page bg, where the old "blue → gray → red" scale
+    // had values around 0 disappearing into the background.
+    colorscale: [
+      [0.00, "#1565c0"],   // strong negative
+      [0.25, "#5b8def"],   // mild negative
+      [0.45, "#eef0f4"],   // neutral band start
+      [0.55, "#eef0f4"],   // neutral band end
+      [0.75, "#ff8a65"],   // mild positive
+      [1.00, "#c62828"],   // strong positive
+    ],
     zmin: -1, zmax: 1,
-    text: matrix.map(row => row.map(v => v.toFixed(2))),
-    texttemplate: "%{text}",
-    textfont: { size: 12, color: "#d1d4dc" },
-    hovertemplate: "%{x} vs %{y}: %{z:.2f}<extra></extra>",
+    xgap: 3, ygap: 3,          // thin gaps → modern "grid" look
+    hovertemplate: "<b>%{x}</b> ↔ <b>%{y}</b><br>ρ = %{z:.3f}<extra></extra>",
+    colorbar: {
+      title: { text: "ρ", side: "right", font: { size: 13, color: "#d1d4dc" } },
+      tickvals: [-1, -0.5, 0, 0.5, 1],
+      ticktext: ["−1.0", "−0.5", "0", "+0.5", "+1.0"],
+      tickfont: { size: 10, color: "#787b86" },
+      thickness: 12,
+      len: 0.85,
+      outlinewidth: 0,
+    },
   }], plotlyLayout({
-    height: 350,
-    margin: { l: 60, r: 20, t: 10, b: 60 },
-    xaxis: { tickangle: -45 },
+    height: 420,
+    margin: { l: 70, r: 70, t: 30, b: 70 },
+    xaxis: { tickangle: -45, side: "bottom", showgrid: false, zeroline: false, ticks: "" },
+    yaxis: { autorange: "reversed", showgrid: false, zeroline: false, ticks: "" },
+    annotations,
   }), plotlyConfig());
+
 }
 
 function loadSectorAllocation() {
@@ -707,90 +860,47 @@ async function loadStrategiesComparison() {
    MODULE 04 - Market History & Psychology
    ══════════════════════════════════════════════ */
 
-const MARKET_EVENTS = [
-  { date: "1987-10-19", label: "Black Monday", period: ["1987-08-01", "1988-03-01"], desc: "On October 19, 1987, the NASDAQ fell over 11% in a single day. Program trading and panic selling cascaded across global markets. The crash was triggered by rising interest rates and overvaluation concerns." },
-  { date: "2000-03-10", label: "Dot-com Peak", period: ["1999-06-01", "2002-12-01"], desc: "The NASDAQ peaked at 5,048 on March 10, 2000. Over the next 2.5 years, it lost 78% of its value as hundreds of internet companies with no profits went bankrupt." },
-  { date: "2008-09-15", label: "Financial Crisis", period: ["2007-10-01", "2009-06-01"], desc: "Lehman Brothers collapsed, triggering a global financial meltdown. The NASDAQ fell over 55% from its 2007 peak. Banks froze lending, and the housing market collapsed." },
-  { date: "2020-03-16", label: "COVID Crash", period: ["2020-02-01", "2020-06-01"], desc: "COVID-19 pandemic triggered the fastest bear market in history. The NASDAQ dropped 30% in three weeks. Unprecedented fiscal stimulus led to a V-shaped recovery." },
-  { date: "2022-01-03", label: "Rate Hike Selloff", period: ["2022-01-01", "2023-01-01"], desc: "The Federal Reserve began aggressively raising interest rates to fight inflation. Growth stocks were hit hardest as future earnings became less valuable. NASDAQ fell 33%." },
+  const eventsData = [
+  {
+    title: "1987 Black Monday",
+    description: "A sudden global stock market crash where the Dow Jones fell over 22% in a single day. It exposed weaknesses in market structure and led to the introduction of circuit breakers."
+  },
+  {
+    title: "2000 Dot-com Bubble",
+    description: "Tech stocks reached extreme valuations before collapsing. Many internet companies failed, and the NASDAQ lost nearly 80% of its value over the following years."
+  },
+  {
+    title: "2008 Financial Crisis",
+    description: "Triggered by the collapse of the housing market and financial institutions. Massive sell-offs occurred, leading to a global recession and major regulatory reforms."
+  },
+  {
+    title: "2020 COVID Crash",
+    description: "Markets dropped sharply due to global lockdowns and uncertainty. Rapid intervention by central banks led to one of the fastest recoveries in history."
+  },
+  {
+    title: "2022 Rate Hike Selloff",
+    description: "Rising inflation forced central banks to increase interest rates. Growth stocks, especially tech, declined significantly due to higher discount rates."
+  }
 ];
 
-async function loadNasdaqTimeline() {
-  const container = document.getElementById("nasdaq-timeline");
-  const infoCard = document.getElementById("timeline-info");
-  if (!container) return;
-  container.innerHTML = '<div class="chart-loading">Loading NASDAQ history...</div>';
+const buttons = document.querySelectorAll(".timeline-event-btn");
+const titleEl = document.querySelector(".timeline-events-description h3");
+const descEl = document.querySelector(".timeline-events-description p");
 
-  const data = await StockData.loadTicker("QQQ");
-  if (!data) {
-    // Fallback: try ^IXIC or show message
-    container.innerHTML = '<div class="chart-loading">Loading QQQ as NASDAQ proxy...</div>';
-    return;
-  }
+buttons.forEach(btn => {
+  btn.addEventListener("click", () => {
+    const index = btn.dataset.event;
+    const event = eventsData[index];
 
-  const dates = data.map(d => d.date);
-  const prices = data.map(d => d.close);
+    // Update content
+    titleEl.textContent = event.title;
+    descEl.textContent = event.description;
 
-  const annotations = MARKET_EVENTS.filter(e => e.date >= data[0].date).map(event => ({
-    x: event.date, y: prices[dates.indexOf(event.date)] || prices[Math.max(0, dates.findIndex(d => d >= event.date))],
-    text: event.label, showarrow: true,
-    arrowhead: 2, arrowsize: 1, arrowwidth: 1.5,
-    arrowcolor: getRedColor(), ax: 0, ay: -40,
-    font: { size: 11, color: getAccentColor() },
-    bgcolor: "rgba(30,34,45,0.9)", borderpad: 4,
-    bordercolor: getAccentColor(), borderwidth: 1,
-  }));
-
-  container.innerHTML = "";
-  Plotly.newPlot(container, [{
-    x: dates, y: prices, type: "scatter", mode: "lines",
-    name: "QQQ (NASDAQ-100)", line: { color: getAccentColor(), width: 1.5 },
-    fill: "tozeroy", fillcolor: "rgba(41,98,255,0.06)",
-  }], plotlyLayout({
-    height: 400,
-    yaxis: { title: "Price ($)", type: "log" },
-    annotations,
-  }), plotlyConfig());
-
-  // Click handler for annotations
-  container.on("plotly_click", (eventData) => {
-    if (!infoCard) return;
-    const clickDate = eventData.points[0].x;
-    const event = MARKET_EVENTS.find(e => {
-      const d = new Date(clickDate);
-      const s = new Date(e.period[0]);
-      const en = new Date(e.period[1]);
-      return d >= s && d <= en;
-    });
-    if (event) {
-      infoCard.innerHTML = `<h4>${event.label}</h4><p>${event.desc}</p>`;
-      infoCard.style.display = "block";
-      // Zoom to period
-      Plotly.relayout(container, {
-        "xaxis.range": event.period,
-      });
-    }
+    // Optional: active state
+    buttons.forEach(b => b.classList.remove("active"));
+    btn.classList.add("active");
   });
-}
-
-function setupTimelineButtons() {
-  document.querySelectorAll(".timeline-event-btn").forEach(btn => {
-    btn.addEventListener("click", () => {
-      const idx = parseInt(btn.dataset.event);
-      const event = MARKET_EVENTS[idx];
-      if (!event) return;
-      const container = document.getElementById("nasdaq-timeline");
-      const infoCard = document.getElementById("timeline-info");
-      if (container) {
-        Plotly.relayout(container, { "xaxis.range": event.period });
-      }
-      if (infoCard) {
-        infoCard.innerHTML = `<h4>${event.label}</h4><p>${event.desc}</p>`;
-        infoCard.style.display = "block";
-      }
-    });
-  });
-}
+});
 
 async function loadVolatilityClustering() {
   const container = document.getElementById("vol-clustering-chart");
