@@ -4,6 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>StocksWise - Simulator</title>
+  <link rel="icon" href="data:,">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
@@ -233,6 +234,13 @@
       justify-content: center;
       position: relative;
     }
+    /* When Plotly mounts inside a .chart-area, drop the flex centering so the
+       SVG fills the box. Plotly sizes its own SVG via clientWidth/Height -
+       don't override .main-svg dimensions, that breaks Plotly's layout math. */
+    .chart-area:has(.js-plotly-plot) {
+      display: block;
+      padding: 0;
+    }
 
     .chart-placeholder {
       color: var(--text-muted);
@@ -370,6 +378,180 @@
       height: auto;
       min-height: 200px;
     }
+
+    /* Strategy + crisis bar above the main chart (advanced sim) */
+    .adv-strategy-bar {
+      display: grid;
+      grid-template-columns: 1.6fr 1fr 1fr 1.4fr;
+      gap: 1.25rem;
+      align-items: end;
+      padding: 1rem 1.25rem;
+      margin: 1rem 0;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+    }
+    .adv-strategy-bar .adv-field { margin: 0; }
+    .adv-strategy-bar .adv-field label {
+      display: flex;
+      justify-content: space-between;
+      align-items: baseline;
+      font-size: 0.72rem;
+      font-weight: 700;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      margin-bottom: 0.4rem;
+    }
+    .adv-strategy-bar .adv-field input[type="date"],
+    .adv-strategy-bar .adv-field input[type="number"],
+    .adv-strategy-bar .adv-field select {
+      width: 100%;
+      box-sizing: border-box;
+    }
+    .adv-strategy-bar .adv-field-term input[type="range"] { width: 100%; }
+    .adv-strategy-bar .adv-range-ticks {
+      display: flex;
+      justify-content: space-between;
+      font-family: var(--font-mono);
+      font-size: 0.7rem;
+      color: var(--text-muted);
+      margin-top: 0.2rem;
+    }
+    @media (max-width: 880px) {
+      .adv-strategy-bar { grid-template-columns: 1fr 1fr; }
+    }
+    @media (max-width: 520px) {
+      .adv-strategy-bar { grid-template-columns: 1fr; }
+    }
+
+    /* Helper text under each research tool that now feeds the main chart */
+    .adv-tool-note {
+      margin: 0.6rem 0 0;
+      font-size: 0.78rem;
+      color: var(--text-muted);
+      font-style: italic;
+    }
+
+    /* Manual weight sliders below the main chart */
+    .adv-weights {
+      margin-top: 1rem;
+      padding: 0.85rem 1.1rem;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
+    }
+    .adv-weights-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: baseline;
+      margin-bottom: 0.5rem;
+    }
+    .adv-weights-title {
+      font-size: 0.72rem;
+      font-weight: 700;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+    }
+    .adv-weights-total {
+      font-family: var(--font-mono);
+      font-size: 0.78rem;
+      color: var(--text-strong);
+    }
+    .adv-weights-list {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+      gap: 0.5rem 1rem;
+    }
+    .adv-weight-row {
+      display: grid;
+      grid-template-columns: 60px 1fr 48px;
+      align-items: center;
+      gap: 0.6rem;
+    }
+    .adv-weight-row .adv-weight-ticker {
+      font-family: var(--font-mono);
+      font-size: 0.85rem;
+      color: var(--text-strong);
+      font-weight: 600;
+    }
+    .adv-weight-row input[type="range"] {
+      width: 100%;
+      accent-color: var(--accent);
+    }
+    .adv-weight-row .adv-weight-pct {
+      font-family: var(--font-mono);
+      font-size: 0.78rem;
+      color: var(--text-muted);
+      text-align: right;
+    }
+    .adv-weights:empty,
+    .adv-weights[hidden] { display: none; }
+
+    /* Crisis-specific stats row (shown when crisis dropdown is set) */
+    .adv-crisis-stats {
+      margin-top: 1rem;
+      padding: 0.9rem 1.1rem;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-left: 3px solid var(--red);
+      border-radius: var(--radius-lg);
+    }
+    .adv-crisis-stats-title {
+      font-size: 0.72rem;
+      font-weight: 700;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      margin-bottom: 0.6rem;
+    }
+    .adv-crisis-stats-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 0.6rem;
+    }
+    @media (max-width: 720px) {
+      .adv-crisis-stats-grid { grid-template-columns: repeat(2, 1fr); }
+    }
+
+    /* Aux analyses (correlation + efficient frontier) at the bottom */
+    .adv-aux {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 1rem;
+      margin-top: 1rem;
+    }
+    @media (max-width: 880px) {
+      .adv-aux { grid-template-columns: 1fr; }
+    }
+    .adv-aux-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
+      overflow: hidden;
+    }
+    .adv-aux-title {
+      padding: 0.6rem 1rem;
+      font-size: 0.78rem;
+      font-weight: 600;
+      color: var(--text-strong);
+      border-bottom: 1px solid var(--border);
+    }
+    .adv-aux-chart {
+      height: 280px;
+      min-height: 280px;
+    }
+    .adv-aux-optimal {
+      margin-top: 0.75rem;
+      padding: 0.75rem 1rem;
+      background: var(--green-bg, rgba(38, 166, 154, 0.1));
+      border: 1px solid var(--green, #26a69a);
+      border-radius: var(--radius);
+      color: var(--green, #26a69a);
+      font-size: 0.82rem;
+      font-weight: 600;
+    }
   </style>
 </head>
 <body>
@@ -408,18 +590,14 @@
       <p class="expert-content">Backtest strategies, build portfolios, and stress-test them against historical crises.</p>
     </div>
 
+    <div class="adv-portfolio-types beginner-content" role="tablist" aria-label="Portfolio type" style="margin-bottom:0.9rem;">
+      <button class="adv-portfolio-pill active" data-bsim-type="premade">Pre-made</button>
+      <button class="adv-portfolio-pill" data-bsim-type="custom">Custom</button>
+      <button class="adv-portfolio-pill" data-bsim-type="random">Random</button>
+      <span class="adv-portfolio-current" id="bsim-portfolio-current"></span>
+    </div>
+
     <div class="sim-controls beginner-content">
-      <div class="sim-field">
-        <label>Ticker</label>
-        <select id="sim-ticker" class="ticker-select">
-          <option value="AAPL">AAPL - Apple</option>
-          <option value="MSFT">MSFT - Microsoft</option>
-          <option value="NVDA">NVDA - NVIDIA</option>
-          <option value="AMZN">AMZN - Amazon</option>
-          <option value="TSLA">TSLA - Tesla</option>
-          <option value="QQQ">QQQ - NASDAQ-100 ETF</option>
-        </select>
-      </div>
       <div class="sim-field">
         <label>Start Date</label>
         <input type="date" id="sim-date" value="2015-01-02">
@@ -434,7 +612,7 @@
     <div class="chart-container beginner-content">
       <div class="chart-toolbar">
         <div class="chart-toolbar-left">
-          <span class="chart-ticker-name" id="chart-ticker-name">-</span>
+          <span class="chart-ticker-name" id="chart-ticker-name">Portfolio</span>
         </div>
         <div class="chart-timeframe">
           <button class="active">ALL</button>
@@ -464,77 +642,71 @@
       <!-- Portfolio type pills - each opens its modal -->
       <div class="adv-portfolio-types" role="tablist" aria-label="Portfolio type">
         <button class="adv-portfolio-pill active" data-type="premade">
-          <span class="adv-pill-icon">📦</span> Pre-made
+          Pre-made
         </button>
         <button class="adv-portfolio-pill" data-type="custom">
-          <span class="adv-pill-icon">🎯</span> Custom
+          Custom
         </button>
         <button class="adv-portfolio-pill" data-type="random">
-          <span class="adv-pill-icon">🎲</span> Random
+          Random
         </button>
         <span class="adv-portfolio-current" id="adv-portfolio-current"></span>
       </div>
 
-      <!-- Two-column: sidebar + chart -->
-      <div class="adv-grid">
-        <aside class="adv-sidebar">
-          <div class="adv-card">
-            <h4 class="adv-card-title">Strategy</h4>
-            <div class="adv-field">
-              <label>Intensity</label>
-              <div class="adv-radios">
-                <label><input type="radio" name="adv-strategy" value="soft"><span>Soft</span></label>
-                <label><input type="radio" name="adv-strategy" value="medium" checked><span>Medium</span></label>
-                <label><input type="radio" name="adv-strategy" value="high"><span>High</span></label>
-              </div>
-            </div>
-            <div class="adv-field">
-              <label>Long term <output id="adv-term-out">5Y</output></label>
-              <input type="range" id="adv-term" min="6" max="120" value="60" step="6">
-              <div class="adv-range-ticks"><span>6M</span><span>10Y</span></div>
-            </div>
-            <div class="adv-field">
-              <label>Start date</label>
-              <input type="date" id="adv-start" value="2015-04-01" max="2020-03-31">
-            </div>
-            <div class="adv-field">
-              <label>Amount (€)</label>
-              <input type="number" id="adv-amount" value="1000" min="1">
-            </div>
-          </div>
-
-          <div class="adv-card">
-            <h4 class="adv-card-title">Test through crisis</h4>
-            <select id="adv-crisis" class="adv-select">
-              <option value="">No crisis overlay</option>
-              <option value="dotcom">Dot-com Bubble (2000)</option>
-              <option value="2008">2008 Financial Crisis</option>
-              <option value="covid">COVID Crash (2020)</option>
-              <option value="rate">2022 Rate Hike</option>
-            </select>
-            <p class="adv-hint">Replaces the date range with the crisis window so you can see how your portfolio fared.</p>
-          </div>
-        </aside>
-
-        <div class="adv-chart-wrap">
-          <div class="chart-toolbar">
-            <div class="chart-toolbar-left">
-              <span class="chart-ticker-name" id="adv-chart-name">Portfolio</span>
-            </div>
-            <div class="chart-timeframe" id="adv-timeframe">
-              <button class="active" data-tf="all">ALL</button>
-              <button data-tf="5y">5Y</button>
-              <button data-tf="1y">1Y</button>
-              <button data-tf="6m">6M</button>
-            </div>
-          </div>
-          <div class="chart-area" id="adv-chart-area">
-            <div class="chart-placeholder">Loading…</div>
-          </div>
+      <!-- Strategy + crisis bar above the chart -->
+      <div class="adv-strategy-bar">
+        <div class="adv-field adv-field-term">
+          <label>Long term <output id="adv-term-out">5Y</output></label>
+          <input type="range" id="adv-term" min="6" max="120" value="60" step="6">
+          <div class="adv-range-ticks"><span>6M</span><span>10Y</span></div>
+        </div>
+        <div class="adv-field">
+          <label>Start date</label>
+          <input type="date" id="adv-start" value="2015-04-01" max="2020-03-31">
+        </div>
+        <div class="adv-field">
+          <label>Amount (€)</label>
+          <input type="number" id="adv-amount" value="1000" min="1">
+        </div>
+        <div class="adv-field adv-field-crisis">
+          <label>Test through crisis</label>
+          <select id="adv-crisis" class="adv-select">
+            <option value="">No crisis overlay</option>
+            <option value="dotcom">Dot-com Bubble (2000)</option>
+            <option value="2008">2008 Financial Crisis</option>
+            <option value="covid">COVID Crash (2020)</option>
+          </select>
         </div>
       </div>
 
-      <!-- Stats row - clickable for definitions -->
+      <div class="adv-chart-wrap">
+        <div class="chart-toolbar">
+          <div class="chart-toolbar-left">
+            <span class="chart-ticker-name" id="adv-chart-name">Portfolio</span>
+          </div>
+          <div class="chart-timeframe" id="adv-timeframe">
+            <button class="active" data-tf="all">ALL</button>
+            <button data-tf="5y">5Y</button>
+            <button data-tf="1y">1Y</button>
+            <button data-tf="6m">6M</button>
+          </div>
+        </div>
+        <div class="chart-area" id="adv-chart-area">
+          <div class="chart-placeholder">Loading…</div>
+        </div>
+      </div>
+
+      <!-- Manual weight sliders (auto-normalized to 100%) -->
+      <div class="adv-weights" id="adv-weights">
+        <div class="adv-weights-header">
+          <span class="adv-weights-title">Weights</span>
+          <span class="adv-weights-total" id="adv-weights-total">Total: 100%</span>
+        </div>
+        <div class="adv-weights-list" id="adv-weights-list"></div>
+      </div>
+
+      <!-- Stats row - clickable for definitions. Sharpe / MaxDD / Vol live in
+           the same row now (was previously locked behind a Pro upsell). -->
       <div class="adv-stats">
         <button class="adv-stat-card" data-info="stocks">
           <div class="adv-stat-label">Stocks selected</div>
@@ -552,14 +724,55 @@
           <div class="adv-stat-label">CAGR</div>
           <div class="adv-stat-value" id="stat-cagr">-</div>
         </button>
+        <button class="adv-stat-card" data-info="sharpe">
+          <div class="adv-stat-label">Sharpe Ratio</div>
+          <div class="adv-stat-value" id="stat-sharpe">-</div>
+        </button>
+        <button class="adv-stat-card" data-info="drawdown">
+          <div class="adv-stat-label">Max Drawdown</div>
+          <div class="adv-stat-value" id="stat-drawdown">-</div>
+        </button>
+        <button class="adv-stat-card" data-info="vol">
+          <div class="adv-stat-label">Volatility</div>
+          <div class="adv-stat-value" id="stat-vol">-</div>
+        </button>
       </div>
 
-      <!-- Locked "Pro" tiles -->
-      <div class="adv-locked-row">
-        <div class="adv-locked-tile"><span class="adv-lock">🔒</span><span class="adv-locked-name">Sharpe Ratio</span><span class="adv-pro">Pro</span></div>
-        <div class="adv-locked-tile"><span class="adv-lock">🔒</span><span class="adv-locked-name">Max Drawdown</span><span class="adv-pro">Pro</span></div>
-        <div class="adv-locked-tile"><span class="adv-lock">🔒</span><span class="adv-locked-name">Volatility</span><span class="adv-pro">Pro</span></div>
+      <!-- Crisis-specific stats - shown only when a crisis overlay is active -->
+      <div class="adv-crisis-stats" id="adv-crisis-stats" hidden>
+        <div class="adv-crisis-stats-title" id="adv-crisis-stats-title">Crisis stats</div>
+        <div class="adv-crisis-stats-grid">
+          <button class="adv-stat-card" data-info="cdrawdown">
+            <div class="adv-stat-label">Drawdown in crisis</div>
+            <div class="adv-stat-value" id="stat-cdd">-</div>
+          </button>
+          <button class="adv-stat-card" data-info="cbench">
+            <div class="adv-stat-label">QQQ in crisis</div>
+            <div class="adv-stat-value" id="stat-cbench">-</div>
+          </button>
+          <button class="adv-stat-card" data-info="crecover">
+            <div class="adv-stat-label">Days to recover</div>
+            <div class="adv-stat-value" id="stat-crec">-</div>
+          </button>
+          <button class="adv-stat-card" data-info="cworst">
+            <div class="adv-stat-label">Worst single day</div>
+            <div class="adv-stat-value" id="stat-cworst">-</div>
+          </button>
+        </div>
       </div>
+
+      <!-- Auxiliary analyses - rendered when 2+ tickers selected -->
+      <div class="adv-aux" id="adv-aux">
+        <div class="adv-aux-card">
+          <div class="adv-aux-title">Correlation Heatmap</div>
+          <div class="chart-area adv-aux-chart" id="adv-corr"></div>
+        </div>
+        <div class="adv-aux-card">
+          <div class="adv-aux-title">Efficient Frontier</div>
+          <div class="chart-area adv-aux-chart" id="adv-frontier"></div>
+        </div>
+      </div>
+      <div class="adv-aux-optimal" id="adv-aux-optimal" hidden></div>
 
       <!-- Existing research tools, kept as collapsible cards below -->
       <div class="adv-research">
@@ -567,7 +780,7 @@
 
       <!-- TOOL 1: Strategy Backtester -->
       <details class="adv-tool-card">
-        <summary class="adv-tool-summary"><span class="adv-tool-icon">🔬</span> Strategy Backtester <span class="adv-tool-hint">test entry/exit rules on a single asset</span></summary>
+        <summary class="adv-tool-summary">Strategy Backtester <span class="adv-tool-hint">test entry/exit rules on a single asset</span></summary>
       <div class="sim-tool-panel active" id="panel-backtest">
         <div class="sim-controls">
           <div class="sim-field">
@@ -623,168 +836,59 @@
               </div>
             </div>
           </div>
-          <button class="sim-run" id="bt-run" style="align-self:flex-start;margin-top:0.75rem;">Run Backtest</button>
-        </div>
-        <div class="chart-container">
-          <div class="chart-area" id="bt-chart" style="height:380px;">
-            <div class="chart-placeholder">Configure your strategy above and press <strong>Run Backtest</strong>.</div>
-          </div>
+          <p class="adv-tool-note">Output replaces the main chart above. Changes auto-run.</p>
         </div>
         <div class="backtest-stats" id="bt-stats"></div>
       </div>
       </details>
 
-      <!-- TOOL 2: Portfolio Builder -->
-      <details class="adv-tool-card">
-        <summary class="adv-tool-summary"><span class="adv-tool-icon">🧪</span> Portfolio Builder <span class="adv-tool-hint">weight tickers, see correlation + efficient frontier</span></summary>
-      <div class="sim-tool-panel active" id="panel-portfolio">
-        <div class="sim-controls" style="flex-direction:column;align-items:stretch;">
-          <div style="display:flex;gap:0.75rem;align-items:flex-end;flex-wrap:wrap;">
-            <div class="sim-field">
-              <label>Step 1 - Add Tickers (3–6)</label>
-              <select id="pb-add-ticker" class="ticker-select">
-                <option value="AAPL">AAPL</option><option value="MSFT">MSFT</option><option value="NVDA">NVDA</option>
-                <option value="AMZN">AMZN</option><option value="TSLA">TSLA</option><option value="GOOG">GOOG</option>
-                <option value="META">META</option><option value="NFLX">NFLX</option><option value="AMD">AMD</option>
-                <option value="QQQ">QQQ</option>
-              </select>
-            </div>
-            <button class="expert-btn" id="pb-add-btn">+ Add</button>
-            <div class="sim-field">
-              <label>Start Date</label>
-              <input type="date" id="pb-start" value="2018-01-02">
-            </div>
-            <div class="sim-field">
-              <label>End Date</label>
-              <input type="date" id="pb-end" value="2024-12-31">
-            </div>
-            <div class="sim-field">
-              <label>Capital (€)</label>
-              <input type="number" id="pb-capital" value="10000" min="1">
-            </div>
-          </div>
-          <div style="margin-top:1rem;">
-            <label style="font-size:0.72rem;font-weight:700;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.06em;">Step 2 - Allocate Weights</label>
-            <div class="weight-sliders" id="pb-sliders"></div>
-            <div class="weight-total" id="pb-total">Total: 0%</div>
-          </div>
-          <button class="sim-run" id="pb-run" style="align-self:flex-start;">Build Portfolio</button>
-        </div>
-        <div class="chart-container">
-          <div class="chart-area" id="pb-chart" style="height:350px;">
-            <div class="chart-placeholder">Add tickers, set weights, and press <strong>Build Portfolio</strong>.</div>
-          </div>
-        </div>
-        <div class="backtest-stats" id="pb-stats"></div>
-        <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem;margin-top:1rem;">
-          <div class="chart-container">
-            <div class="chart-toolbar"><span class="chart-ticker-name">Correlation Heatmap</span></div>
-            <div class="chart-area" id="pb-corr" style="height:280px;"></div>
-          </div>
-          <div class="chart-container">
-            <div class="chart-toolbar"><span class="chart-ticker-name">Efficient Frontier</span></div>
-            <div class="chart-area" id="pb-frontier" style="height:320px;"></div>
-          </div>
-        </div>
-        <div id="pb-optimal" style="display:none;margin-top:0.75rem;padding:1rem;background:var(--green-bg);border:1px solid var(--green);border-radius:var(--radius);color:var(--green);font-size:0.85rem;font-weight:600;"></div>
-      </div>
-      </details>
-
-      <!-- TOOL 3: Crisis Stress Test -->
-      <details class="adv-tool-card">
-        <summary class="adv-tool-summary"><span class="adv-tool-icon">⚠️</span> Crisis Stress Test <span class="adv-tool-hint">overlay a portfolio against historical drawdowns</span></summary>
-      <div class="sim-tool-panel active" id="panel-stress">
-        <div class="sim-controls" style="flex-direction:column;align-items:stretch;">
-          <div style="display:flex;gap:0.75rem;align-items:flex-end;flex-wrap:wrap;">
-            <div class="sim-field">
-              <label>Step 1 - Build Your Portfolio</label>
-              <select id="st-add-ticker" class="ticker-select">
-                <option value="AAPL">AAPL</option><option value="MSFT">MSFT</option><option value="NVDA">NVDA</option>
-                <option value="AMZN">AMZN</option><option value="TSLA">TSLA</option><option value="GOOG">GOOG</option>
-                <option value="META">META</option><option value="QQQ">QQQ</option>
-              </select>
-            </div>
-            <button class="expert-btn" id="st-add-btn">+ Add</button>
-          </div>
-          <div class="weight-sliders" id="st-sliders" style="margin-top:0.75rem;"></div>
-          <div class="weight-total" id="st-total">Total: 0%</div>
-          <label style="font-size:0.72rem;font-weight:700;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.06em;margin-top:1rem;">Step 2 - Pick a Crisis</label>
-          <div class="crisis-options">
-            <div class="crisis-option" onclick="selectCrisis(0)">
-              <div class="crisis-name">Dot-com Bubble</div>
-              <div class="crisis-dates">Mar 2000 - Oct 2002</div>
-            </div>
-            <div class="crisis-option" onclick="selectCrisis(1)">
-              <div class="crisis-name">2008 Financial Crisis</div>
-              <div class="crisis-dates">Oct 2007 - Mar 2009</div>
-            </div>
-            <div class="crisis-option" onclick="selectCrisis(2)">
-              <div class="crisis-name">COVID Crash</div>
-              <div class="crisis-dates">Feb 2020 - Apr 2020</div>
-            </div>
-            <div class="crisis-option" onclick="selectCrisis(3)">
-              <div class="crisis-name">2022 Rate Hike Selloff</div>
-              <div class="crisis-dates">Jan 2022 - Dec 2022</div>
-            </div>
-          </div>
-          <button class="sim-run" id="st-run" style="align-self:flex-start;margin-top:0.75rem;">Run Stress Test</button>
-        </div>
-        <div class="chart-container">
-          <div class="chart-area" id="st-chart" style="height:380px;">
-            <div class="chart-placeholder">Build your portfolio, pick a crisis, and press <strong>Run Stress Test</strong>.</div>
-          </div>
-        </div>
-        <div class="backtest-stats" id="st-stats"></div>
-      </div>
-      </details>
-
       </div><!-- /.adv-research -->
-
-      <!-- ── Modals ── -->
-      <div class="adv-modal" id="modal-premade" role="dialog" aria-hidden="true">
-        <div class="adv-modal-content">
-          <button class="adv-modal-close" data-close aria-label="Close">×</button>
-          <h3>Pick a pre-made portfolio</h3>
-          <p class="adv-modal-sub">Curated baskets of NASDAQ tickers for common strategies.</p>
-          <div class="adv-premade-options" id="adv-premade-options"></div>
-        </div>
-      </div>
-
-      <div class="adv-modal" id="modal-custom" role="dialog" aria-hidden="true">
-        <div class="adv-modal-content">
-          <button class="adv-modal-close" data-close aria-label="Close">×</button>
-          <h3>Build a custom portfolio</h3>
-          <p class="adv-modal-sub">Search NASDAQ tickers and pick up to 8.</p>
-          <input type="text" id="adv-custom-search" class="adv-modal-input" placeholder="Search ticker (AAPL, GOOG…)">
-          <div class="adv-custom-results" id="adv-custom-results"></div>
-          <div class="adv-custom-selected-wrap">
-            <div class="adv-custom-selected-label">Selected (<span id="adv-custom-count">0</span>/8)</div>
-            <div class="adv-custom-selected" id="adv-custom-selected"></div>
-          </div>
-          <button class="adv-modal-apply" id="adv-custom-apply">Apply portfolio</button>
-        </div>
-      </div>
-
-      <div class="adv-modal" id="modal-random" role="dialog" aria-hidden="true">
-        <div class="adv-modal-content">
-          <button class="adv-modal-close" data-close aria-label="Close">×</button>
-          <h3>Random portfolio</h3>
-          <p class="adv-modal-sub">Five NASDAQ tickers picked at random. Reshuffle until you find one you like.</p>
-          <div class="adv-random-preview" id="adv-random-preview"></div>
-          <div class="adv-modal-actions">
-            <button class="adv-modal-shuffle" id="adv-random-shuffle">🎲 Shuffle</button>
-            <button class="adv-modal-apply" id="adv-random-apply">Apply portfolio</button>
-          </div>
-        </div>
-      </div>
-
-      <!-- Stat info popover -->
-      <div class="adv-stat-popover" id="adv-stat-popover" hidden>
-        <div class="adv-popover-title"></div>
-        <div class="adv-popover-desc"></div>
-      </div>
     </div>
 
+  </div>
+
+  <!-- ── Modals (kept outside .expert-content so the beginner sim can open them too) ── -->
+  <div class="adv-modal" id="modal-premade" role="dialog" aria-hidden="true">
+    <div class="adv-modal-content">
+      <button class="adv-modal-close" data-close aria-label="Close">×</button>
+      <h3>Pick a pre-made portfolio</h3>
+      <p class="adv-modal-sub">Curated baskets of NASDAQ tickers for common strategies.</p>
+      <div class="adv-premade-options" id="adv-premade-options"></div>
+    </div>
+  </div>
+
+  <div class="adv-modal" id="modal-custom" role="dialog" aria-hidden="true">
+    <div class="adv-modal-content">
+      <button class="adv-modal-close" data-close aria-label="Close">×</button>
+      <h3>Build a custom portfolio</h3>
+      <p class="adv-modal-sub">Search NASDAQ tickers and pick up to 8.</p>
+      <input type="text" id="adv-custom-search" class="adv-modal-input" placeholder="Search ticker (AAPL, GOOG…)">
+      <div class="adv-custom-results" id="adv-custom-results"></div>
+      <div class="adv-custom-selected-wrap">
+        <div class="adv-custom-selected-label">Selected (<span id="adv-custom-count">0</span>/8)</div>
+        <div class="adv-custom-selected" id="adv-custom-selected"></div>
+      </div>
+      <button class="adv-modal-apply" id="adv-custom-apply">Apply portfolio</button>
+    </div>
+  </div>
+
+  <div class="adv-modal" id="modal-random" role="dialog" aria-hidden="true">
+    <div class="adv-modal-content">
+      <button class="adv-modal-close" data-close aria-label="Close">×</button>
+      <h3>Random portfolio</h3>
+      <p class="adv-modal-sub">Five NASDAQ tickers picked at random. Reshuffle until you find one you like.</p>
+      <div class="adv-random-preview" id="adv-random-preview"></div>
+      <div class="adv-modal-actions">
+        <button class="adv-modal-shuffle" id="adv-random-shuffle">Shuffle</button>
+        <button class="adv-modal-apply" id="adv-random-apply">Apply portfolio</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Stat info popover (used by advanced stat cards) -->
+  <div class="adv-stat-popover" id="adv-stat-popover" hidden>
+    <div class="adv-popover-title"></div>
+    <div class="adv-popover-desc"></div>
   </div>
 
   <script src="https://cdn.plot.ly/plotly-2.27.0.min.js"></script>
@@ -837,18 +941,12 @@
       });
     }
 
-    /* ── Ticker name lookup for the chart toolbar ── */
-    const tickerNames = {
-      AAPL: "Apple Inc.",
-      MSFT: "Microsoft Corp.",
-      NVDA: "NVIDIA Corp.",
-      AMZN: "Amazon.com Inc.",
-      TSLA: "Tesla Inc.",
-      QQQ:  "Invesco QQQ Trust",
-    };
-
     /* ── SVG Chart ── */
     function drawChart(container, data, amount) {
+      // Research tools render Plotly into the same container; clean up so the
+      // next SVG render isn't sitting on top of Plotly's internal state.
+      if (window.Plotly) { try { Plotly.purge(container); } catch (_) {} }
+      container.style.display = "";
       container.innerHTML = "";
       const W = container.clientWidth;
       const H = container.clientHeight || 420;
@@ -1078,9 +1176,31 @@
       container.appendChild(svg);
     }
 
-    /* ── Run simulation against real historical data ── */
+    /* ── Beginner portfolio state (mirrors the advanced pill UI) ── */
+    const BSIM_PREMADE = (typeof ADV_PREMADE !== "undefined") ? ADV_PREMADE : [
+      { id: "tech", name: "Tech Giants", tickers: ["AAPL", "MSFT", "NVDA", "GOOG", "AMZN"] },
+    ];
+    const bsimState = {
+      type: "premade",
+      premadeId: "tech",
+      tickers: [...(BSIM_PREMADE.find(p => p.id === "tech")?.tickers || ["AAPL", "MSFT", "NVDA", "GOOG", "AMZN"])],
+    };
+
+    function bsimRenderCurrent() {
+      const el = document.getElementById("bsim-portfolio-current");
+      if (!el) return;
+      const typeLabel = { premade: "Pre-made", custom: "Custom", random: "Random" }[bsimState.type] || bsimState.type;
+      el.innerHTML = `<strong>${bsimState.tickers.length}</strong> stocks · ${typeLabel}` +
+        (bsimState.tickers.length ? ` · <span style="color:var(--text-strong)">${bsimState.tickers.slice(0,5).join(", ")}${bsimState.tickers.length > 5 ? "…" : ""}</span>` : "");
+    }
+    function bsimUpdatePillState() {
+      document.querySelectorAll(".adv-portfolio-pill[data-bsim-type]").forEach(p => {
+        p.classList.toggle("active", p.dataset.bsimType === bsimState.type);
+      });
+    }
+
+    /* ── Run simulation against real historical data (multi-ticker portfolio) ── */
     async function runSimulation() {
-      const ticker = document.getElementById("sim-ticker").value;
       const startDate = document.getElementById("sim-date").value;
       const amount = parseFloat(document.getElementById("sim-amount").value) || 1000;
 
@@ -1088,30 +1208,38 @@
       const nameEl = document.getElementById("chart-ticker-name");
       const resultsEl = document.getElementById("sim-results");
 
-      chartArea.innerHTML = '<div class="chart-placeholder">Loading real market data…</div>';
+      const typeLabel = { premade: "Pre-made", custom: "Custom", random: "Random" }[bsimState.type] || bsimState.type;
+      nameEl.textContent = `Portfolio · ${bsimState.tickers.length} stocks · ${typeLabel}`;
       resultsEl.innerHTML = "";
-      nameEl.textContent = `${ticker} · ${tickerNames[ticker] || ticker}`;
 
-      const raw = await StockData.loadTicker(ticker);
-      if (!raw || raw.length === 0) {
-        chartArea.innerHTML = `<div class="chart-placeholder">Could not load data for <strong>${ticker}</strong>.</div>`;
-        return;
-      }
-      const filtered = StockData.filterByDate(raw, startDate);
-      if (filtered.length < 2) {
-        chartArea.innerHTML = `<div class="chart-placeholder">No data available for <strong>${ticker}</strong> from ${startDate}.</div>`;
+      if (!bsimState.tickers.length) {
+        chartArea.innerHTML = '<div class="chart-placeholder">Pick a portfolio to begin.</div>';
         return;
       }
 
-      // Shape for drawChart: { date: Date, price: Number }.
-      // Use close (not adjClose) so the chart matches the prices users see elsewhere.
-      const data = filtered.map((d) => ({ date: new Date(d.date), price: d.close }));
+      chartArea.innerHTML = '<div class="chart-placeholder">Loading real market data…</div>';
 
+      const datasets = await Promise.all(bsimState.tickers.map(t => StockData.loadTicker(t)));
+      const okIdx = datasets.map((d, i) => (d && d.length ? i : -1)).filter(i => i >= 0);
+      if (okIdx.length === 0) {
+        chartArea.innerHTML = '<div class="chart-placeholder">Could not load price data for any selected ticker.</div>';
+        return;
+      }
+      const okTickers = okIdx.map(i => bsimState.tickers[i]);
+      const okData = okIdx.map(i => datasets[i]);
+      const weights = okTickers.map(() => 1 / okTickers.length);
+
+      const filtered = okData.map(d => StockData.filterByDate(d, startDate));
+      const portfolio = StockData.computePortfolioValue(filtered, weights, amount);
+      if (portfolio.length < 2) {
+        chartArea.innerHTML = '<div class="chart-placeholder">Not enough overlapping data for this period. Try an earlier start date.</div>';
+        return;
+      }
+
+      const data = portfolio.map(p => ({ date: new Date(p.date), price: p.value }));
       drawChart(chartArea, data, amount);
 
-      const startPrice = data[0].price;
-      const endPrice = data[data.length - 1].price;
-      const finalValue = (endPrice / startPrice) * amount;
+      const finalValue = data[data.length - 1].price;
       const totalReturn = ((finalValue - amount) / amount) * 100;
       const years = (data[data.length - 1].date - data[0].date) / (365.25 * 86400000);
       const cagr = years > 0 ? (Math.pow(finalValue / amount, 1 / years) - 1) * 100 : 0;
@@ -1119,9 +1247,8 @@
       let peak = -Infinity;
       let maxDD = 0;
       data.forEach((d) => {
-        const val = (d.price / startPrice) * amount;
-        if (val > peak) peak = val;
-        const dd = (peak - val) / peak;
+        if (d.price > peak) peak = d.price;
+        const dd = (peak - d.price) / peak;
         if (dd > maxDD) maxDD = dd;
       });
 
@@ -1147,6 +1274,39 @@
     }
 
     document.getElementById("sim-run")?.addEventListener("click", runSimulation);
+
+    /* ── Beginner pills open the shared advanced modals ── */
+    document.querySelectorAll(".adv-portfolio-pill[data-bsim-type]").forEach(pill => {
+      pill.addEventListener("click", () => {
+        const type = pill.dataset.bsimType;
+        window.__simModalTarget = "beginner";
+        if (type === "custom" && typeof advCustomWorking !== "undefined") {
+          advCustomWorking = [...bsimState.tickers];
+          if (typeof advRenderCustomSelected === "function") advRenderCustomSelected();
+          const search = document.getElementById("adv-custom-search");
+          if (search) { search.value = ""; document.getElementById("adv-custom-results").innerHTML = ""; }
+        } else if (type === "random" && typeof advShuffleRandom === "function") {
+          advShuffleRandom();
+        }
+        if (typeof advOpenModal === "function") advOpenModal(`modal-${type}`);
+      });
+    });
+
+    /* ── Receive a portfolio chosen via the modal ── */
+    document.addEventListener("bsim-portfolio-applied", (e) => {
+      const { type, tickers, premadeId } = e.detail || {};
+      if (!Array.isArray(tickers) || !tickers.length) return;
+      bsimState.type = type;
+      if (premadeId) bsimState.premadeId = premadeId;
+      bsimState.tickers = [...tickers];
+      bsimUpdatePillState();
+      bsimRenderCurrent();
+      if (!document.body.classList.contains("expert")) runSimulation();
+    });
+
+    bsimRenderCurrent();
+    bsimUpdatePillState();
+
     // Auto-run with the default selections - but only if the beginner sim
     // is actually visible. Drawing into a display:none container fails
     // because clientWidth is 0.

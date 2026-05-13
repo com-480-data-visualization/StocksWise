@@ -1870,8 +1870,11 @@ body.expert .expert-content.adv-sim {
 /* ── Stats row ── */
 .adv-stats {
   display: grid;
-  grid-template-columns: repeat(4, 1fr);
-  gap: 0.85rem;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 0.6rem;
+}
+@media (max-width: 1100px) {
+  .adv-stats { grid-template-columns: repeat(4, 1fr); }
 }
 @media (max-width: 720px) {
   .adv-stats { grid-template-columns: repeat(2, 1fr); }

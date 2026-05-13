@@ -30,9 +30,9 @@ function simPlotlyLayout(overrides = {}) {
     paper_bgcolor: "rgba(0,0,0,0)",
     plot_bgcolor: "rgba(0,0,0,0)",
     font: { family: "Inter, sans-serif", color: g("--text-muted"), size: 11 },
-    margin: { l: 55, r: 20, t: 10, b: 40 },
-    xaxis: { gridcolor: g("--border"), zerolinecolor: g("--border"), fixedrange: true },
-    yaxis: { gridcolor: g("--border"), zerolinecolor: g("--border"), fixedrange: true },
+    margin: { l: 60, r: 50, t: 16, b: 48 },
+    xaxis: { gridcolor: g("--border"), zerolinecolor: g("--border"), fixedrange: true, automargin: true },
+    yaxis: { gridcolor: g("--border"), zerolinecolor: g("--border"), fixedrange: true, automargin: true },
     dragmode: false,
     hovermode: false,
   };
@@ -50,6 +50,33 @@ function simPlotlyConfig() {
   return { responsive: true, displayModeBar: false, scrollZoom: false };
 }
 
+// Single helper: every Plotly mount goes through this. Switching display to
+// block (the chart-area is otherwise flex-centered for placeholders) and
+// calling Plotly.Plots.resize after the initial paint guarantees Plotly's
+// SVG fills the container instead of getting clipped by .adv-chart-wrap's
+// rounded `overflow: hidden` corners.
+function simPlotlyMount(el, traces, layout, config) {
+  if (!el) return;
+  el.style.display = "block";
+  el.innerHTML = "";
+  Plotly.newPlot(el, traces, layout, config || simPlotlyConfig());
+  // Two ticks: one to let the browser apply the display change, one for Plotly.
+  requestAnimationFrame(() => {
+    requestAnimationFrame(() => {
+      try { Plotly.Plots.resize(el); } catch (_) {}
+    });
+  });
+}
+
+// Reset a chart-area back to its CSS default (flex-centered) so a
+// chart-placeholder text renders centered after a Plotly mount.
+function simShowPlaceholder(el, msg) {
+  if (!el) return;
+  if (window.Plotly) try { Plotly.purge(el); } catch (_) {}
+  el.style.display = "";
+  el.innerHTML = `<div class="chart-placeholder">${msg}</div>`;
+}
+
 const SIM_TICKERS = ["AAPL", "MSFT", "NVDA", "AMZN", "TSLA", "GOOG", "META", "NFLX", "AMD", "QQQ"];
 
 /* ══════════════════════════════════════════════
@@ -64,17 +91,19 @@ async function runBacktest() {
   const exitRule = document.querySelector("input[name='bt-exit']:checked")?.value;
   const exitDays = parseInt(document.getElementById("bt-exit-days")?.value) || 20;
 
-  const chartEl = document.getElementById("bt-chart");
+  const chartEl = document.getElementById("adv-chart-area");
   const statsEl = document.getElementById("bt-stats");
+  const nameEl  = document.getElementById("adv-chart-name");
   if (!chartEl) return;
-  chartEl.innerHTML = '<div class="chart-loading">Running backtest...</div>';
+  if (nameEl) nameEl.textContent = `Backtest · ${ticker} · ${entryRule || "—"} → ${exitRule || "—"}`;
+  chartEl.innerHTML = '<div class="chart-placeholder">Running backtest…</div>';
   if (statsEl) statsEl.innerHTML = "";
 
   const data = await StockData.loadTicker(ticker);
-  if (!data) { chartEl.innerHTML = '<div class="chart-loading">Could not load data</div>'; return; }
+  if (!data) { chartEl.innerHTML = '<div class="chart-placeholder">Could not load data.</div>'; return; }
 
   const filtered = StockData.filterByDate(data, startDate, endDate);
-  if (filtered.length < 60) { chartEl.innerHTML = '<div class="chart-loading">Not enough data for this period</div>'; return; }
+  if (filtered.length < 60) { chartEl.innerHTML = '<div class="chart-placeholder">Not enough data for this period.</div>'; return; }
 
   // Compute indicators
   const rsi = StockData.computeRSI(filtered, 14);
@@ -180,8 +209,7 @@ async function runBacktest() {
     return (filtered[idx].close / filtered[50].close) * capital;
   });
 
-  chartEl.innerHTML = "";
-  Plotly.newPlot(chartEl, [
+  simPlotlyMount(chartEl, [
     {
       x: dates, y: portfolioValues.map(p => p.value), type: "scatter", mode: "lines",
       name: "Strategy", line: { color: accent, width: 2 },
@@ -199,10 +227,9 @@ async function runBacktest() {
       name: "Sell", marker: { color: red, size: 10, symbol: "triangle-down" },
     },
   ], simPlotlyLayout({
-    height: 380,
     yaxis: { title: "Portfolio Value (€)" },
     legend: { x: 0.02, y: 0.98, bgcolor: "rgba(0,0,0,0)" },
-  }), simPlotlyConfig());
+  }));
 
   // Stats
   if (statsEl) {
@@ -233,11 +260,33 @@ function pbAddTicker() {
   if (pbTickers.includes(ticker) || pbTickers.length >= 6) return;
   pbTickers.push(ticker);
   renderPBSliders();
+  pbAdvanceDropdown();
+  pbRefreshAddButton();
 }
 
 function pbRemoveTicker(ticker) {
   pbTickers = pbTickers.filter(t => t !== ticker);
   renderPBSliders();
+  pbRefreshAddButton();
+}
+
+// Move the dropdown to the next ticker that's not already in the portfolio,
+// so a fresh click on "+ Add" actually adds something.
+function pbAdvanceDropdown() {
+  const select = document.getElementById("pb-add-ticker");
+  if (!select) return;
+  const next = Array.from(select.options).find(o => !pbTickers.includes(o.value));
+  if (next) select.value = next.value;
+}
+
+function pbRefreshAddButton() {
+  const select = document.getElementById("pb-add-ticker");
+  const btn = document.getElementById("pb-add-btn");
+  if (!select || !btn) return;
+  const atMax = pbTickers.length >= 6;
+  const dup = pbTickers.includes(select.value);
+  btn.disabled = atMax || dup;
+  btn.textContent = atMax ? "Max 6 tickers" : (dup ? "Already added" : "+ Add");
 }
 
 function renderPBSliders() {
@@ -248,48 +297,81 @@ function renderPBSliders() {
     return;
   }
 
-  const equalWeight = Math.floor(100 / pbTickers.length);
-  container.innerHTML = pbTickers.map((t, i) => `
+  // Equal weights, with the remainder absorbed by the first slider so the total is 100.
+  const each = Math.floor(100 / pbTickers.length);
+  const remainder = 100 - each * pbTickers.length;
+  container.innerHTML = pbTickers.map((t, i) => {
+    const w = each + (i === 0 ? remainder : 0);
+    return `
     <div class="weight-slider-row">
       <span class="ticker-label">${t}</span>
-      <input type="range" min="0" max="100" value="${equalWeight}" class="pb-weight" data-ticker="${t}" oninput="updatePBWeights()">
-      <span class="weight-value" id="pb-w-${t}">${equalWeight}%</span>
+      <input type="range" min="0" max="100" value="${w}" class="pb-weight" data-ticker="${t}" oninput="updatePBWeights(this)">
+      <span class="weight-value" id="pb-w-${t}">${w}%</span>
       <button onclick="pbRemoveTicker('${t}')" style="background:none;border:none;color:var(--red);cursor:pointer;font-size:1rem;padding:0 0.3rem;">×</button>
     </div>
-  `).join("");
+  `;
+  }).join("");
   updatePBWeights();
 }
 
-function updatePBWeights() {
-  const sliders = document.querySelectorAll(".pb-weight");
-  let total = 0;
+// Keeps the weights summing to 100. When a slider is dragged, the others are
+// rescaled in proportion to their previous values (or split equally if they
+// were all zero) to absorb the change.
+function updatePBWeights(changed) {
+  const sliders = Array.from(document.querySelectorAll(".pb-weight"));
+  if (sliders.length === 0) return;
+
+  if (changed) {
+    const newVal = Math.max(0, Math.min(100, parseInt(changed.value) || 0));
+    changed.value = newVal;
+    const others = sliders.filter(s => s !== changed);
+    const remaining = 100 - newVal;
+    if (others.length === 0) {
+      changed.value = 100;
+    } else {
+      const otherSum = others.reduce((a, s) => a + (parseInt(s.value) || 0), 0);
+      let assigned = 0;
+      others.forEach((s, i) => {
+        let v;
+        if (i === others.length - 1) {
+          v = remaining - assigned;
+        } else if (otherSum === 0) {
+          v = Math.floor(remaining / others.length);
+        } else {
+          v = Math.round((parseInt(s.value) || 0) * remaining / otherSum);
+        }
+        v = Math.max(0, Math.min(100, v));
+        s.value = v;
+        assigned += v;
+      });
+    }
+  }
+
   sliders.forEach(s => {
-    const val = parseInt(s.value);
-    total += val;
     const label = document.getElementById("pb-w-" + s.dataset.ticker);
-    if (label) label.textContent = val + "%";
+    if (label) label.textContent = s.value + "%";
   });
   const totalEl = document.getElementById("pb-total");
   if (totalEl) {
-    totalEl.textContent = `Total: ${total}%`;
-    totalEl.className = "weight-total " + (total === 100 ? "valid" : "invalid");
+    totalEl.textContent = "Total: 100%";
+    totalEl.className = "weight-total valid";
   }
 }
 
 async function runPortfolioBuilder() {
-  const chartEl = document.getElementById("pb-chart");
+  const chartEl = document.getElementById("adv-chart-area");
   const corrEl = document.getElementById("pb-corr");
   const frontierEl = document.getElementById("pb-frontier");
   const statsEl = document.getElementById("pb-stats");
+  const nameEl = document.getElementById("adv-chart-name");
   if (!chartEl) return;
 
   const sliders = document.querySelectorAll(".pb-weight");
   const weights = [];
   sliders.forEach(s => weights.push(parseInt(s.value) / 100));
-  const totalW = weights.reduce((a, b) => a + b, 0);
 
-  if (pbTickers.length < 2 || Math.abs(totalW - 1) > 0.02) {
-    chartEl.innerHTML = '<div class="chart-loading">Add at least 2 tickers and ensure weights sum to 100%</div>';
+  if (pbTickers.length < 2) {
+    chartEl.innerHTML = '<div class="chart-placeholder">Add at least 2 tickers to build a portfolio.</div>';
     return;
   }
 
@@ -297,20 +379,21 @@ async function runPortfolioBuilder() {
   const endDate = document.getElementById("pb-end").value;
   const capital = parseFloat(document.getElementById("pb-capital").value) || 10000;
 
-  chartEl.innerHTML = '<div class="chart-loading">Building portfolio...</div>';
-  if (corrEl) corrEl.innerHTML = '<div class="chart-loading">Computing...</div>';
-  if (frontierEl) frontierEl.innerHTML = '<div class="chart-loading">Computing...</div>';
+  if (nameEl) nameEl.textContent = `Portfolio Builder · ${pbTickers.length} stocks`;
+  chartEl.innerHTML = '<div class="chart-placeholder">Building portfolio…</div>';
+  if (corrEl) corrEl.innerHTML = '<div class="chart-loading">Computing…</div>';
+  if (frontierEl) frontierEl.innerHTML = '<div class="chart-loading">Computing…</div>';
 
   const datasets = await Promise.all(pbTickers.map(t => StockData.loadTicker(t)));
   if (datasets.some(d => !d)) {
-    chartEl.innerHTML = '<div class="chart-loading">Failed to load some ticker data</div>';
+    chartEl.innerHTML = '<div class="chart-placeholder">Failed to load some ticker data.</div>';
     return;
   }
 
   const filtered = datasets.map(d => StockData.filterByDate(d, startDate, endDate));
   const portfolio = StockData.computePortfolioValue(filtered, weights, capital);
   if (portfolio.length < 2) {
-    chartEl.innerHTML = '<div class="chart-loading">Not enough overlapping data</div>';
+    chartEl.innerHTML = '<div class="chart-placeholder">Not enough overlapping data for this period.</div>';
     return;
   }
 
@@ -344,7 +427,7 @@ async function runPortfolioBuilder() {
 
   chartEl.innerHTML = "";
   Plotly.newPlot(chartEl, traces, simPlotlyLayout({
-    height: 350, yaxis: { title: "Portfolio Value (€)" },
+    yaxis: { title: "Portfolio Value (€)" },
     legend: { x: 0.02, y: 0.98, bgcolor: "rgba(0,0,0,0)" },
   }), simPlotlyConfig());
 
@@ -491,11 +574,12 @@ async function runPortfolioBuilder() {
    TOOL 3 - Crisis Stress Test
    ══════════════════════════════════════════════ */
 
+// Crisis windows for the Stress Test tool. The 2022 Rate Hike was dropped
+// because the bundled dataset ends at 2020-04-01.
 const CRISES = [
   { name: "Dot-com Bubble", start: "2000-03-01", end: "2002-10-01", before: "1999-09-01", after: "2003-04-01" },
   { name: "2008 Financial Crisis", start: "2007-10-01", end: "2009-03-01", before: "2007-04-01", after: "2009-09-01" },
-  { name: "COVID Crash", start: "2020-02-01", end: "2020-04-01", before: "2019-08-01", after: "2020-10-01" },
-  { name: "2022 Rate Hike Selloff", start: "2022-01-01", end: "2022-12-31", before: "2021-07-01", after: "2023-06-30" },
+  { name: "COVID Crash", start: "2020-02-01", end: "2020-04-01", before: "2019-08-01", after: "2020-04-01" },
 ];
 
 let selectedCrisis = null;
@@ -507,11 +591,31 @@ function stAddTicker() {
   if (stTickers.includes(ticker) || stTickers.length >= 6) return;
   stTickers.push(ticker);
   renderSTSliders();
+  stAdvanceDropdown();
+  stRefreshAddButton();
 }
 
 function stRemoveTicker(ticker) {
   stTickers = stTickers.filter(t => t !== ticker);
   renderSTSliders();
+  stRefreshAddButton();
+}
+
+function stAdvanceDropdown() {
+  const select = document.getElementById("st-add-ticker");
+  if (!select) return;
+  const next = Array.from(select.options).find(o => !stTickers.includes(o.value));
+  if (next) select.value = next.value;
+}
+
+function stRefreshAddButton() {
+  const select = document.getElementById("st-add-ticker");
+  const btn = document.getElementById("st-add-btn");
+  if (!select || !btn) return;
+  const atMax = stTickers.length >= 6;
+  const dup = stTickers.includes(select.value);
+  btn.disabled = atMax || dup;
+  btn.textContent = atMax ? "Max 6 tickers" : (dup ? "Already added" : "+ Add");
 }
 
 function renderSTSliders() {
@@ -521,28 +625,58 @@ function renderSTSliders() {
     container.innerHTML = '<p style="color:var(--text-muted);font-size:0.85rem;">Add tickers above.</p>';
     return;
   }
-  const eq = Math.floor(100 / stTickers.length);
-  container.innerHTML = stTickers.map(t => `
+  const each = Math.floor(100 / stTickers.length);
+  const remainder = 100 - each * stTickers.length;
+  container.innerHTML = stTickers.map((t, i) => {
+    const w = each + (i === 0 ? remainder : 0);
+    return `
     <div class="weight-slider-row">
       <span class="ticker-label">${t}</span>
-      <input type="range" min="0" max="100" value="${eq}" class="st-weight" data-ticker="${t}" oninput="updateSTWeights()">
-      <span class="weight-value" id="st-w-${t}">${eq}%</span>
+      <input type="range" min="0" max="100" value="${w}" class="st-weight" data-ticker="${t}" oninput="updateSTWeights(this)">
+      <span class="weight-value" id="st-w-${t}">${w}%</span>
       <button onclick="stRemoveTicker('${t}')" style="background:none;border:none;color:var(--red);cursor:pointer;font-size:1rem;padding:0 0.3rem;">×</button>
     </div>
-  `).join("");
+  `;
+  }).join("");
   updateSTWeights();
 }
 
-function updateSTWeights() {
-  const sliders = document.querySelectorAll(".st-weight");
-  let total = 0;
+function updateSTWeights(changed) {
+  const sliders = Array.from(document.querySelectorAll(".st-weight"));
+  if (sliders.length === 0) return;
+
+  if (changed) {
+    const newVal = Math.max(0, Math.min(100, parseInt(changed.value) || 0));
+    changed.value = newVal;
+    const others = sliders.filter(s => s !== changed);
+    const remaining = 100 - newVal;
+    if (others.length === 0) {
+      changed.value = 100;
+    } else {
+      const otherSum = others.reduce((a, s) => a + (parseInt(s.value) || 0), 0);
+      let assigned = 0;
+      others.forEach((s, i) => {
+        let v;
+        if (i === others.length - 1) {
+          v = remaining - assigned;
+        } else if (otherSum === 0) {
+          v = Math.floor(remaining / others.length);
+        } else {
+          v = Math.round((parseInt(s.value) || 0) * remaining / otherSum);
+        }
+        v = Math.max(0, Math.min(100, v));
+        s.value = v;
+        assigned += v;
+      });
+    }
+  }
+
   sliders.forEach(s => {
-    total += parseInt(s.value);
     const lbl = document.getElementById("st-w-" + s.dataset.ticker);
     if (lbl) lbl.textContent = s.value + "%";
   });
   const el = document.getElementById("st-total");
-  if (el) { el.textContent = `Total: ${total}%`; el.className = "weight-total " + (total === 100 ? "valid" : "invalid"); }
+  if (el) { el.textContent = "Total: 100%"; el.className = "weight-total valid"; }
 }
 
 function selectCrisis(idx) {
@@ -553,28 +687,47 @@ function selectCrisis(idx) {
 }
 
 async function runStressTest() {
-  const chartEl = document.getElementById("st-chart");
+  const chartEl = document.getElementById("adv-chart-area");
   const statsEl = document.getElementById("st-stats");
+  const nameEl = document.getElementById("adv-chart-name");
   if (!chartEl) return;
 
-  if (selectedCrisis === null) { chartEl.innerHTML = '<div class="chart-loading">Select a crisis first</div>'; return; }
-  if (stTickers.length < 1) { chartEl.innerHTML = '<div class="chart-loading">Add at least 1 ticker</div>'; return; }
+  if (selectedCrisis === null) { chartEl.innerHTML = '<div class="chart-placeholder">Select a crisis first.</div>'; return; }
+  if (stTickers.length < 1) { chartEl.innerHTML = '<div class="chart-placeholder">Add at least 1 ticker.</div>'; return; }
 
   const crisis = CRISES[selectedCrisis];
   const sliders = document.querySelectorAll(".st-weight");
   const weights = [];
   sliders.forEach(s => weights.push(parseInt(s.value) / 100));
   const totalW = weights.reduce((a, b) => a + b, 0);
-  if (Math.abs(totalW - 1) > 0.05) { chartEl.innerHTML = '<div class="chart-loading">Weights must sum to 100%</div>'; return; }
+  if (Math.abs(totalW - 1) > 0.05) { chartEl.innerHTML = '<div class="chart-placeholder">Weights must sum to 100%.</div>'; return; }
 
-  chartEl.innerHTML = '<div class="chart-loading">Running stress test...</div>';
+  if (nameEl) nameEl.textContent = `Stress Test · ${crisis.name}`;
+  chartEl.innerHTML = '<div class="chart-placeholder">Running stress test…</div>';
 
   const datasets = await Promise.all(stTickers.map(t => StockData.loadTicker(t)));
-  if (datasets.some(d => !d)) { chartEl.innerHTML = '<div class="chart-loading">Failed to load data</div>'; return; }
+  if (datasets.some(d => !d)) { chartEl.innerHTML = '<div class="chart-placeholder">Failed to load data.</div>'; return; }
 
   // Full period: before + during + after
-  const filtered = datasets.map(d => StockData.filterByDate(d, crisis.before, crisis.after));
-  const portfolio = StockData.computePortfolioValue(filtered, weights, 10000);
+  const filteredAll = datasets.map(d => StockData.filterByDate(d, crisis.before, crisis.after));
+  // Drop tickers with no rows in this window (e.g. picking META during the
+  // dot-com era — META didn't IPO until 2012). Re-normalize the surviving
+  // weights so they still sum to 100%.
+  const survIdx = filteredAll.map((d, i) => (d && d.length > 0 ? i : -1)).filter(i => i >= 0);
+  if (survIdx.length === 0) {
+    chartEl.innerHTML = '<div class="chart-placeholder">None of the selected tickers traded during this crisis window.</div>';
+    return;
+  }
+  const survFiltered = survIdx.map(i => filteredAll[i]);
+  const survRawWeights = survIdx.map(i => weights[i]);
+  const survSum = survRawWeights.reduce((a, b) => a + b, 0) || 1;
+  const survWeights = survRawWeights.map(w => w / survSum);
+  const droppedTickers = stTickers.filter((t, i) => !survIdx.includes(i));
+  if (droppedTickers.length && nameEl) {
+    nameEl.textContent = `Stress Test · ${crisis.name} · skipped ${droppedTickers.join(", ")} (no data)`;
+  }
+
+  const portfolio = StockData.computePortfolioValue(survFiltered, survWeights, 10000);
 
   // QQQ benchmark
   const qqq = await StockData.loadTicker("QQQ");
@@ -587,7 +740,7 @@ async function runStressTest() {
     }
   }
 
-  if (portfolio.length < 2) { chartEl.innerHTML = '<div class="chart-loading">Not enough data for this period</div>'; return; }
+  if (portfolio.length < 2) { chartEl.innerHTML = '<div class="chart-placeholder">Not enough overlapping data for this period.</div>'; return; }
 
   const cs = getComputedStyle(document.documentElement);
   const accent = cs.getPropertyValue("--accent").trim();
@@ -610,7 +763,6 @@ async function runStressTest() {
 
   chartEl.innerHTML = "";
   Plotly.newPlot(chartEl, traces, simPlotlyLayout({
-    height: 380,
     yaxis: { title: "Portfolio Value (€)" },
     shapes: [{
       type: "rect", x0: crisis.start, x1: crisis.end,
@@ -684,15 +836,34 @@ document.addEventListener("DOMContentLoaded", () => {
     });
   });
 
-  // Backtest button
-  document.getElementById("bt-run")?.addEventListener("click", runBacktest);
+  // Backtester: auto-run on any input change (debounced) instead of a Run button.
+  let btTimer = null;
+  const scheduleBacktest = () => {
+    clearTimeout(btTimer);
+    btTimer = setTimeout(runBacktest, 120);
+  };
+  ["bt-ticker", "bt-start", "bt-end", "bt-capital", "bt-exit-days"].forEach(id => {
+    const el = document.getElementById(id);
+    if (!el) return;
+    el.addEventListener("change", scheduleBacktest);
+    if (el.tagName === "INPUT") el.addEventListener("input", scheduleBacktest);
+  });
+  document.querySelectorAll("input[name='bt-entry'], input[name='bt-exit']").forEach(r => {
+    r.addEventListener("change", scheduleBacktest);
+  });
+  // Run once when the user opens the Backtester accordion.
+  document.querySelector("#panel-backtest")?.closest("details")?.addEventListener("toggle", (e) => {
+    if (e.target.open) scheduleBacktest();
+  });
 
   // Portfolio builder
   document.getElementById("pb-add-btn")?.addEventListener("click", pbAddTicker);
+  document.getElementById("pb-add-ticker")?.addEventListener("change", pbRefreshAddButton);
   document.getElementById("pb-run")?.addEventListener("click", runPortfolioBuilder);
 
   // Stress test
   document.getElementById("st-add-btn")?.addEventListener("click", stAddTicker);
+  document.getElementById("st-add-ticker")?.addEventListener("change", stRefreshAddButton);
   document.getElementById("st-run")?.addEventListener("click", runStressTest);
   document.querySelectorAll(".crisis-option").forEach((el, i) => {
     el.addEventListener("click", () => selectCrisis(i));
@@ -702,10 +873,14 @@ document.addEventListener("DOMContentLoaded", () => {
   if (document.getElementById("pb-sliders")) {
     pbTickers = ["AAPL", "MSFT", "NVDA"];
     renderPBSliders();
+    pbAdvanceDropdown();
+    pbRefreshAddButton();
   }
   if (document.getElementById("st-sliders")) {
     stTickers = ["AAPL", "MSFT", "NVDA"];
     renderSTSliders();
+    stAdvanceDropdown();
+    stRefreshAddButton();
   }
 });
 
@@ -729,22 +904,37 @@ const ADV_PREMADE = [
     tickers: ["KO", "PEP", "WMT", "JNJ", "PG"] },
 ];
 
+// Bundled NASDAQ data ends at ADV_DATA_END (2020-04-01), so any crisis window
+// past that date is clipped or omitted - otherwise the chart silently goes blank.
 const ADV_CRISES = [
   { id: "dotcom", name: "Dot-com Bubble",       start: "1999-09-01", end: "2003-04-01" },
   { id: "2008",   name: "2008 Financial Crisis",start: "2007-04-01", end: "2009-09-01" },
-  { id: "covid",  name: "COVID Crash",          start: "2019-08-01", end: "2020-10-01" },
-  { id: "rate",   name: "2022 Rate Hike",       start: "2021-07-01", end: "2023-06-30" },
+  { id: "covid",  name: "COVID Crash",          start: "2019-08-01", end: ADV_DATA_END },
 ];
 
 const ADV_STAT_INFO = {
   stocks: { title: "Stocks selected",
     desc: "Number of distinct stocks in your portfolio. More stocks = more diversification, each gets a smaller share." },
   final:  { title: "Final value",
-    desc: "What your initial investment is worth at the end of the period - based on real historical close prices, equally weighted across selected stocks." },
+    desc: "What your initial investment is worth at the end of the period - based on real historical close prices weighted by the sliders below the chart." },
   return: { title: "Total return",
     desc: "Percentage change from start to end of the simulated period. Includes price changes only (no dividends)." },
   cagr:   { title: "CAGR",
     desc: "Compound Annual Growth Rate. The constant yearly rate that would turn your start value into your end value over the same number of years." },
+  sharpe: { title: "Sharpe Ratio",
+    desc: "Excess return per unit of risk. (Annualized return - 2% risk-free) / annualized volatility. Higher is better; >1 is generally considered good." },
+  drawdown: { title: "Max Drawdown",
+    desc: "Largest peak-to-trough drop the portfolio took during the period. Shows how much you would have been down at the worst moment." },
+  vol:    { title: "Volatility",
+    desc: "Annualized standard deviation of daily returns. Higher means the portfolio swings more day-to-day." },
+  cdrawdown: { title: "Drawdown in crisis",
+    desc: "Worst peak-to-trough drop your portfolio suffered while the crisis window was active." },
+  cbench: { title: "QQQ in crisis",
+    desc: "What the NASDAQ-100 ETF did over the same crisis window. Shows whether your basket fared better or worse than the broad market." },
+  crecover: { title: "Days to recover",
+    desc: "Days from the start of the crisis until the portfolio first climbed back to its pre-crisis level. \"—\" means it didn't recover within the available data." },
+  cworst: { title: "Worst single day",
+    desc: "Largest one-day drop during the crisis window." },
 };
 
 const advState = {
@@ -762,8 +952,9 @@ function advFormatTerm(months) {
 
 function advSetTickers(tickers) {
   advState.tickers = tickers;
-  advState.weights = tickers.map(() => 1 / tickers.length);
+  advState.weights = tickers.length ? tickers.map(() => 1 / tickers.length) : [];
   advRenderCurrent();
+  advRenderWeights();
   advScheduleRun();
 }
 
@@ -810,10 +1001,16 @@ function advRenderPremadeOptions() {
     btn.addEventListener("click", () => {
       const preset = ADV_PREMADE.find(p => p.id === btn.dataset.id);
       if (!preset) return;
-      advState.type = "premade";
-      advState.premadeId = preset.id;
-      advUpdatePillState();
-      advSetTickers([...preset.tickers]);
+      if (window.__simModalTarget === "beginner") {
+        document.dispatchEvent(new CustomEvent("bsim-portfolio-applied", {
+          detail: { type: "premade", tickers: [...preset.tickers], premadeId: preset.id }
+        }));
+      } else {
+        advState.type = "premade";
+        advState.premadeId = preset.id;
+        advUpdatePillState();
+        advSetTickers([...preset.tickers]);
+      }
       advCloseModal("modal-premade");
     });
   });
@@ -938,39 +1135,59 @@ async function runAdvancedSim() {
 
   let startDate = startInput;
   let endDate = null;
-  let label = `Portfolio · ${advState.tickers.length} stocks`;
   if (crisis) {
     startDate = crisis.start;
     endDate = crisis.end;
-    label += ` · ${crisis.name}`;
   }
-  if (nameEl) nameEl.textContent = label;
 
   if (!advState.tickers.length) {
-    chartArea.innerHTML = '<div class="chart-placeholder">Pick a portfolio to begin.</div>';
+    simShowPlaceholder(chartArea, "Pick a portfolio to begin.");
     advClearStats();
+    advRenderAux([], [], []);
+    if (nameEl) nameEl.textContent = "Portfolio";
     return;
   }
 
-  chartArea.innerHTML = '<div class="chart-placeholder">Loading real market data…</div>';
+  simShowPlaceholder(chartArea, "Loading real market data…");
 
   const datasets = await Promise.all(advState.tickers.map(t => StockData.loadTicker(t)));
   const okIdx = datasets.map((d, i) => d ? i : -1).filter(i => i >= 0);
   if (okIdx.length === 0) {
-    chartArea.innerHTML = '<div class="chart-placeholder">Could not load price data for any selected ticker.</div>';
+    simShowPlaceholder(chartArea, "Could not load price data for any selected ticker.");
     advClearStats();
+    advRenderAux([], [], []);
     return;
   }
-  // Drop tickers that failed to load and rebalance equal weights.
+  // Drop tickers that failed to load.
   const okTickers = okIdx.map(i => advState.tickers[i]);
   const okData = okIdx.map(i => datasets[i]);
-  const weights = okTickers.map(() => 1 / okTickers.length);
+  const okWeights = okIdx.map(i => advState.weights[i] || 0);
 
-  const filtered = okData.map(d => StockData.filterByDate(d, startDate, endDate));
-  const portfolio = StockData.computePortfolioValue(filtered, weights, amount);
-  if (portfolio.length < 2) {
-    chartArea.innerHTML = '<div class="chart-placeholder">Not enough overlapping data for this period. Try an earlier start date.</div>';
+  // Drop tickers that have no rows inside the chosen window so a single
+  // late-IPO ticker (e.g. NFLX during the dotcom era) doesn't collapse the
+  // aligned date set in computePortfolioValue to zero.
+  const filteredAll = okData.map(d => StockData.filterByDate(d, startDate, endDate));
+  const survIdx = filteredAll.map((d, i) => (d && d.length > 0 ? i : -1)).filter(i => i >= 0);
+  if (survIdx.length === 0) {
+    simShowPlaceholder(chartArea, "None of the selected tickers traded during this window.");
     advClearStats();
+    advRenderAux([], [], []);
+    return;
+  }
+  const survTickers = survIdx.map(i => okTickers[i]);
+  const survData = survIdx.map(i => filteredAll[i]);
+  const survRawWeights = survIdx.map(i => okWeights[i]);
+  // Re-normalize the surviving weights to sum to 100% (they were originally
+  // normalized across the full ticker list including the dropped ones).
+  const survSum = survRawWeights.reduce((a, b) => a + b, 0) || 1;
+  const survWeights = survRawWeights.map(w => w / survSum);
+  const droppedTickers = okTickers.filter(t => !survTickers.includes(t));
+
+  const portfolio = StockData.computePortfolioValue(survData, survWeights, amount);
+  if (portfolio.length < 2) {
+    simShowPlaceholder(chartArea, "Not enough overlapping data for this period. Try an earlier start date.");
+    advClearStats();
+    advRenderAux([], [], []);
     return;
   }
 
@@ -978,14 +1195,43 @@ async function runAdvancedSim() {
   const data = portfolio.map(p => ({ date: new Date(p.date), price: p.value }));
   if (typeof drawChart === "function") drawChart(chartArea, data, amount);
 
-  advUpdateStats(data, amount, okTickers.length);
+  // Chart-toolbar label reflects the actual ticker count used.
+  if (nameEl) {
+    let lbl = `Portfolio · ${survTickers.length} stocks`;
+    if (crisis) lbl += ` · ${crisis.name}`;
+    if (droppedTickers.length) lbl += ` · skipped ${droppedTickers.join(", ")} (no data in window)`;
+    nameEl.textContent = lbl;
+  }
+  advUpdateStats(data, amount, survTickers.length);
+  advRenderAux(survTickers, survData, survWeights);
+
+  // Crisis stats: load QQQ benchmark for the same window and render the
+  // bottom panel. Hidden when no crisis is active.
+  if (crisis) {
+    const qqqRaw = await StockData.loadTicker("QQQ");
+    let qqqSeries = [];
+    if (qqqRaw) {
+      const qFilt = StockData.filterByDate(qqqRaw, crisis.start, crisis.end);
+      if (qFilt.length > 1) {
+        const qStart = qFilt[0].close;
+        qqqSeries = qFilt.map(d => ({ date: d.date, value: (d.close / qStart) * amount }));
+      }
+    }
+    advRenderCrisisStats(crisis, data, qqqSeries);
+  } else {
+    const wrap = document.getElementById("adv-crisis-stats");
+    if (wrap) wrap.hidden = true;
+  }
 }
 
 function advClearStats() {
-  ["stat-stocks", "stat-final", "stat-return", "stat-cagr"].forEach(id => {
+  ["stat-stocks", "stat-final", "stat-return", "stat-cagr",
+   "stat-sharpe", "stat-drawdown", "stat-vol"].forEach(id => {
     const el = document.getElementById(id);
     if (el) { el.textContent = "-"; el.className = "adv-stat-value"; }
   });
+  const cs = document.getElementById("adv-crisis-stats");
+  if (cs) cs.hidden = true;
 }
 
 function advUpdateStats(data, amount, numStocks) {
@@ -994,6 +1240,26 @@ function advUpdateStats(data, amount, numStocks) {
   const years = (data[data.length - 1].date - data[0].date) / (365.25 * 86400000);
   const cagr = years > 0 ? (Math.pow(finalValue / amount, 1 / years) - 1) * 100 : 0;
   const positive = finalValue >= amount;
+
+  // Daily returns from portfolio values
+  const rets = [];
+  for (let i = 1; i < data.length; i++) rets.push(data[i].price / data[i - 1].price - 1);
+  const mean = rets.length ? rets.reduce((a, b) => a + b, 0) / rets.length : 0;
+  const variance = rets.length > 1
+    ? rets.reduce((a, b) => a + (b - mean) ** 2, 0) / (rets.length - 1)
+    : 0;
+  const stdev = Math.sqrt(variance);
+  // 252 trading days; risk-free 2% annual.
+  const annVol = stdev * Math.sqrt(252) * 100;
+  const sharpe = stdev > 0 ? (mean * 252 - 0.02) / (stdev * Math.sqrt(252)) : 0;
+
+  let peak = -Infinity, maxDD = 0;
+  data.forEach(p => {
+    if (p.price > peak) peak = p.price;
+    const dd = (peak - p.price) / peak;
+    if (dd > maxDD) maxDD = dd;
+  });
+
   const set = (id, text, cls) => {
     const el = document.getElementById(id);
     if (!el) return;
@@ -1004,6 +1270,257 @@ function advUpdateStats(data, amount, numStocks) {
   set("stat-final", "€" + Math.round(finalValue).toLocaleString(), positive ? "positive" : "negative");
   set("stat-return", (totalReturn >= 0 ? "+" : "") + totalReturn.toFixed(1) + "%", positive ? "positive" : "negative");
   set("stat-cagr", cagr.toFixed(1) + "%");
+  set("stat-sharpe", sharpe.toFixed(2), sharpe >= 1 ? "positive" : (sharpe <= 0 ? "negative" : ""));
+  set("stat-drawdown", "-" + (maxDD * 100).toFixed(1) + "%", "negative");
+  set("stat-vol", annVol.toFixed(1) + "%");
+}
+
+/* ── Weight sliders (auto-normalized to 100%) ── */
+function advRenderWeights() {
+  const list = document.getElementById("adv-weights-list");
+  const wrap = document.getElementById("adv-weights");
+  if (!list || !wrap) return;
+  if (!advState.tickers.length) { wrap.hidden = true; list.innerHTML = ""; return; }
+  wrap.hidden = false;
+  const ws = advState.weights;
+  list.innerHTML = advState.tickers.map((t, i) => {
+    const pct = Math.round((ws[i] || 0) * 100);
+    return `
+      <div class="adv-weight-row">
+        <span class="adv-weight-ticker">${t}</span>
+        <input type="range" min="0" max="100" value="${pct}" data-idx="${i}" class="adv-weight">
+        <span class="adv-weight-pct" id="adv-weight-pct-${i}">${pct}%</span>
+      </div>
+    `;
+  }).join("");
+  list.querySelectorAll(".adv-weight").forEach(slider => {
+    slider.addEventListener("input", () => {
+      advNormalizeWeights(parseInt(slider.dataset.idx, 10), parseInt(slider.value, 10));
+      advRefreshWeightLabels();
+      advScheduleRun();
+    });
+  });
+  advRefreshWeightLabels();
+}
+
+function advRefreshWeightLabels() {
+  advState.weights.forEach((w, i) => {
+    const el = document.getElementById("adv-weight-pct-" + i);
+    const slider = document.querySelector(`.adv-weight[data-idx="${i}"]`);
+    const pct = Math.round(w * 100);
+    if (el) el.textContent = pct + "%";
+    if (slider && slider.value !== String(pct)) slider.value = pct;
+  });
+  const total = document.getElementById("adv-weights-total");
+  if (total) total.textContent = "Total: 100%";
+}
+
+// User dragged slider `idx` to `pctNew` (0..100). Rescale the others so the
+// total stays at 100%. Same logic as the Portfolio Builder normalization.
+function advNormalizeWeights(idx, pctNew) {
+  const n = advState.weights.length;
+  if (n === 0) return;
+  pctNew = Math.max(0, Math.min(100, pctNew));
+  if (n === 1) { advState.weights[0] = 1; return; }
+
+  const newW = pctNew / 100;
+  const remaining = 1 - newW;
+  const otherSum = advState.weights.reduce((a, w, i) => a + (i === idx ? 0 : w), 0);
+
+  const out = advState.weights.slice();
+  out[idx] = newW;
+  let assignedPct = pctNew;
+  let lastOtherIdx = -1;
+  for (let i = n - 1; i >= 0; i--) if (i !== idx) { lastOtherIdx = i; break; }
+  for (let i = 0; i < n; i++) {
+    if (i === idx) continue;
+    if (i === lastOtherIdx) {
+      // Fill the rounding gap so percentages sum to exactly 100.
+      out[i] = Math.max(0, (100 - assignedPct) / 100);
+    } else if (otherSum === 0) {
+      const each = Math.floor(remaining * 100 / (n - 1));
+      out[i] = each / 100;
+      assignedPct += each;
+    } else {
+      const v = Math.round(advState.weights[i] / otherSum * remaining * 100);
+      out[i] = v / 100;
+      assignedPct += v;
+    }
+  }
+  advState.weights = out;
+}
+
+/* ── Auxiliary analyses: correlation heatmap + efficient frontier ── */
+function advRenderAux(survTickers, survFiltered, survWeights) {
+  const corrEl = document.getElementById("adv-corr");
+  const frontierEl = document.getElementById("adv-frontier");
+  const optEl = document.getElementById("adv-aux-optimal");
+  if (!corrEl || !frontierEl) return;
+
+  if (survTickers.length < 2) {
+    simShowPlaceholder(corrEl, "Add 2+ tickers to see correlations.");
+    simShowPlaceholder(frontierEl, "Add 2+ tickers to see the frontier.");
+    if (optEl) optEl.hidden = true;
+    return;
+  }
+
+  const cs = getComputedStyle(document.documentElement);
+  const accent = cs.getPropertyValue("--accent").trim();
+
+  // ── Correlation heatmap (using daily returns) ──
+  const returnSets = survFiltered.map(d => StockData.dailyReturns(d));
+  const minLen = Math.min(...returnSets.map(r => r.length));
+  if (minLen < 5) {
+    simShowPlaceholder(corrEl, "Not enough overlapping data.");
+    simShowPlaceholder(frontierEl, "Not enough overlapping data.");
+    if (optEl) optEl.hidden = true;
+    return;
+  }
+  const aligned = returnSets.map(r => r.slice(r.length - minLen));
+  const matrix = StockData.computeCorrelationMatrix(aligned);
+  simPlotlyMount(corrEl, [{
+    z: matrix, x: survTickers, y: survTickers, type: "heatmap",
+    colorscale: [[0, "#2962ff"], [0.5, "#1e222d"], [1, "#ef5350"]],
+    zmin: -1, zmax: 1,
+    text: matrix.map(row => row.map(v => v.toFixed(2))),
+    texttemplate: "%{text}",
+    textfont: { size: 11, color: "#d1d4dc" },
+  }], simPlotlyLayout({
+    margin: { l: 60, r: 50, t: 16, b: 60 },
+    xaxis: { tickangle: -45 },
+  }));
+
+  // ── Efficient frontier (Monte Carlo) ──
+  const n = aligned.length;
+  const means = aligned.map(r => r.reduce((a, b) => a + b, 0) / r.length * 252);
+  const cov = Array.from({ length: n }, () => Array(n).fill(0));
+  for (let i = 0; i < n; i++) {
+    for (let j = 0; j < n; j++) {
+      let sum = 0;
+      for (let k = 0; k < minLen; k++) sum += (aligned[i][k] - means[i] / 252) * (aligned[j][k] - means[j] / 252);
+      cov[i][j] = sum / (minLen - 1) * 252;
+    }
+  }
+
+  const portfolios = [];
+  for (let p = 0; p < 1500; p++) {
+    const w = Array.from({ length: n }, () => Math.random());
+    const ws = w.reduce((a, b) => a + b);
+    const wn = w.map(x => x / ws);
+    let ret = 0;
+    for (let i = 0; i < n; i++) ret += wn[i] * means[i];
+    let vari = 0;
+    for (let i = 0; i < n; i++) for (let j = 0; j < n; j++) vari += wn[i] * wn[j] * cov[i][j];
+    portfolios.push({ ret: ret * 100, vol: Math.sqrt(vari) * 100, weights: wn });
+  }
+
+  let userRet = 0;
+  for (let i = 0; i < n; i++) userRet += survWeights[i] * means[i];
+  let userVar = 0;
+  for (let i = 0; i < n; i++) for (let j = 0; j < n; j++) userVar += survWeights[i] * survWeights[j] * cov[i][j];
+  const userVol = Math.sqrt(userVar);
+
+  let bestSharpe = -Infinity, bestPort = null;
+  portfolios.forEach(p => {
+    const s = p.vol > 0 ? (p.ret - 2) / p.vol : 0;
+    if (s > bestSharpe) { bestSharpe = s; bestPort = p; }
+  });
+
+  const fTraces = [
+    {
+      x: portfolios.map(p => p.vol), y: portfolios.map(p => p.ret),
+      mode: "markers", type: "scatter", name: "Random",
+      marker: { size: 3, opacity: 0.35, color: portfolios.map(p => p.ret / Math.max(p.vol, 0.001)),
+        colorscale: [[0, "#ef5350"], [0.5, "#ff9800"], [1, "#26a69a"]] },
+    },
+    {
+      x: [userVol * 100], y: [userRet * 100], mode: "markers+text", type: "scatter",
+      name: "Yours", text: ["You"],
+      textposition: "top center", textfont: { color: accent, size: 12 },
+      marker: { size: 14, color: accent, symbol: "star" },
+    },
+  ];
+  if (bestPort) {
+    fTraces.push({
+      x: [bestPort.vol], y: [bestPort.ret], mode: "markers+text", type: "scatter",
+      name: "Optimal", text: ["Optimal"],
+      textposition: "bottom center", textfont: { color: "#26a69a", size: 11 },
+      marker: { size: 12, color: "#26a69a", symbol: "diamond" },
+    });
+    if (optEl) {
+      optEl.innerHTML = "<strong>Max-Sharpe weights:</strong> " +
+        survTickers.map((t, i) => `${t}: ${(bestPort.weights[i] * 100).toFixed(0)}%`).join(", ");
+      optEl.hidden = false;
+    }
+  } else if (optEl) {
+    optEl.hidden = true;
+  }
+  simPlotlyMount(frontierEl, fTraces, simPlotlyLayout({
+    margin: { l: 60, r: 50, t: 16, b: 56 },
+    xaxis: { title: "Volatility (%)" },
+    yaxis: { title: "Return (%)" },
+    legend: { x: 0.02, y: 0.98, bgcolor: "rgba(0,0,0,0)" },
+  }));
+}
+
+/* ── Crisis-specific stats panel ── */
+function advRenderCrisisStats(crisis, portfolio, qqqSeries) {
+  const wrap = document.getElementById("adv-crisis-stats");
+  const titleEl = document.getElementById("adv-crisis-stats-title");
+  if (!wrap) return;
+  if (!crisis) { wrap.hidden = true; return; }
+  wrap.hidden = false;
+  if (titleEl) titleEl.textContent = `${crisis.name} · ${crisis.start.slice(0,7)} → ${crisis.end.slice(0,7)}`;
+
+  // Portfolio drawdown WITHIN the crisis window.
+  let peak = -Infinity, maxDD = 0, worstDay = 0;
+  for (let i = 0; i < portfolio.length; i++) {
+    const v = portfolio[i].price;
+    if (v > peak) peak = v;
+    const dd = (peak - v) / peak;
+    if (dd > maxDD) maxDD = dd;
+    if (i > 0) {
+      const day = v / portfolio[i - 1].price - 1;
+      if (day < worstDay) worstDay = day;
+    }
+  }
+
+  // QQQ benchmark drawdown.
+  let qqDD = 0;
+  if (qqqSeries.length) {
+    let qPeak = -Infinity;
+    qqqSeries.forEach(p => {
+      if (p.value > qPeak) qPeak = p.value;
+      const dd = (qPeak - p.value) / qPeak;
+      if (dd > qqDD) qqDD = dd;
+    });
+  }
+
+  const set = (id, text, cls) => {
+    const el = document.getElementById(id);
+    if (!el) return;
+    el.textContent = text;
+    el.className = "adv-stat-value" + (cls ? " " + cls : "");
+  };
+  set("stat-cdd", "-" + (maxDD * 100).toFixed(1) + "%", "negative");
+  set("stat-cbench", qqqSeries.length ? "-" + (qqDD * 100).toFixed(1) + "%" : "—",
+    qqqSeries.length ? "negative" : "");
+  set("stat-cworst", (worstDay * 100).toFixed(1) + "%", worstDay < 0 ? "negative" : "");
+  // Recovery within the same window: first time after the trough where we
+  // climb back to the pre-trough peak. If there's no recovery inside the
+  // chart window, show "—" (the dataset ends at 2020-04-01 so post-2020
+  // crises like COVID have no after-period to compute against).
+  let recoveryDays = null;
+  if (portfolio.length) {
+    const startVal = portfolio[0].price;
+    const recIdx = portfolio.findIndex((p, i) => i > 0 && p.price >= startVal && portfolio.slice(0, i).some(q => q.price < startVal * 0.95));
+    if (recIdx > 0) {
+      const start = portfolio[0].date.getTime();
+      const end = portfolio[recIdx].date.getTime();
+      recoveryDays = Math.round((end - start) / 86400000);
+    }
+  }
+  set("stat-crec", recoveryDays !== null ? recoveryDays + "d" : "—");
 }
 
 /* ── Stat info popover ── */
@@ -1054,12 +1571,15 @@ document.addEventListener("DOMContentLoaded", () => {
   advRenderPremadeOptions();
   advRenderCurrent();
   advUpdatePillState();
+  advRenderWeights();
   advSetupStatPopover();
 
-  // Pill clicks open the corresponding modal.
-  document.querySelectorAll(".adv-portfolio-pill").forEach(pill => {
+  // Pill clicks open the corresponding modal. Skip pills that belong to the
+  // beginner sim (those carry data-bsim-type and are wired up in simulation.html).
+  document.querySelectorAll(".adv-portfolio-pill[data-type]").forEach(pill => {
     pill.addEventListener("click", () => {
       const type = pill.dataset.type;
+      window.__simModalTarget = "advanced";
       if (type === "custom") {
         advCustomWorking = [...advState.tickers];
         advRenderCustomSelected();
@@ -1094,9 +1614,15 @@ document.addEventListener("DOMContentLoaded", () => {
   }
   document.getElementById("adv-custom-apply")?.addEventListener("click", () => {
     if (!advCustomWorking.length) return;
-    advState.type = "custom";
-    advUpdatePillState();
-    advSetTickers([...advCustomWorking]);
+    if (window.__simModalTarget === "beginner") {
+      document.dispatchEvent(new CustomEvent("bsim-portfolio-applied", {
+        detail: { type: "custom", tickers: [...advCustomWorking] }
+      }));
+    } else {
+      advState.type = "custom";
+      advUpdatePillState();
+      advSetTickers([...advCustomWorking]);
+    }
     advCloseModal("modal-custom");
   });
 
@@ -1104,9 +1630,15 @@ document.addEventListener("DOMContentLoaded", () => {
   document.getElementById("adv-random-shuffle")?.addEventListener("click", advShuffleRandom);
   document.getElementById("adv-random-apply")?.addEventListener("click", () => {
     if (!advRandomWorking.length) return;
-    advState.type = "random";
-    advUpdatePillState();
-    advSetTickers([...advRandomWorking]);
+    if (window.__simModalTarget === "beginner") {
+      document.dispatchEvent(new CustomEvent("bsim-portfolio-applied", {
+        detail: { type: "random", tickers: [...advRandomWorking] }
+      }));
+    } else {
+      advState.type = "random";
+      advUpdatePillState();
+      advSetTickers([...advRandomWorking]);
+    }
     advCloseModal("modal-random");
   });
 
@@ -1122,7 +1654,6 @@ document.addEventListener("DOMContentLoaded", () => {
   });
   document.getElementById("adv-amount")?.addEventListener("input", advScheduleRun);
   document.getElementById("adv-crisis")?.addEventListener("change", advScheduleRun);
-  document.querySelectorAll("input[name='adv-strategy']").forEach(r => r.addEventListener("change", advScheduleRun));
 
   // Timeframe pills above the chart.
   document.getElementById("adv-timeframe")?.addEventListener("click", (e) => {
