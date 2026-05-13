@@ -358,3 +358,16 @@
     }
   });
 })();
+
+/* ── End-of-beginner-flow "Go to Expert mode" button ── */
+document.addEventListener("DOMContentLoaded", () => {
+  const btn = document.getElementById("upgrade-to-expert");
+  if (!btn) return;
+  btn.addEventListener("click", () => {
+    const toggle = document.getElementById("expert-toggle");
+    // Only flip the toggle if we're in beginner mode - clicking from
+    // expert would silently downgrade the user.
+    if (toggle && !document.body.classList.contains("expert")) toggle.click();
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  });
+});

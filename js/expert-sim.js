@@ -1642,13 +1642,24 @@ document.addEventListener("DOMContentLoaded", () => {
     advCloseModal("modal-random");
   });
 
+  // When a crisis overlay is on, runAdvancedSim ignores the term slider and
+  // start-date input - it forces the chart window to crisis.start..crisis.end.
+  // So the user moving those controls would silently have no effect. Clear
+  // the crisis dropdown first so the new term/date actually applies.
+  function clearCrisisIfSet() {
+    const sel = document.getElementById("adv-crisis");
+    if (sel && sel.value) sel.value = "";
+  }
+
   // Strategy controls - every change re-runs.
   document.getElementById("adv-term")?.addEventListener("input", () => {
+    clearCrisisIfSet();
     const m = parseInt(document.getElementById("adv-term").value, 10);
     advSetTermFromMonths(m);
     advScheduleRun();
   });
   document.getElementById("adv-start")?.addEventListener("change", () => {
+    clearCrisisIfSet();
     advSyncTermFromDate();
     advScheduleRun();
   });
@@ -1659,6 +1670,7 @@ document.addEventListener("DOMContentLoaded", () => {
   document.getElementById("adv-timeframe")?.addEventListener("click", (e) => {
     const btn = e.target.closest("button[data-tf]");
     if (!btn) return;
+    clearCrisisIfSet();
     document.querySelectorAll("#adv-timeframe button").forEach(b => b.classList.remove("active"));
     btn.classList.add("active");
     const map = { all: 120, "5y": 60, "1y": 12, "6m": 6 };

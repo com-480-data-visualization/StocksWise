@@ -340,16 +340,19 @@ html  { scroll-padding-top: calc(var(--nav-h) + 36px + 16px); }
   gap: 3rem;
   z-index: 1;
   max-width: 80%;
+  margin: 0 auto;
+  align-items: center;
 }
 
 .hero-content h1 {
-  font-size: clamp(1.8rem, 3.5vw, 2.7rem);
+  font-size: clamp(1.4rem, 2.6vw, 2.2rem);
   font-weight: 800;
-  line-height: 1.1;
+  line-height: 1.15;
   letter-spacing: -0.04em;
   color: var(--text-strong);
   margin-bottom: 0.5rem;
-  text-align: left;
+  text-align: center;
+  white-space: nowrap;
 }
   
 .accent {
@@ -366,23 +369,47 @@ html  { scroll-padding-top: calc(var(--nav-h) + 36px + 16px); }
   align-items: center;
 }
 
-/* Mosaic plots */
+/* Mosaic plots - 5 equally-sized, non-interactive thumbnails */
 .graphs-mosaic {
-  display: flex;
-  justify-content: space-between;
-  gap: 2rem;              
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 1.25rem;
+  width: 100%;
   align-items: stretch;
 }
-  
+
 .graphs-mosaic .viz-card {
-  flex: 1;                
+  flex: 1;
   text-align: center;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  /* Decorative thumbnails - no link target */
+  pointer-events: none;
+  cursor: default;
+  text-decoration: none;
+  color: var(--accent-light);
 }
-  
+
 .graphs-mosaic .viz-card img {
   width: 100%;
+  /* Force a uniform thumbnail aspect so all five cards line up regardless of
+     the underlying figure's native aspect ratio. */
+  aspect-ratio: 16 / 9;
   height: auto;
+  object-fit: cover;
+  object-position: center;
   display: block;
+  border-radius: var(--radius);
+  border: 1px solid var(--border);
+  background: var(--surface);
+}
+
+@media (max-width: 880px) {
+  .graphs-mosaic { grid-template-columns: repeat(2, 1fr); }
+}
+@media (max-width: 520px) {
+  .graphs-mosaic { grid-template-columns: 1fr; }
 }
 
 .hero-badge {
@@ -1029,6 +1056,58 @@ html  { scroll-padding-top: calc(var(--nav-h) + 36px + 16px); }
 }
 
 /* ══════════════════════════════════════════════
+   END-OF-BEGINNER UPGRADE PROMPT
+   ══════════════════════════════════════════════ */
+/* Lives inside .topic-detail (right column of the simulation section) so it
+   sits directly under the "Launch Simulator" card instead of below the
+   80vh-tall section's empty bottom. */
+.upgrade-cta-inline {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 0.6rem;
+  margin-top: 1.25rem;
+  text-align: right;
+}
+@media (max-width: 720px) {
+  .upgrade-cta-inline { align-items: center; text-align: center; }
+}
+
+/* The simulation section is the last on the page; the global 80vh min-height
+   AND the 11rem bottom padding from .topic-section-inner together leave a
+   big empty band below the button. Tighten both for this section. */
+#simulation .topic-section-inner {
+  min-height: auto;
+  padding-bottom: 3rem;
+}
+.upgrade-cta-lede {
+  margin: 0;
+  font-size: 1rem;
+  color: var(--text-muted);
+  letter-spacing: 0.02em;
+}
+.upgrade-cta-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.55rem;
+  padding: 0.95rem 2rem;
+  border: 1px solid transparent;
+  border-radius: 8px;
+  background: var(--gradient-btn);
+  color: #fff;
+  font-family: var(--font);
+  font-weight: 700;
+  font-size: 0.95rem;
+  cursor: pointer;
+  box-shadow: 0 4px 16px var(--accent-glow);
+  transition: transform 0.18s, box-shadow 0.18s;
+}
+.upgrade-cta-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 32px var(--accent-glow);
+}
+
+/* ══════════════════════════════════════════════
    FOOTER
    ══════════════════════════════════════════════ */
 footer {
@@ -1075,7 +1154,8 @@ footer a:hover { color: var(--accent-light); }
   }
   .nav-toggle { display: block; }
   .hero-stats { gap: 1.5rem; flex-wrap: wrap; }
-  .hero-content h1 { font-size: 2rem; }
+  /* Allow the title to wrap on narrow viewports - nowrap would overflow. */
+  .hero-content h1 { font-size: clamp(1.3rem, 5vw, 1.9rem); white-space: normal; }
   .ticker-tape { display: none; }
   body { padding-top: var(--nav-h); }
   html { scroll-padding-top: calc(var(--nav-h) + 16px); }

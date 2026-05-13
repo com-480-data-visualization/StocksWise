@@ -515,6 +515,36 @@
       .adv-crisis-stats-grid { grid-template-columns: repeat(2, 1fr); }
     }
 
+    /* Beginner -> Expert upgrade button under the sim */
+    .bsim-upgrade {
+      display: flex;
+      justify-content: flex-end;
+      margin-top: 1.5rem;
+    }
+    @media (max-width: 720px) {
+      .bsim-upgrade { justify-content: center; }
+    }
+    .bsim-upgrade-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.55rem;
+      padding: 0.85rem 1.6rem;
+      border: 1px solid transparent;
+      border-radius: 8px;
+      background: var(--gradient-btn);
+      color: #fff;
+      font-family: var(--font);
+      font-weight: 700;
+      font-size: 0.92rem;
+      cursor: pointer;
+      box-shadow: 0 4px 16px var(--accent-glow);
+      transition: transform 0.18s, box-shadow 0.18s;
+    }
+    .bsim-upgrade-btn:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 8px 32px var(--accent-glow);
+    }
+
     /* Aux analyses (correlation + efficient frontier) at the bottom */
     .adv-aux {
       display: grid;
@@ -633,6 +663,12 @@
     <div class="disclaimer beginner-content">
       <strong>Disclaimer:</strong> This simulator uses real historical NASDAQ close prices.
       Past performance is not indicative of future results. This is not financial advice.
+    </div>
+
+    <div class="bsim-upgrade beginner-content">
+      <button type="button" class="bsim-upgrade-btn" id="bsim-go-expert">
+        Go to Expert mode <span aria-hidden="true">→</span>
+      </button>
     </div>
 
     <!-- ══════════════════════════════════════════════
@@ -843,6 +879,12 @@
       </details>
 
       </div><!-- /.adv-research -->
+
+      <!-- Same disclaimer as beginner mode, shown at the end of the expert flow -->
+      <div class="disclaimer">
+        <strong>Disclaimer:</strong> This simulator uses real historical NASDAQ close prices.
+        Past performance is not indicative of future results. This is not financial advice.
+      </div>
     </div>
 
   </div>
@@ -1274,6 +1316,15 @@
     }
 
     document.getElementById("sim-run")?.addEventListener("click", runSimulation);
+
+    /* ── "Go to Expert mode" button under the beginner sim ── */
+    document.getElementById("bsim-go-expert")?.addEventListener("click", () => {
+      const toggle = document.getElementById("expert-toggle");
+      // Only flip the toggle if we're currently in beginner mode - clicking
+      // it from advanced would actually downgrade the user.
+      if (toggle && !document.body.classList.contains("expert")) toggle.click();
+      window.scrollTo({ top: 0, behavior: "smooth" });
+    });
 
     /* ── Beginner pills open the shared advanced modals ── */
     document.querySelectorAll(".adv-portfolio-pill[data-bsim-type]").forEach(pill => {
