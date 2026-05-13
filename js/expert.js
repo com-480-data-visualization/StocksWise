@@ -615,7 +615,7 @@ async function loadEfficientFrontier() {
   const minLen = Math.min(...returnSets.map(r => r.length));
   const aligned = returnSets.map(r => r.slice(r.length - minLen));
 
-  // Mean returns and covariance
+  // Mean returns and covariance (annualized)
   const means = aligned.map(r => r.reduce((a, b) => a + b) / r.length * 252);
   const n = aligned.length;
   const cov = Array.from({ length: n }, () => Array(n).fill(0));
@@ -629,9 +629,9 @@ async function loadEfficientFrontier() {
     }
   }
 
-  // Generate random portfolios
+  // Generate random portfolios + Sharpe per portfolio
   const portfolios = [];
-  for (let p = 0; p < 3000; p++) {
+  for (let p = 0; p < 4000; p++) {
     const w = Array.from({ length: n }, () => Math.random());
     const wSum = w.reduce((a, b) => a + b);
     const weights = w.map(x => x / wSum);
@@ -646,8 +646,17 @@ async function loadEfficientFrontier() {
       }
     }
     const vol = Math.sqrt(variance);
-    portfolios.push({ ret: ret * 100, vol: vol * 100, weights });
+    portfolios.push({ ret: ret * 100, vol: vol * 100, sharpe: ret / vol, weights });
   }
+
+  // Single-stock "portfolios" — show where 100%-in-one-name lands relative
+  // to the cloud. Usually high vol with mid return: makes the diversification
+  // benefit visually obvious.
+  const singleStocks = selectedTickers.map((t, i) => ({
+    ticker: t,
+    ret: means[i] * 100,
+    vol: Math.sqrt(cov[i][i]) * 100,
+  }));
 
   // Equal-weight portfolio
   const eqW = Array(n).fill(1 / n);
@@ -656,34 +665,148 @@ async function loadEfficientFrontier() {
   let eqVar = 0;
   for (let i = 0; i < n; i++) for (let j = 0; j < n; j++) eqVar += eqW[i] * eqW[j] * cov[i][j];
   const eqVol = Math.sqrt(eqVar);
+  const eqRetP = eqRet * 100, eqVolP = eqVol * 100;
+  const eqSharpe = eqRet / eqVol;
 
-  // Find min-variance portfolio (approximate)
+  // Min variance and max Sharpe (approximate, from the random cloud)
   let minVarPort = portfolios[0];
-  portfolios.forEach(p => { if (p.vol < minVarPort.vol) minVarPort = p; });
+  let maxSharpePort = portfolios[0];
+  portfolios.forEach(pf => {
+    if (pf.vol < minVarPort.vol) minVarPort = pf;
+    if (pf.sharpe > maxSharpePort.sharpe) maxSharpePort = pf;
+  });
+
+  // ── Build the actual efficient frontier curve ──
+  // Slice volatility into 50 bins, keep the highest-return portfolio in each
+  // bin, and discard the descending tail (the "non-efficient" lower branch).
+  // Connecting these gives a smooth upper envelope of the cloud — the curve
+  // that the term "efficient frontier" actually refers to.
+  const minVol = Math.min(...portfolios.map(p => p.vol));
+  const maxVol = Math.max(...portfolios.map(p => p.vol));
+  const nBins = 50;
+  const binStep = (maxVol - minVol) / nBins;
+  const frontier = [];
+  for (let b = 0; b < nBins; b++) {
+    const bMin = minVol + b * binStep;
+    const bMax = bMin + binStep + 1e-9;
+    let best = null;
+    for (const pf of portfolios) {
+      if (pf.vol >= bMin && pf.vol < bMax) {
+        if (!best || pf.ret > best.ret) best = pf;
+      }
+    }
+    if (best) frontier.push(best);
+  }
+  // Keep only the monotonically-increasing prefix so the curve never bends
+  // back (any portfolio with higher vol AND lower return than a previous one
+  // is dominated → not on the frontier).
+  const frontierEfficient = [];
+  let lastRet = -Infinity;
+  for (const pf of frontier) {
+    if (pf.ret > lastRet) {
+      frontierEfficient.push(pf);
+      lastRet = pf.ret;
+    }
+  }
+
+  // Composition string for hover ("AAPL 22% · MSFT 31% · NVDA 47%")
+  const fmtWeights = (w) => selectedTickers
+    .map((t, i) => `${t} ${(w[i] * 100).toFixed(0)}%`)
+    .join(" · ");
 
   container.innerHTML = "";
-  Plotly.newPlot(container, [
+  smoothPlot(container, [
     {
+      // 1. Random portfolios cloud — colored by Sharpe
       x: portfolios.map(p => p.vol), y: portfolios.map(p => p.ret),
-      mode: "markers", type: "scatter", name: "Random Portfolios",
+      customdata: portfolios.map(p => p.sharpe),
+      mode: "markers", type: "scatter", name: "Random portfolios",
       marker: {
-        size: 4, opacity: 0.4,
-        color: portfolios.map(p => p.ret / p.vol),
-        colorscale: [[0, getRedColor()], [0.5, "#ff9800"], [1, getGreenColor()]],
-        colorbar: { title: "Sharpe", thickness: 12 },
+        size: 4, opacity: 0.5,
+        color: portfolios.map(p => p.sharpe),
+        colorscale: [
+          [0.00, "#c62828"],  // poor Sharpe — deep red
+          [0.50, "#ff9800"],  // medium — orange
+          [1.00, "#26a69a"],  // strong Sharpe — teal/green
+        ],
+        colorbar: {
+          title: { text: "Sharpe", font: { color: "#d1d4dc", size: 11 } },
+          thickness: 12, len: 0.7,
+          tickfont: { color: "#787b86", size: 10 },
+          outlinewidth: 0,
+        },
+        line: { width: 0 },
       },
+      hovertemplate: "Vol: %{x:.1f}%<br>Return: %{y:.1f}%<br>Sharpe: %{customdata:.2f}<extra></extra>",
     },
     {
-      x: [eqVol * 100], y: [eqRet * 100], mode: "markers+text", type: "scatter",
-      name: "Equal Weight", text: ["Your Portfolio"],
-      textposition: "top center", textfont: { color: getAccentColor(), size: 12 },
-      marker: { size: 14, color: getAccentColor(), symbol: "star" },
+      // 2. Efficient frontier line — the actual curve
+      x: frontierEfficient.map(p => p.vol),
+      y: frontierEfficient.map(p => p.ret),
+      mode: "lines", type: "scatter", name: "Efficient frontier",
+      line: { color: "#ffd54f", width: 3, shape: "spline", smoothing: 0.6 },
+      hoverinfo: "skip",
+    },
+    {
+      // 3. Single-stock points — where 100%-of-each-name lands
+      x: singleStocks.map(s => s.vol), y: singleStocks.map(s => s.ret),
+      mode: "markers+text", type: "scatter", name: "Single stock",
+      text: singleStocks.map(s => "  " + s.ticker),
+      textposition: "middle right",
+      textfont: { color: "#d1d4dc", size: 11, family: "JetBrains Mono, monospace" },
+      marker: {
+        size: 11, color: "#ffffff", symbol: "circle",
+        line: { width: 2, color: "#1e222d" },
+      },
+      hovertemplate: "<b>100% %{text}</b><br>Vol: %{x:.1f}%<br>Return: %{y:.1f}%<extra></extra>",
+    },
+    {
+      // 4. Min-variance portfolio
+      x: [minVarPort.vol], y: [minVarPort.ret],
+      mode: "markers+text", type: "scatter", name: "Min variance",
+      text: ["  Min Vol"], textposition: "middle right",
+      textfont: { color: "#00bcd4", size: 11, family: "Inter, sans-serif" },
+      marker: { size: 14, color: "#00bcd4", symbol: "diamond", line: { width: 1.5, color: "#fff" } },
+      hovertemplate: "<b>Min variance</b><br>Vol: %{x:.1f}%<br>Return: %{y:.1f}%<br>Sharpe: " + minVarPort.sharpe.toFixed(2) + "<br><br>" + fmtWeights(minVarPort.weights) + "<extra></extra>",
+    },
+    {
+      // 5. Equal-weight reference
+      x: [eqVolP], y: [eqRetP],
+      mode: "markers+text", type: "scatter", name: "Equal weight",
+      text: ["  Equal-weight"], textposition: "top right",
+      textfont: { color: getAccentColor(), size: 11, family: "Inter, sans-serif" },
+      marker: { size: 13, color: getAccentColor(), symbol: "triangle-up", line: { width: 1.5, color: "#fff" } },
+      hovertemplate: "<b>Equal-weight</b><br>Vol: %{x:.1f}%<br>Return: %{y:.1f}%<br>Sharpe: " + eqSharpe.toFixed(2) + "<extra></extra>",
+    },
+    {
+      // 6. Max-Sharpe (tangency) — the "best" portfolio by risk-adjusted return
+      x: [maxSharpePort.vol], y: [maxSharpePort.ret],
+      mode: "markers+text", type: "scatter", name: "Max Sharpe",
+      text: ["  Max Sharpe"], textposition: "top right",
+      textfont: { color: "#ffd54f", size: 11, family: "Inter, sans-serif", weight: 700 },
+      marker: { size: 17, color: "#ffd54f", symbol: "star", line: { width: 2, color: "#1e222d" } },
+      hovertemplate: "<b>Max Sharpe portfolio</b><br>Vol: %{x:.1f}%<br>Return: %{y:.1f}%<br>Sharpe: " + maxSharpePort.sharpe.toFixed(2) + "<br><br>" + fmtWeights(maxSharpePort.weights) + "<extra></extra>",
     },
   ], plotlyLayout({
-    height: 380,
+    height: 460,
+    margin: { l: 60, r: 30, t: 30, b: 60 },
     xaxis: { title: "Annualized Volatility (%)" },
     yaxis: { title: "Annualized Return (%)" },
-    legend: { x: 0.02, y: 0.98, bgcolor: "rgba(0,0,0,0)" },
+    legend: {
+      x: 0.01, y: 0.99,
+      bgcolor: "rgba(19,23,34,0.72)",
+      bordercolor: "#2a2e39", borderwidth: 1,
+      font: { size: 10, color: "#d1d4dc" },
+    },
+    annotations: [
+      {
+        x: 0.99, y: 0.02, xref: "paper", yref: "paper",
+        text: "Hover any star/diamond to see its composition",
+        showarrow: false,
+        font: { size: 10, color: "#787b86", family: "Inter, sans-serif" },
+        xanchor: "right",
+      },
+    ],
   }), plotlyConfig());
 }
 
