@@ -78,15 +78,15 @@
       </div>
       <div class="hero-stats">
         <div class="hero-stat">
-          <span class="hero-stat-value">6,800+</span>
+          <span class="hero-stat-value" data-target="6800" data-suffix="+" data-format="comma">0</span>
           <span class="hero-stat-label">Stock tickers</span>
         </div>
         <div class="hero-stat">
-          <span class="hero-stat-value">45 yrs</span>
+          <span class="hero-stat-value" data-target="45" data-suffix=" yrs">0</span>
           <span class="hero-stat-label">Of history</span>
         </div>
         <div class="hero-stat">
-          <span class="hero-stat-value">30M+</span>
+          <span class="hero-stat-value" data-target="30" data-suffix="M+">0</span>
           <span class="hero-stat-label">Data points</span>
         </div>
       </div>
@@ -208,7 +208,7 @@
               <label class="indicator-toggle"><input type="checkbox" id="ta-ema20"><span>EMA 20</span></label>
               <label class="indicator-toggle"><input type="checkbox" id="ta-sr"><span>Support & Resistance</span></label>
             </div>
-            <p style="margin-top:0.5rem; font-size:0.85rem; color:var(--text-muted);">Toggle these overlays on the chart above - what each one means is explained right below.</p>
+            <p style="margin-top:0.5rem; font-size:0.85rem;">Toggle these overlays on the chart above - what each one means is explained right below.</p>
           </div>
 
           <div class="card reveal">
@@ -225,7 +225,7 @@
               <li><strong>SMA 200</strong> - last ~10 months. Long-term trend - many traders treat price above SMA 200 as a bullish regime, below as bearish.</li>
               <li><strong>EMA 20</strong> - same ~1-month window as SMA 20, but weighted toward recent days, so it turns faster.</li>
             </ul>
-            <p style="margin-top:0.75rem; font-size:0.85rem; color:var(--text-muted);">When price crosses <strong>above</strong> a moving average, it's often a bullish signal. When it crosses <strong>below</strong>, bearish.</p>
+            <p style="margin-top:0.75rem; font-size:0.85rem;">When price crosses <strong>above</strong> a moving average, it's often a bullish signal. When it crosses <strong>below</strong>, bearish.</p>
           </div>
 
           <div class="card reveal">
@@ -248,14 +248,14 @@
             <div class="expert-chart" id="ta-rsi-chart">
               <div class="chart-loading">Loading…</div>
             </div>
-            <p style="margin-top:0.6rem; font-size:0.85rem; color:var(--text-muted);">The chart above plots RSI through time for the ticker selected at the top of this section. The dashed lines at <strong>70</strong> and <strong>30</strong> mark the overbought/oversold thresholds - watch how the line tends to reverse soon after it pokes through them. Look for <strong>divergences</strong> too: when price keeps making new highs but RSI peaks lower each time, momentum is fading even though the price isn't - often an early warning of a trend change.</p>
+            <p style="margin-top:0.6rem; font-size:0.85rem;">The chart above plots RSI through time for the ticker selected at the top of this section. The dashed lines at <strong>70</strong> and <strong>30</strong> mark the overbought/oversold thresholds - watch how the line tends to reverse soon after it pokes through them. Look for <strong>divergences</strong> too: when price keeps making new highs but RSI peaks lower each time, momentum is fading even though the price isn't - often an early warning of a trend change.</p>
           </div>
 
           <div class="card reveal">
             <h3>Support & Resistance</h3>
             <p><strong>Support</strong> - a price floor: a level where the stock keeps stopping its fall and bouncing back up. When a stock drops to $150 and bounces 3 times, traders remember. Next time it approaches $150, they think "this is a good buying opportunity," so they buy - pushing the price back up. It becomes a self-fulfilling prophecy.</p>
             <p style="margin-top:0.75rem;"><strong>Resistance</strong> - a price ceiling: a level where the stock keeps stopping its rise and falling back down. Traders who bought at $200 and watched it fall are waiting to "get out even." When price approaches $200 again, they all sell - supply overwhelms demand - price falls again.</p>
-            <p style="margin-top:0.75rem; font-size:0.85rem; color:var(--text-muted);">Toggle <strong>Support &amp; Resistance</strong> under the candle chart at the top of this section to see these levels drawn on the price.</p>
+            <p style="margin-top:0.75rem; font-size:0.85rem;">Toggle <strong>Support &amp; Resistance</strong> under the candle chart at the top of this section to see these levels drawn on the price.</p>
           </div>
         </div>
       </div>
@@ -332,8 +332,8 @@
               <li><strong>ρ ≈ 0</strong> - returns are independent (e.g. a tech stock vs. a gold ETF). When one zigs, the other doesn't systematically zag - but it doesn't follow either. This is the sweet spot for diversification.</li>
               <li><strong>ρ ≈ −1</strong> - assets move in opposite directions. Rare in practice; the cleanest hedge but you sacrifice expected return.</li>
             </ul>
-            <p style="margin-top:0.75rem; font-size:0.85rem; color:var(--text-muted);">Why it works mathematically: portfolio variance ≈ Σ wᵢ² σᵢ² + ΣΣ wᵢ wⱼ σᵢ σⱼ ρᵢⱼ. When ρ is low, the cross-terms shrink, so the portfolio's overall volatility drops below the average volatility of its parts - <strong>risk that doesn't come at the cost of return</strong>. That is the only "free lunch" in finance.</p>
-            <p style="margin-top:0.75rem; font-size:0.85rem; color:var(--text-muted);">In practice, look for assets across <strong>different sectors</strong> (tech vs. healthcare vs. energy), <strong>different geographies</strong> (US vs. emerging markets), and <strong>different asset classes</strong> (stocks vs. bonds vs. commodities). The correlation heatmap below this card shows how tightly the major NASDAQ stocks actually move together.</p>
+            <p style="margin-top:0.75rem; font-size:0.85rem;">Why it works mathematically: portfolio variance ≈ Σ wᵢ² σᵢ² + ΣΣ wᵢ wⱼ σᵢ σⱼ ρᵢⱼ. When ρ is low, the cross-terms shrink, so the portfolio's overall volatility drops below the average volatility of its parts - <strong>risk that doesn't come at the cost of return</strong>. That is the only "free lunch" in finance.</p>
+            <p style="margin-top:0.75rem; font-size:0.85rem;">In practice, look for assets across <strong>different sectors</strong> (tech vs. healthcare vs. energy), <strong>different geographies</strong> (US vs. emerging markets), and <strong>different asset classes</strong> (stocks vs. bonds vs. commodities). The correlation heatmap below this card shows how tightly the major NASDAQ stocks actually move together.</p>
             <div class="chart-pair">
               <div class="chart-pair-item">
                 <h4>Portfolio A: 100% Tesla (volatile)</h4>
@@ -349,15 +349,12 @@
           <div class="card reveal">
             <h3>Correlation</h3>
             <p>Correlation ranges from <strong>-1</strong> (perfect inverse) to <strong>+1</strong> (move in lockstep). For diversification, you want assets with <strong>low or negative correlation</strong>. Two stocks that always rise and fall together give you no diversification benefit.</p>
-            <div class="ticker-checkboxes">
-              <label class="ticker-checkbox"><input type="checkbox" class="corr-ticker" value="AAPL" checked><span>AAPL</span></label>
-              <label class="ticker-checkbox"><input type="checkbox" class="corr-ticker" value="MSFT" checked><span>MSFT</span></label>
-              <label class="ticker-checkbox"><input type="checkbox" class="corr-ticker" value="NVDA" checked><span>NVDA</span></label>
-              <label class="ticker-checkbox"><input type="checkbox" class="corr-ticker" value="AMZN" checked><span>AMZN</span></label>
-              <label class="ticker-checkbox"><input type="checkbox" class="corr-ticker" value="GOOG" checked><span>GOOG</span></label>
-              <label class="ticker-checkbox"><input type="checkbox" class="corr-ticker" value="META"><span>META</span></label>
-              <label class="ticker-checkbox"><input type="checkbox" class="corr-ticker" value="AMD"><span>AMD</span></label>
-              <label class="ticker-checkbox"><input type="checkbox" class="corr-ticker" value="TSLA"><span>TSLA</span></label>
+            <div class="ticker-picker" id="corr-picker">
+              <div class="ticker-picker-input-wrap">
+                <input type="text" class="ticker-picker-input" placeholder="Add any NASDAQ ticker (AAPL, GOOG…)">
+                <div class="ticker-picker-results" hidden></div>
+              </div>
+              <div class="ticker-picker-chips"></div>
             </div>
             <div class="expert-chart" id="corr-heatmap" style="margin-top:0.75rem;">
               <div class="chart-loading">Loading…</div>
@@ -367,16 +364,14 @@
           <div class="card reveal">
             <h3>Sector Allocation</h3>
             <p>Spreading across <strong>different sectors</strong> matters because industries are affected by different economic forces. A tech crash won't necessarily hurt energy or healthcare stocks. The pie below shows what a balanced <strong>NASDAQ-only</strong> portfolio looks like across sectors:</p>
-            <div style="margin-top:0.75rem; padding:0.85rem 1rem; border-left:3px solid var(--accent); background:rgba(41,98,255,0.06); border-radius:6px;">
-              <p style="margin:0; font-size:0.9rem;"><strong>Important:</strong> a truly diversified portfolio should <strong>not</strong> be limited to the NASDAQ. The NASDAQ is heavily skewed toward US tech and growth names - even its "non-tech" sectors (consumer, healthcare, finance) are dominated by large American companies that often move together during US-led shocks (2000 dot-com, 2022 rate hikes).</p>
-              <p style="margin:0.5rem 0 0 0; font-size:0.9rem;">For real diversification, layer on:</p>
-              <ul class="term-list" style="margin-top:0.4rem;">
-                <li><strong>Other equity markets</strong> - S&amp;P 500 (broader US), Russell 2000 (US small caps), MSCI EAFE (developed ex-US), MSCI Emerging Markets.</li>
-                <li><strong>Other asset classes</strong> - bonds (Treasuries, investment-grade, high-yield), real estate (REITs), commodities (gold, oil), and cash equivalents.</li>
-                <li><strong>Different currencies</strong> - non-USD exposure hedges against a falling dollar.</li>
-              </ul>
-              <p style="margin:0.5rem 0 0 0; font-size:0.9rem;">The pie below is a useful <em>starting point</em> for the equity slice of a portfolio, not the whole picture.</p>
-            </div>
+            <p style="margin-top:0.85rem;"><strong>Important:</strong> a truly diversified portfolio should <strong>not</strong> be limited to the NASDAQ. The NASDAQ is heavily skewed toward US tech and growth names - even its "non-tech" sectors (consumer, healthcare, finance) are dominated by large American companies that often move together during US-led shocks (2000 dot-com, 2022 rate hikes).</p>
+            <p style="margin-top:0.5rem;">For real diversification, layer on:</p>
+            <ul class="term-list" style="margin-top:0.4rem;">
+              <li><strong>Other equity markets</strong> - S&amp;P 500 (broader US), Russell 2000 (US small caps), MSCI EAFE (developed ex-US), MSCI Emerging Markets.</li>
+              <li><strong>Other asset classes</strong> - bonds (Treasuries, investment-grade, high-yield), real estate (REITs), commodities (gold, oil), and cash equivalents.</li>
+              <li><strong>Different currencies</strong> - non-USD exposure hedges against a falling dollar.</li>
+            </ul>
+            <p style="margin-top:0.5rem;">The pie below is a useful <em>starting point</em> for the equity slice of a portfolio, not the whole picture.</p>
             <div class="expert-chart" id="sector-pie" style="margin-top:0.75rem;">
               <div class="chart-loading">Loading sector chart...</div>
             </div>
@@ -385,14 +380,13 @@
 
           <div class="card reveal">
             <h3>Efficient Frontier</h3>
-            <p>For every level of risk, there's a <strong>maximum possible return</strong>. The efficient frontier is the curve connecting the best portfolios - you can't do better without taking more risk. Portfolios below the frontier are suboptimal.</p>
-            <div class="ticker-checkboxes">
-              <label class="ticker-checkbox"><input type="checkbox" class="frontier-ticker" value="AAPL" checked><span>AAPL</span></label>
-              <label class="ticker-checkbox"><input type="checkbox" class="frontier-ticker" value="MSFT" checked><span>MSFT</span></label>
-              <label class="ticker-checkbox"><input type="checkbox" class="frontier-ticker" value="NVDA" checked><span>NVDA</span></label>
-              <label class="ticker-checkbox"><input type="checkbox" class="frontier-ticker" value="AMZN"><span>AMZN</span></label>
-              <label class="ticker-checkbox"><input type="checkbox" class="frontier-ticker" value="GOOG" checked><span>GOOG</span></label>
-              <label class="ticker-checkbox"><input type="checkbox" class="frontier-ticker" value="QQQ"><span>QQQ</span></label>
+            <p>For every level of risk, there's a <strong>maximum possible return</strong>. The <strong>efficient frontier</strong> is the curve connecting the best portfolios - you can't do better without taking more risk. The <strong>Capital Market Line</strong> is tangent to the frontier at the <strong>Ideal Market Portfolio</strong>: combining the risk-free asset with that single portfolio dominates everything to its right.</p>
+            <div class="ticker-picker" id="frontier-picker">
+              <div class="ticker-picker-input-wrap">
+                <input type="text" class="ticker-picker-input" placeholder="Add any NASDAQ ticker (AAPL, GOOG…)">
+                <div class="ticker-picker-results" hidden></div>
+              </div>
+              <div class="ticker-picker-chips"></div>
             </div>
             <div class="expert-chart" id="frontier-chart" style="margin-top:0.75rem;">
               <div class="chart-loading">Loading…</div>
@@ -566,16 +560,17 @@
             <h3>The Annotated NASDAQ Timeline</h3>
             <p>An interactive timeline of the NASDAQ-100 (QQQ) from its inception to today. Click on events or use the buttons below to zoom into key crisis periods.</p>
             <div class="timeline-events">
+              <button class="timeline-event-btn timeline-reset-btn" id="timeline-reset-btn">Full timeline</button>
               <button class="timeline-event-btn" data-event="0">1987 Black Monday</button>
               <button class="timeline-event-btn" data-event="1">2000 Dot-com Bubble</button>
               <button class="timeline-event-btn" data-event="2">2008 Financial Crisis</button>
               <button class="timeline-event-btn" data-event="3">2020 COVID Crash</button>
               <button class="timeline-event-btn" data-event="4">2022 Rate Hike Selloff</button>
             </div>
-            <div class="timeline-events-description">
-              <h3>1987 Black Monday</h3>
-              <p>Small descritpion of the event and its consequence</p>
+            <div id="nasdaq-timeline" class="expert-chart" style="min-height: 400px;">
+              <div class="chart-loading">Loading NASDAQ history…</div>
             </div>
+            <div id="timeline-info" class="timeline-info"></div>
           </div>
 
           <div class="card reveal">
@@ -637,6 +632,7 @@
   <!-- ───────── FOOTER ───────── -->
   <footer>
     <p>StocksWise - EPFL COM-480 Data Visualization 2025 · This is not financial advice.</p>
+    <p class="footer-credits">Youssef Seddik · Maxime Garambois · Gustave Lapierre</p>
   </footer>
 
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4/dist/chart.umd.min.js"></script>

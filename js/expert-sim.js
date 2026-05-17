@@ -3,6 +3,73 @@
    (Portfolio modal flows, weight sliders, aux analyses, crisis stats)
    ══════════════════════════════════════════════ */
 
+/* ── Mean-variance helpers: linear solve + analytical efficient frontier ──
+   Closed-form tangency w ∝ Σ⁻¹(μ − rf·1) and the hyperbolic frontier:
+       σ²(μ) = (C μ² − 2A μ + B) / D
+   These are duplicated from expert.js so the sim page (which doesn't
+   load expert.js) can use them too. */
+function _linsolve(A, b) {
+  const n = A.length;
+  const M = A.map((row, i) => [...row, b[i]]);
+  for (let i = 0; i < n; i++) {
+    let maxRow = i, maxVal = Math.abs(M[i][i]);
+    for (let k = i + 1; k < n; k++) {
+      if (Math.abs(M[k][i]) > maxVal) { maxRow = k; maxVal = Math.abs(M[k][i]); }
+    }
+    if (maxVal < 1e-12) return null;
+    [M[i], M[maxRow]] = [M[maxRow], M[i]];
+    for (let k = i + 1; k < n; k++) {
+      const f = M[k][i] / M[i][i];
+      for (let j = i; j <= n; j++) M[k][j] -= f * M[i][j];
+    }
+  }
+  const x = Array(n).fill(0);
+  for (let i = n - 1; i >= 0; i--) {
+    let s = M[i][n];
+    for (let j = i + 1; j < n; j++) s -= M[i][j] * x[j];
+    x[i] = s / M[i][i];
+  }
+  return x;
+}
+
+function _analyticalFrontier(means, cov, rf) {
+  const n = means.length;
+  const ones = Array(n).fill(1);
+  const excess = means.map(m => m - rf);
+  const z = _linsolve(cov, excess);
+  if (!z) return null;
+  const sumZ = z.reduce((a, b) => a + b, 0);
+  if (!isFinite(sumZ) || Math.abs(sumZ) < 1e-12) return null;
+  const wTan = z.map(zi => zi / sumZ);
+  let muTan = 0;
+  for (let i = 0; i < n; i++) muTan += wTan[i] * means[i];
+  let varTan = 0;
+  for (let i = 0; i < n; i++) for (let j = 0; j < n; j++) varTan += wTan[i] * wTan[j] * cov[i][j];
+  const sigTan = Math.sqrt(Math.max(0, varTan));
+
+  const sigmaInvMu  = _linsolve(cov, means);
+  const sigmaInvOne = _linsolve(cov, ones);
+  let frontier = null;
+  if (sigmaInvMu && sigmaInvOne) {
+    const A = sigmaInvMu.reduce((s, v) => s + v, 0);
+    const B = sigmaInvMu.reduce((s, v, i) => s + v * means[i], 0);
+    const C = sigmaInvOne.reduce((s, v) => s + v, 0);
+    const D = B * C - A * A;
+    if (D > 1e-12 && C > 0) {
+      const muMin = A / C;
+      const muMax = Math.max(muTan, ...means) * 1.15;
+      frontier = [];
+      const steps = 120;
+      for (let k = 0; k <= steps; k++) {
+        const mu = muMin + (muMax - muMin) * (k / steps);
+        const sigSq = (C * mu * mu - 2 * A * mu + B) / D;
+        if (sigSq > 0) frontier.push({ mu, sig: Math.sqrt(sigSq) });
+      }
+    }
+  }
+  return { wTan, muTan, sigTan, frontier };
+}
+
 /* ── Populate all ticker-select dropdowns with full dataset ── */
 (async function populateTickerSelects() {
   const meta = await StockData.loadMeta();
@@ -317,12 +384,26 @@ async function runPortfolioBuilder() {
     for (let i = 0; i < n; i++) for (let j = 0; j < n; j++) userVar += weights[i] * weights[j] * cov[i][j];
     const userVol = Math.sqrt(userVar);
 
-    // Find optimal (max Sharpe)
-    let bestSharpe = -Infinity, bestPort = null;
-    portfolios.forEach(p => {
-      const s = p.vol > 0 ? (p.ret - 2) / p.vol : 0;
-      if (s > bestSharpe) { bestSharpe = s; bestPort = p; }
-    });
+    // Analytical tangency portfolio. Fall back to long-only best Sharpe if
+    // the closed-form solution requires shorting any asset (that diamond
+    // would land far outside the long-only feasible cloud).
+    const PB_RF = 2;
+    const analytical = _analyticalFrontier(means, cov, PB_RF / 100);
+    const allLong = analytical && analytical.wTan.every(w => isFinite(w) && w >= -1e-6);
+    let bestPort = null;
+    if (allLong) {
+      bestPort = {
+        ret: analytical.muTan * 100,
+        vol: analytical.sigTan * 100,
+        weights: analytical.wTan,
+      };
+    } else {
+      let bestSharpe = -Infinity;
+      portfolios.forEach(p => {
+        const s = p.vol > 0 ? (p.ret - PB_RF) / p.vol : 0;
+        if (s > bestSharpe) { bestSharpe = s; bestPort = p; }
+      });
+    }
 
     const fTraces = [
       {
@@ -338,16 +419,59 @@ async function runPortfolioBuilder() {
       },
     ];
 
-    if (bestPort) {
+    // Axis bounds derived from the cloud + user portfolio. Tangency only
+    // counted if it sits inside the cloud-derived bounds (otherwise it
+    // would crush the cloud into one corner of the plot).
+    const pbAllVols = portfolios.map(p => p.vol).concat([userVol * 100]);
+    const pbAllRets = portfolios.map(p => p.ret).concat([userRet * 100]);
+    const pbCloudVolMax = Math.max(...pbAllVols);
+    const pbCloudRetMax = Math.max(...pbAllRets);
+    const pbTangencyInView = bestPort
+      && bestPort.vol <= pbCloudVolMax * 1.25
+      && bestPort.ret <= pbCloudRetMax * 1.25;
+    if (pbTangencyInView) { pbAllVols.push(bestPort.vol); pbAllRets.push(bestPort.ret); }
+    const pbXMax = Math.max(...pbAllVols) * 1.08;
+    const pbYMin = Math.min(0, ...pbAllRets) - 2;
+    const pbYMax = Math.max(...pbAllRets) * 1.12;
+    let pbFrontierMinVol = null;
+    if (analytical && analytical.frontier && analytical.frontier.length > 1) {
+      const pts = analytical.frontier
+        .map(p => ({ x: p.sig * 100, y: p.mu * 100 }))
+        .filter(p => p.x <= pbXMax * 1.02 && p.y >= pbYMin && p.y <= pbYMax);
+      if (pts.length > 1) {
+        pbFrontierMinVol = pts[0].x;
+        fTraces.push({
+          x: pts.map(p => p.x), y: pts.map(p => p.y),
+          mode: "lines", type: "scatter", name: "Efficient frontier",
+          line: { color: "#26a69a", width: 2 },
+          hoverinfo: "skip", showlegend: false,
+        });
+      }
+    }
+
+    if (bestPort && pbTangencyInView) {
+      // Capital Market Line - trimmed to the cloud region so the empty
+      // bottom-left segment doesn't dominate the chart.
+      const cloudMinVol = Math.min(...portfolios.map(p => p.vol));
+      const cmlStartX = pbFrontierMinVol != null ? pbFrontierMinVol : cloudMinVol * 0.85;
+      const slope = (bestPort.ret - PB_RF) / bestPort.vol;
+      const cmlStartY = PB_RF + slope * cmlStartX;
+      fTraces.push({
+        x: [cmlStartX, bestPort.vol], y: [cmlStartY, bestPort.ret],
+        mode: "lines", type: "scatter", name: "Capital Market Line",
+        line: { color: "#26a69a", width: 1.5, dash: "dot" },
+        hoverinfo: "skip", showlegend: false,
+      });
       fTraces.push({
         x: [bestPort.vol], y: [bestPort.ret], mode: "markers+text", type: "scatter",
         name: "Optimal", text: ["Optimal"],
         textposition: "bottom center", textfont: { color: "#26a69a", size: 11 },
         marker: { size: 12, color: "#26a69a", symbol: "diamond" },
       });
-      // Show optimal weights
+    }
+    if (bestPort) {
       const optEl = document.getElementById("pb-optimal");
-      if (optEl && bestPort) {
+      if (optEl) {
         optEl.innerHTML = "<strong>Optimal weights:</strong> " + pbTickers.map((t, i) => `${t}: ${(bestPort.weights[i] * 100).toFixed(0)}%`).join(", ");
         optEl.style.display = "block";
       }
@@ -356,8 +480,8 @@ async function runPortfolioBuilder() {
     frontierEl.innerHTML = "";
     Plotly.newPlot(frontierEl, fTraces, simPlotlyLayout({
       height: 320,
-      xaxis: { title: "Volatility (%)" },
-      yaxis: { title: "Return (%)" },
+      xaxis: { title: "Volatility (%)", range: [0, pbXMax] },
+      yaxis: { title: "Return (%)", range: [pbYMin, pbYMax] },
       legend: { x: 0.02, y: 0.98, bgcolor: "rgba(0,0,0,0)" },
     }), simPlotlyConfig());
   }
@@ -1176,8 +1300,11 @@ function advRenderAux(survTickers, survFiltered, survWeights) {
 
   const cs = getComputedStyle(document.documentElement);
   const accent = cs.getPropertyValue("--accent").trim();
+  const textStrong = cs.getPropertyValue("--text-strong").trim() || "#d1d4dc";
+  const textMuted  = cs.getPropertyValue("--text-muted").trim() || "#787b86";
+  const RISK_FREE_PCT = 2; // Annualized risk-free rate used by Sharpe / CML.
 
-  // ── Correlation heatmap (using daily returns) ──
+  // ── Correlation heatmap (daily-return correlation, -1 = inverse, +1 = lockstep) ──
   const returnSets = survFiltered.map(d => StockData.dailyReturns(d));
   const minLen = Math.min(...returnSets.map(r => r.length));
   if (minLen < 5) {
@@ -1188,19 +1315,35 @@ function advRenderAux(survTickers, survFiltered, survWeights) {
   }
   const aligned = returnSets.map(r => r.slice(r.length - minLen));
   const matrix = StockData.computeCorrelationMatrix(aligned);
+  // Per-ticker average off-diagonal correlation - useful as a "diversification
+  // score" displayed alongside each row label.
+  const avgCorr = matrix.map((row, i) => {
+    const others = row.filter((_, j) => j !== i);
+    return others.reduce((a, b) => a + b, 0) / others.length;
+  });
+  const tickerLabels = survTickers.map((t, i) => `${t} (${avgCorr[i].toFixed(2)})`);
   simPlotlyMount(corrEl, [{
-    z: matrix, x: survTickers, y: survTickers, type: "heatmap",
+    z: matrix, x: survTickers, y: tickerLabels, type: "heatmap",
     colorscale: [[0, "#2962ff"], [0.5, "#1e222d"], [1, "#ef5350"]],
-    zmin: -1, zmax: 1,
+    zmin: -1, zmax: 1, zmid: 0,
     text: matrix.map(row => row.map(v => v.toFixed(2))),
     texttemplate: "%{text}",
-    textfont: { size: 11, color: "#d1d4dc" },
+    textfont: { size: 11, color: textStrong },
+    colorbar: {
+      title: { text: "ρ", font: { size: 11, color: textMuted } },
+      tickfont: { color: textMuted, size: 10 },
+      thickness: 10, len: 0.85,
+      tickvals: [-1, 0, 1],
+      ticktext: ["−1<br>inverse", "0<br>indep.", "+1<br>lockstep"],
+    },
+    hovertemplate: "<b>%{y} vs %{x}</b><br>r = %{z:.2f}<extra></extra>",
   }], simPlotlyLayout({
-    margin: { l: 60, r: 50, t: 16, b: 60 },
-    xaxis: { tickangle: -45 },
+    margin: { l: 110, r: 30, t: 12, b: 70 },
+    xaxis: { tickangle: -45, side: "bottom" },
+    yaxis: { autorange: "reversed", automargin: true },
   }));
 
-  // ── Efficient frontier (Monte Carlo) ──
+  // ── Efficient frontier (Monte Carlo) + Capital Market Line ──
   const n = aligned.length;
   const means = aligned.map(r => r.reduce((a, b) => a + b, 0) / r.length * 252);
   const cov = Array.from({ length: n }, () => Array(n).fill(0));
@@ -1224,52 +1367,192 @@ function advRenderAux(survTickers, survFiltered, survWeights) {
     portfolios.push({ ret: ret * 100, vol: Math.sqrt(vari) * 100, weights: wn });
   }
 
+  // Individual asset positions in (vol, return) space - matches the "Inferior
+  // portfolios & Individual Assets" cloud in the reference image.
+  const assetPoints = survTickers.map((t, i) => ({
+    ticker: t,
+    ret: means[i] * 100,
+    vol: Math.sqrt(cov[i][i]) * 100,
+  }));
+
   let userRet = 0;
   for (let i = 0; i < n; i++) userRet += survWeights[i] * means[i];
   let userVar = 0;
   for (let i = 0; i < n; i++) for (let j = 0; j < n; j++) userVar += survWeights[i] * survWeights[j] * cov[i][j];
   const userVol = Math.sqrt(userVar);
 
-  let bestSharpe = -Infinity, bestPort = null;
-  portfolios.forEach(p => {
-    const s = p.vol > 0 ? (p.ret - 2) / p.vol : 0;
-    if (s > bestSharpe) { bestSharpe = s; bestPort = p; }
-  });
+  // Analytical tangency portfolio. Fall back to long-only best Sharpe if
+  // the closed-form solution requires shorting any asset.
+  const advAnalytical = _analyticalFrontier(means, cov, RISK_FREE_PCT / 100);
+  const advAllLong = advAnalytical && advAnalytical.wTan.every(w => isFinite(w) && w >= -1e-6);
+  let bestPort = null;
+  if (advAllLong) {
+    bestPort = {
+      ret: advAnalytical.muTan * 100,
+      vol: advAnalytical.sigTan * 100,
+      weights: advAnalytical.wTan,
+    };
+  } else {
+    let bestSharpe = -Infinity;
+    portfolios.forEach(p => {
+      const s = p.vol > 0 ? (p.ret - RISK_FREE_PCT) / p.vol : 0;
+      if (s > bestSharpe) { bestSharpe = s; bestPort = p; }
+    });
+  }
 
+  // Axis bounds: cloud + assets + user portfolio. Tangency only if it sits
+  // inside cloud-derived bounds; otherwise an out-of-range tangency would
+  // crush the cloud into one corner.
+  const allVols = portfolios.map(p => p.vol).concat(assetPoints.map(a => a.vol), [userVol * 100]);
+  const allRets = portfolios.map(p => p.ret).concat(assetPoints.map(a => a.ret), [userRet * 100]);
+  const advCloudVolMax = Math.max(...allVols);
+  const advCloudRetMax = Math.max(...allRets);
+  const advTangencyInView = bestPort
+    && bestPort.vol <= advCloudVolMax * 1.25
+    && bestPort.ret <= advCloudRetMax * 1.25;
+  if (advTangencyInView) { allVols.push(bestPort.vol); allRets.push(bestPort.ret); }
+  const xMax = Math.max(...allVols) * 1.08;
+  const yMin = Math.min(0, ...allRets) - 2;
+  const yMax = Math.max(...allRets) * 1.12;
+
+  // Markers carry no inline text labels - the chart got too cramped before.
+  // Each special point is identified by a small annotation with an arrow
+  // (matching the reference image) and a hover tooltip.
   const fTraces = [
+    // Random portfolios cloud
     {
       x: portfolios.map(p => p.vol), y: portfolios.map(p => p.ret),
-      mode: "markers", type: "scatter", name: "Random",
-      marker: { size: 3, opacity: 0.35, color: portfolios.map(p => p.ret / Math.max(p.vol, 0.001)),
-        colorscale: [[0, "#ef5350"], [0.5, "#ff9800"], [1, "#26a69a"]] },
+      mode: "markers", type: "scatter", name: "Random portfolios",
+      marker: {
+        size: 3, opacity: 0.35,
+        color: portfolios.map(p => p.ret / Math.max(p.vol, 0.001)),
+        colorscale: [[0, "#ef5350"], [0.5, "#ff9800"], [1, "#26a69a"]],
+      },
+      hovertemplate: "Vol: %{x:.1f}%<br>Return: %{y:.1f}%<extra></extra>",
+      showlegend: false,
     },
+    // Individual constituent assets
     {
-      x: [userVol * 100], y: [userRet * 100], mode: "markers+text", type: "scatter",
-      name: "Yours", text: ["You"],
-      textposition: "top center", textfont: { color: accent, size: 12 },
-      marker: { size: 14, color: accent, symbol: "star" },
+      x: assetPoints.map(a => a.vol), y: assetPoints.map(a => a.ret),
+      mode: "markers+text", type: "scatter", name: "Individual assets",
+      text: assetPoints.map(a => a.ticker),
+      textposition: "top right",
+      textfont: { color: textMuted, size: 10 },
+      marker: { size: 9, color: "rgba(216, 220, 232, 0.85)", line: { color: textStrong, width: 1 } },
+      hovertemplate: "<b>%{text}</b><br>Vol: %{x:.1f}%<br>Return: %{y:.1f}%<extra></extra>",
+      showlegend: false,
+    },
+    // The user's actual portfolio (weighted)
+    {
+      x: [userVol * 100], y: [userRet * 100], mode: "markers", type: "scatter",
+      name: "Your portfolio",
+      marker: { size: 16, color: accent, symbol: "star", line: { color: "#fff", width: 1 } },
+      hovertemplate: "<b>Your portfolio</b><br>Vol: %{x:.1f}%<br>Return: %{y:.1f}%<extra></extra>",
+      showlegend: false,
     },
   ];
-  if (bestPort) {
+  const layoutShapes = [];
+  const layoutAnnots = [];
+
+  // Analytical efficient frontier curve - drawn before the markers so the
+  // tangency diamond sits on top.
+  let advFrontierMinVol = null;
+  if (advAnalytical && advAnalytical.frontier && advAnalytical.frontier.length > 1) {
+    const pts = advAnalytical.frontier
+      .map(p => ({ x: p.sig * 100, y: p.mu * 100 }))
+      .filter(p => p.x <= xMax * 1.02 && p.y >= yMin && p.y <= yMax);
+    if (pts.length > 1) {
+      advFrontierMinVol = pts[0].x;
+      fTraces.push({
+        x: pts.map(p => p.x), y: pts.map(p => p.y),
+        mode: "lines", type: "scatter", name: "Efficient frontier",
+        line: { color: "#26a69a", width: 2 },
+        hovertemplate: "Efficient frontier<br>Vol: %{x:.1f}%<br>Return: %{y:.1f}%<extra></extra>",
+        showlegend: false,
+      });
+    }
+  }
+
+  // Tangency portfolio = "Ideal Market Portfolio" + Capital Market Line.
+  // Only render the CML/diamond if the tangency falls inside the cloud-
+  // derived axis bounds; otherwise we'd dominate the plot with one point.
+  if (bestPort && advTangencyInView) {
+    const cloudMinVol = Math.min(...portfolios.map(p => p.vol));
+    const cmlStartX = advFrontierMinVol != null ? advFrontierMinVol : cloudMinVol * 0.85;
+    const slope = (bestPort.ret - RISK_FREE_PCT) / bestPort.vol;
+    const cmlStartY = RISK_FREE_PCT + slope * cmlStartX;
     fTraces.push({
-      x: [bestPort.vol], y: [bestPort.ret], mode: "markers+text", type: "scatter",
-      name: "Optimal", text: ["Optimal"],
-      textposition: "bottom center", textfont: { color: "#26a69a", size: 11 },
-      marker: { size: 12, color: "#26a69a", symbol: "diamond" },
+      x: [cmlStartX, bestPort.vol], y: [cmlStartY, bestPort.ret],
+      mode: "lines", type: "scatter", name: "Capital Market Line",
+      line: { color: "#26a69a", width: 1.5, dash: "dot" },
+      hovertemplate: "Capital Market Line<extra></extra>",
+      showlegend: false,
     });
+    fTraces.push({
+      x: [bestPort.vol], y: [bestPort.ret], mode: "markers", type: "scatter",
+      name: "Ideal Market Portfolio",
+      marker: { size: 14, color: "#26a69a", symbol: "diamond", line: { color: "#fff", width: 1 } },
+      hovertemplate: "<b>Ideal Market Portfolio</b><br>Vol: %{x:.1f}%<br>Return: %{y:.1f}%<extra></extra>",
+      showlegend: false,
+    });
+    layoutAnnots.push({
+      x: bestPort.vol, y: bestPort.ret,
+      ax: 38, ay: -34,
+      text: "Ideal Market<br>Portfolio",
+      showarrow: true, arrowcolor: "#26a69a", arrowwidth: 1, arrowhead: 2, arrowsize: 0.8,
+      font: { color: "#26a69a", size: 10 },
+      xanchor: "left", yanchor: "bottom",
+      align: "left",
+      bgcolor: "rgba(15,18,28,0.85)", borderpad: 3,
+    });
+  }
+  if (bestPort) {
     if (optEl) {
-      optEl.innerHTML = "<strong>Max-Sharpe weights:</strong> " +
+      optEl.innerHTML = "<strong>Ideal Market Portfolio weights (max Sharpe):</strong> " +
         survTickers.map((t, i) => `${t}: ${(bestPort.weights[i] * 100).toFixed(0)}%`).join(", ");
       optEl.hidden = false;
     }
   } else if (optEl) {
     optEl.hidden = true;
   }
+
+  // Risk-free dashed reference at y = RISK_FREE_PCT
+  layoutShapes.push({
+    type: "line", x0: 0, x1: xMax, y0: RISK_FREE_PCT, y1: RISK_FREE_PCT,
+    line: { color: textMuted, width: 1, dash: "dash" },
+  });
+  layoutAnnots.push({
+    x: 0, y: RISK_FREE_PCT,
+    text: " Risk-free " + RISK_FREE_PCT + "%",
+    showarrow: false, xanchor: "left", yanchor: "bottom",
+    font: { color: textMuted, size: 10 },
+  });
+  // "You" callout above the user star, with offset arrow so it doesn't sit on top of the diamond.
+  layoutAnnots.push({
+    x: userVol * 100, y: userRet * 100,
+    ax: -28, ay: -22,
+    text: "You", showarrow: true, arrowcolor: accent, arrowwidth: 1, arrowhead: 2, arrowsize: 0.8,
+    xanchor: "right", yanchor: "bottom",
+    font: { color: accent, size: 11 },
+  });
+  // "Inferior portfolios" annotation - placed in the empty bottom-right
+  // quadrant of the plot.
+  layoutAnnots.push({
+    x: xMax * 0.97, y: yMin + (yMax - yMin) * 0.10,
+    xanchor: "right",
+    text: "Inferior portfolios &<br>individual assets",
+    showarrow: false,
+    font: { color: textMuted, size: 10, family: "Inter, sans-serif" },
+    align: "right",
+  });
+
   simPlotlyMount(frontierEl, fTraces, simPlotlyLayout({
-    margin: { l: 60, r: 50, t: 16, b: 56 },
-    xaxis: { title: "Volatility (%)" },
-    yaxis: { title: "Return (%)" },
-    legend: { x: 0.02, y: 0.98, bgcolor: "rgba(0,0,0,0)" },
+    margin: { l: 70, r: 30, t: 16, b: 60 },
+    xaxis: { title: "Expected Risk (annualized volatility, %) →", range: [0, xMax] },
+    yaxis: { title: "Expected Return (%) ↑", range: [yMin, yMax] },
+    showlegend: false,
+    shapes: layoutShapes,
+    annotations: layoutAnnots,
   }));
 }
 

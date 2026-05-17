@@ -107,7 +107,7 @@
       letter-spacing: -0.03em;
     }
     .sim-header p {
-      color: var(--text-muted);
+      color: var(--text);
       font-size: 0.9rem;
       margin-top: 0.35rem;
     }
@@ -546,6 +546,17 @@
     }
 
     /* Aux analyses (correlation + efficient frontier) at the bottom */
+    .adv-aux-hint {
+      margin-top: 1rem;
+      padding: 0.6rem 0.9rem;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-left: 3px solid var(--accent);
+      border-radius: var(--radius);
+      font-size: 0.82rem;
+      color: var(--text);
+    }
+    .adv-aux-hint strong { color: var(--text-strong); }
     .adv-aux {
       display: grid;
       grid-template-columns: 1fr 1fr;
@@ -569,8 +580,8 @@
       border-bottom: 1px solid var(--border);
     }
     .adv-aux-chart {
-      height: 280px;
-      min-height: 280px;
+      height: 360px;
+      min-height: 360px;
     }
     .adv-aux-optimal {
       margin-top: 0.75rem;
@@ -798,6 +809,9 @@
       </div>
 
       <!-- Auxiliary analyses - rendered when 2+ tickers selected -->
+      <div class="adv-aux-hint">
+        Want to compare a specific ticker? Use the <strong>Custom</strong> pill above to add any NASDAQ stock to the analysis.
+      </div>
       <div class="adv-aux" id="adv-aux">
         <div class="adv-aux-card">
           <div class="adv-aux-title">Correlation Heatmap</div>
@@ -863,6 +877,11 @@
     <div class="adv-popover-title"></div>
     <div class="adv-popover-desc"></div>
   </div>
+
+  <footer>
+    <p>StocksWise - EPFL COM-480 Data Visualization 2025 · This is not financial advice.</p>
+    <p class="footer-credits">Youssef Seddik · Maxime Garambois · Gustave Lapierre</p>
+  </footer>
 
   <script src="https://cdn.plot.ly/plotly-2.27.0.min.js"></script>
   <script src="../js/data-loader.js"></script>

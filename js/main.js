@@ -371,3 +371,39 @@ document.addEventListener("DOMContentLoaded", () => {
     window.scrollTo({ top: 0, behavior: "smooth" });
   });
 });
+
+/* ── Hero stat counter animation (count up from 0 on first view) ── */
+document.addEventListener("DOMContentLoaded", () => {
+  const els = document.querySelectorAll(".hero-stat-value[data-target]");
+  if (!els.length) return;
+
+  const reduceMotion = window.matchMedia?.("(prefers-reduced-motion: reduce)").matches;
+  const easeOut = (t) => 1 - Math.pow(1 - t, 3);
+  const formatNum = (n, fmt) => fmt === "comma" ? Math.round(n).toLocaleString("en-US") : String(Math.round(n));
+
+  const runCounter = (el) => {
+    if (el.dataset.done === "1") return;
+    el.dataset.done = "1";
+    const target = parseFloat(el.dataset.target) || 0;
+    const suffix = el.dataset.suffix || "";
+    const fmt = el.dataset.format;
+    if (reduceMotion) { el.textContent = formatNum(target, fmt) + suffix; return; }
+
+    const duration = 1800;
+    const start = performance.now();
+    const tick = (now) => {
+      const t = Math.min(1, (now - start) / duration);
+      el.textContent = formatNum(target * easeOut(t), fmt) + suffix;
+      if (t < 1) requestAnimationFrame(tick);
+    };
+    requestAnimationFrame(tick);
+  };
+
+  if (!("IntersectionObserver" in window)) { els.forEach(runCounter); return; }
+  const io = new IntersectionObserver((entries) => {
+    entries.forEach((entry) => {
+      if (entry.isIntersecting) { runCounter(entry.target); io.unobserve(entry.target); }
+    });
+  }, { threshold: 0.4 });
+  els.forEach((el) => io.observe(el));
+});
