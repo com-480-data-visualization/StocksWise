@@ -26,6 +26,7 @@
         <li><a href="#etfs" data-beginner="ETFs" data-expert="Portfolio">ETFs</a></li>
         <li><a href="#risks" data-beginner="Risks" data-expert="Risk Metrics">Risks</a></li>
         <li><a href="#simulation" data-beginner="Simulation" data-expert="History">Simulation</a></li>
+        <li class="expert-content nav-sim-link"><a href="pages/simulation.html">Simulator</a></li>
       </ul>
       <button class="theme-toggle" id="theme-toggle" aria-label="Toggle theme">
         <svg class="icon-moon" viewBox="0 0 24 24"><path d="M21 12.79A9 9 0 1 1 11.21 3a7 7 0 0 0 9.79 9.79z"/></svg>
@@ -527,6 +528,8 @@
       <div class="topic-section-inner">
         <div class="topic-label">
           <div class="sticky-label">
+            <span class="section-number beginner-content">Simulator</span>
+            <span class="section-number expert-content">Module 04</span>
             <h2 class="beginner-content">Our Simulation</h2>
             <h2 class="expert-content">Market History & Psychology</h2>
             <p class="section-desc beginner-content">Travel back in time and see what your money could have done.</p>
@@ -607,9 +610,25 @@
             <script>document.addEventListener("DOMContentLoaded", () => { if (document.body.classList.contains("expert")) setTimeout(loadVolatilityClustering, 900); document.addEventListener("sw-mode-change", (e) => { if (e.detail.expert) setTimeout(loadVolatilityClustering, 600); }); });</script>
           </div>
 
+        </div>
+      </div>
+    </section>
+
+    <!-- SIMULATOR LAUNCHER (expert mode only) -->
+    <div class="sim-launch-divider expert-content" aria-hidden="true"></div>
+    <section id="sim-launch" class="topic-section expert-content">
+      <div class="topic-section-inner sim-launch-inner">
+        <div class="topic-label">
+          <div class="sticky-label">
+            <span class="section-number">Simulator</span>
+            <h2>Put it into practice</h2>
+            <p class="section-desc">Backtest strategies, build portfolios, and stress-test them against historical crises.</p>
+          </div>
+        </div>
+        <div class="topic-detail">
           <div class="card card-highlight reveal">
             <h3>Simulation Lab</h3>
-            <p>Put your knowledge to the test. The expert simulation lab includes a <strong>Strategy Backtester</strong>, <strong>Portfolio Builder</strong>, and <strong>Crisis Stress Test</strong>.</p>
+            <p>Put your knowledge to the test. The expert simulation lab includes a <strong>Portfolio Builder</strong>, <strong>Crisis Stress Test</strong>, and aux analyses (correlation heatmap, efficient frontier) computed from the portfolio you build.</p>
             <a href="pages/simulation.html" class="btn-sim">Launch Simulation Lab <span>→</span></a>
           </div>
         </div>

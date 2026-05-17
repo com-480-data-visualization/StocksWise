@@ -45,6 +45,7 @@
   --link-hover:   #fff;
   --glow-opacity: 0.09;
   --card-shadow:  rgba(0, 0, 0, 0.3);
+  --section-tint: rgba(30, 34, 45, 0.4);
 }
 
 /* ── Light Theme ── */
@@ -78,6 +79,7 @@ body.light {
   --link-hover:   #131722;
   --glow-opacity: 0.06;
   --card-shadow:  rgba(0, 0, 0, 0.06);
+  --section-tint: rgba(41, 98, 255, 0.04);
 }
 
 html {
@@ -164,6 +166,17 @@ strong { color: var(--text-strong); }
   color: #fff;
   background: var(--accent);
   box-shadow: 0 2px 8px var(--accent-glow);
+}
+
+/* Sim link in the expert nav - small divider so it reads as a separate
+   category (the actual simulator app, not an in-page module). */
+body.expert .nav-sim-link {
+  margin-left: 0.5rem;
+  padding-left: 0.6rem;
+  border-left: 1px solid var(--border);
+}
+body.expert .nav-sim-link a {
+  color: var(--accent-light);
 }
 
 /* ── Theme Toggle ── */
@@ -567,7 +580,7 @@ html  { scroll-padding-top: calc(var(--nav-h) + 36px + 16px); }
 
 /* Alternating subtle bg tint for rhythm */
 .topic-section:nth-child(even) {
-  background: linear-gradient(180deg, transparent 0%, rgba(30, 34, 45, 0.4) 50%, transparent 100%);
+  background: linear-gradient(180deg, transparent 0%, var(--section-tint) 50%, transparent 100%);
 }
 
 .topic-label { position: relative; }
@@ -1235,6 +1248,7 @@ body.expert .expert-toggle-switch::after {
 body.expert .beginner-content { display: none !important; }
 body.expert .expert-content { display: block !important; }
 body.expert .topic-detail.expert-content { display: flex !important; }
+body.expert .section-number.expert-content { display: inline-block !important; }
 
 /* Expert section accent colors */
 body.expert #stocks .section-number { color: #ff9800; background: rgba(255, 152, 0, 0.1); }
@@ -1246,6 +1260,23 @@ body.expert #stocks .section-glow { background: #ff9800; }
 body.expert #etfs .section-glow { background: #00bcd4; }
 body.expert #risks .section-glow { background: #f44336; }
 body.expert #simulation .section-glow { background: #9c27b0; }
+
+/* Section number color for the expert-only Simulator launcher block. */
+body.expert #sim-launch .section-number { color: var(--accent-light); background: var(--accent-dim); }
+
+/* Thin divider above the expert-only Simulator launcher, visually separating
+   it from the 4 in-page modules (it's the gateway to the external sim app). */
+.sim-launch-divider {
+  max-width: 880px;
+  margin: 0 auto;
+  height: 1px;
+  background: linear-gradient(90deg, transparent 0%, var(--border-light) 50%, transparent 100%);
+}
+#sim-launch .topic-section-inner {
+  min-height: auto;
+  padding-top: 3rem;
+  padding-bottom: 3rem;
+}
 
 /* ── Expert Controls ── */
 .expert-controls {
