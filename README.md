@@ -133,3 +133,7 @@ Individual growth stocks (NVIDIA, Tesla) exhibit 2–4x the volatility of the QQ
 See PDF "Milestone 2"
 
 ## Milestone 3
+
+A screencast shows live interactions with the visualizations: [video]()
+A process book shows the design process moving from ideas to sketches, and from a high fidelity prototype to a final web version: [process book]()
+The final live prototype can be found at this link: [website](https://com-480-data-visualization.github.io/StocksWise/)
