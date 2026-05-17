@@ -1,13 +1,9 @@
-/* ══════════════════════════════════════════════
-   StocksWise - Advanced simulator + shared helpers
-   (Portfolio modal flows, weight sliders, aux analyses, crisis stats)
-   ══════════════════════════════════════════════ */
+/* StocksWise - Advanced simulator + shared helpers.
+   Portfolio modal flows, weight sliders, aux analyses, crisis stats. */
 
-/* ── Mean-variance helpers: linear solve + analytical efficient frontier ──
-   Closed-form tangency w ∝ Σ⁻¹(μ − rf·1) and the hyperbolic frontier:
-       σ²(μ) = (C μ² − 2A μ + B) / D
-   These are duplicated from expert.js so the sim page (which doesn't
-   load expert.js) can use them too. */
+/* Mean-variance helpers. Closed-form tangency w ∝ Σ⁻¹(μ − rf·1) and the
+   hyperbolic frontier: σ²(μ) = (C μ² − 2A μ + B) / D.
+   Duplicated from expert.js so the sim page (which doesn't load expert.js) can use them. */
 function _linsolve(A, b) {
   const n = A.length;
   const M = A.map((row, i) => [...row, b[i]]);
@@ -70,7 +66,6 @@ function _analyticalFrontier(means, cov, rf) {
   return { wTan, muTan, sigTan, frontier };
 }
 
-/* ── Populate all ticker-select dropdowns with full dataset ── */
 (async function populateTickerSelects() {
   const meta = await StockData.loadMeta();
   if (!meta || meta.length === 0) return;
@@ -89,7 +84,6 @@ function _analyticalFrontier(means, cov, rf) {
   });
 })();
 
-/* ── Helper: Plotly layout/config reused from expert.js ── */
 function simPlotlyLayout(overrides = {}) {
   const cs = getComputedStyle(document.documentElement);
   const g = (v) => cs.getPropertyValue(v).trim();
@@ -117,17 +111,14 @@ function simPlotlyConfig() {
   return { responsive: true, displayModeBar: false, scrollZoom: false };
 }
 
-// Single helper: every Plotly mount goes through this. Switching display to
-// block (the chart-area is otherwise flex-centered for placeholders) and
-// calling Plotly.Plots.resize after the initial paint guarantees Plotly's
-// SVG fills the container instead of getting clipped by .adv-chart-wrap's
-// rounded `overflow: hidden` corners.
+// Every Plotly mount goes through this so the SVG fills the container instead
+// of being clipped by .adv-chart-wrap's rounded `overflow: hidden` corners.
 function simPlotlyMount(el, traces, layout, config) {
   if (!el) return;
   el.style.display = "block";
   el.innerHTML = "";
   Plotly.newPlot(el, traces, layout, config || simPlotlyConfig());
-  // Two ticks: one to let the browser apply the display change, one for Plotly.
+  // Two ticks: one for the browser to apply the display change, one for Plotly.
   requestAnimationFrame(() => {
     requestAnimationFrame(() => {
       try { Plotly.Plots.resize(el); } catch (_) {}
@@ -135,8 +126,6 @@ function simPlotlyMount(el, traces, layout, config) {
   });
 }
 
-// Reset a chart-area back to its CSS default (flex-centered) so a
-// chart-placeholder text renders centered after a Plotly mount.
 function simShowPlaceholder(el, msg) {
   if (!el) return;
   if (window.Plotly) try { Plotly.purge(el); } catch (_) {}
@@ -145,9 +134,7 @@ function simShowPlaceholder(el, msg) {
 }
 
 
-/* ══════════════════════════════════════════════
-   TOOL 2 - Portfolio Builder
-   ══════════════════════════════════════════════ */
+/* TOOL 2 - Portfolio Builder */
 
 let pbTickers = [];
 
@@ -167,8 +154,6 @@ function pbRemoveTicker(ticker) {
   pbRefreshAddButton();
 }
 
-// Move the dropdown to the next ticker that's not already in the portfolio,
-// so a fresh click on "+ Add" actually adds something.
 function pbAdvanceDropdown() {
   const select = document.getElementById("pb-add-ticker");
   if (!select) return;
@@ -194,7 +179,7 @@ function renderPBSliders() {
     return;
   }
 
-  // Equal weights, with the remainder absorbed by the first slider so the total is 100.
+  // Equal weights, remainder absorbed by the first slider so the total is 100.
   const each = Math.floor(100 / pbTickers.length);
   const remainder = 100 - each * pbTickers.length;
   container.innerHTML = pbTickers.map((t, i) => {
@@ -213,9 +198,8 @@ function renderPBSliders() {
   updatePBWeights();
 }
 
-// Keeps the weights summing to 100. When a slider is dragged, the others are
-// rescaled in proportion to their previous values (or split equally if they
-// were all zero) to absorb the change.
+// Keeps weights summing to 100: others rescale in proportion to their previous
+// values (or split equally if all zero) to absorb the dragged slider's change.
 function updatePBWeights(changed) {
   const sliders = Array.from(document.querySelectorAll(".pb-weight"));
   if (sliders.length === 0) return;
@@ -296,7 +280,6 @@ async function runPortfolioBuilder() {
     return;
   }
 
-  // Benchmark: QQQ
   const qqq = await StockData.loadTicker("QQQ");
   let benchmarkTrace = null;
   if (qqq) {
@@ -315,7 +298,6 @@ async function runPortfolioBuilder() {
   const cs = getComputedStyle(document.documentElement);
   const accent = cs.getPropertyValue("--accent").trim();
 
-  // Portfolio chart
   const traces = [{
     x: portfolio.map(d => d.date), y: portfolio.map(d => d.value),
     type: "scatter", mode: "lines", name: "Your Portfolio",
@@ -330,7 +312,6 @@ async function runPortfolioBuilder() {
     legend: { x: 0.02, y: 0.98, bgcolor: "rgba(0,0,0,0)" },
   }), simPlotlyConfig());
 
-  // Correlation heatmap
   if (corrEl && pbTickers.length >= 2) {
     const returnSets = filtered.map(d => StockData.dailyReturns(d));
     const minLen = Math.min(...returnSets.map(r => r.length));
@@ -351,7 +332,6 @@ async function runPortfolioBuilder() {
     }), simPlotlyConfig());
   }
 
-  // Efficient frontier
   if (frontierEl && pbTickers.length >= 2) {
     const returnSets = filtered.map(d => StockData.dailyReturns(d));
     const minLen = Math.min(...returnSets.map(r => r.length));
@@ -379,16 +359,14 @@ async function runPortfolioBuilder() {
       portfolios.push({ ret: ret * 100, vol: Math.sqrt(vari) * 100, weights: wn });
     }
 
-    // User's portfolio
     let userRet = 0;
     for (let i = 0; i < n; i++) userRet += weights[i] * means[i];
     let userVar = 0;
     for (let i = 0; i < n; i++) for (let j = 0; j < n; j++) userVar += weights[i] * weights[j] * cov[i][j];
     const userVol = Math.sqrt(userVar);
 
-    // Analytical tangency portfolio. Fall back to long-only best Sharpe if
-    // the closed-form solution requires shorting any asset (that diamond
-    // would land far outside the long-only feasible cloud).
+    // Fall back to long-only best Sharpe if the closed-form tangency requires
+    // shorting any asset (that diamond would land outside the long-only cloud).
     const PB_RF = 2;
     const analytical = _analyticalFrontier(means, cov, PB_RF / 100);
     const allLong = analytical && analytical.wTan.every(w => isFinite(w) && w >= -1e-6);
@@ -421,9 +399,8 @@ async function runPortfolioBuilder() {
       },
     ];
 
-    // Axis bounds derived from the cloud + user portfolio. Tangency only
-    // counted if it sits inside the cloud-derived bounds (otherwise it
-    // would crush the cloud into one corner of the plot).
+    // Tangency only counted in bounds if it sits inside the cloud-derived
+    // range; otherwise it would crush the cloud into one corner of the plot.
     const pbAllVols = portfolios.map(p => p.vol).concat([userVol * 100]);
     const pbAllRets = portfolios.map(p => p.ret).concat([userRet * 100]);
     const pbCloudVolMin = Math.min(...pbAllVols);
@@ -434,7 +411,7 @@ async function runPortfolioBuilder() {
       && bestPort.vol <= pbCloudVolMax * 1.25
       && bestPort.ret <= pbCloudRetMax * 1.25;
     if (pbTangencyInView) { pbAllVols.push(bestPort.vol); pbAllRets.push(bestPort.ret); }
-    // Tight bounds: start near the cloud so the data fills the plot area.
+    // Start near the cloud so the data fills the plot area.
     const pbWidth = pbCloudVolMax - pbCloudVolMin;
     const pbHeight = pbCloudRetMax - pbCloudRetMin;
     const pbXMin = Math.max(0, pbCloudVolMin - pbWidth * 0.25);
@@ -458,8 +435,8 @@ async function runPortfolioBuilder() {
     }
 
     if (bestPort && pbTangencyInView) {
-      // Capital Market Line - trimmed to the cloud region so the empty
-      // bottom-left segment doesn't dominate the chart.
+      // CML trimmed to the cloud region so its empty bottom-left segment
+      // doesn't dominate the chart.
       const cloudMinVol = Math.min(...portfolios.map(p => p.vol));
       const cmlStartX = pbFrontierMinVol != null ? pbFrontierMinVol : cloudMinVol * 0.85;
       const slope = (bestPort.ret - PB_RF) / bestPort.vol;
@@ -494,7 +471,6 @@ async function runPortfolioBuilder() {
     }), simPlotlyConfig());
   }
 
-  // Stats
   if (statsEl) {
     const startVal = portfolio[0].value;
     const endVal = portfolio[portfolio.length - 1].value;
@@ -511,7 +487,6 @@ async function runPortfolioBuilder() {
     let peak = -Infinity, maxDD = 0;
     portfolio.forEach(p => { if (p.value > peak) peak = p.value; const dd = (peak - p.value) / peak; if (dd > maxDD) maxDD = dd; });
 
-    // Best/worst year
     const yearMap = {};
     portfolio.forEach(p => { const yr = p.date.slice(0, 4); if (!yearMap[yr]) yearMap[yr] = { first: p.value, last: p.value }; yearMap[yr].last = p.value; });
     let bestYear = "", worstYear = "", bestRet = -Infinity, worstRet = Infinity;
@@ -532,12 +507,9 @@ async function runPortfolioBuilder() {
   }
 }
 
-/* ══════════════════════════════════════════════
-   TOOL 3 - Crisis Stress Test
-   ══════════════════════════════════════════════ */
+/* TOOL 3 - Crisis Stress Test */
 
-// Crisis windows for the Stress Test tool. The 2022 Rate Hike was dropped
-// because the bundled dataset ends at 2020-04-01.
+// 2022 Rate Hike omitted because the bundled dataset ends at 2020-04-01.
 const CRISES = [
   { name: "Dot-com Bubble", start: "2000-03-01", end: "2002-10-01", before: "1999-09-01", after: "2003-04-01" },
   { name: "2008 Financial Crisis", start: "2007-10-01", end: "2009-03-01", before: "2007-04-01", after: "2009-09-01" },
@@ -672,11 +644,9 @@ async function runStressTest() {
   const datasets = await Promise.all(stTickers.map(t => StockData.loadTicker(t)));
   if (datasets.some(d => !d)) { chartEl.innerHTML = '<div class="chart-placeholder">Failed to load data.</div>'; return; }
 
-  // Full period: before + during + after
   const filteredAll = datasets.map(d => StockData.filterByDate(d, crisis.before, crisis.after));
-  // Drop tickers with no rows in this window (e.g. picking META during the
-  // dot-com era — META didn't IPO until 2012). Re-normalize the surviving
-  // weights so they still sum to 100%.
+  // Drop tickers with no rows in this window (e.g. META during the dot-com era,
+  // since META IPO'd in 2012) and re-normalize the survivors to sum to 100%.
   const survIdx = filteredAll.map((d, i) => (d && d.length > 0 ? i : -1)).filter(i => i >= 0);
   if (survIdx.length === 0) {
     chartEl.innerHTML = '<div class="chart-placeholder">None of the selected tickers traded during this crisis window.</div>';
@@ -693,7 +663,6 @@ async function runStressTest() {
 
   const portfolio = StockData.computePortfolioValue(survFiltered, survWeights, 10000);
 
-  // QQQ benchmark
   const qqq = await StockData.loadTicker("QQQ");
   let qqqSeries = [];
   if (qqq) {
@@ -743,9 +712,7 @@ async function runStressTest() {
     legend: { x: 0.02, y: 0.98, bgcolor: "rgba(0,0,0,0)" },
   }), simPlotlyConfig());
 
-  // Stats
   if (statsEl) {
-    // Portfolio drawdown during crisis
     const crisisPortfolio = portfolio.filter(d => d.date >= crisis.start && d.date <= crisis.end);
     let peak = -Infinity, maxDD = 0, worstDay = 0;
     crisisPortfolio.forEach((p, i) => {
@@ -760,7 +727,6 @@ async function runStressTest() {
       }
     });
 
-    // QQQ drawdown
     let qqPeak = -Infinity, qqDD = 0;
     if (qqqSeries.length > 0) {
       qqqSeries.filter(d => d.date >= crisis.start && d.date <= crisis.end).forEach(p => {
@@ -770,7 +736,6 @@ async function runStressTest() {
       });
     }
 
-    // Recovery: find first date after crisis where value >= pre-crisis peak
     const preCrisisVal = crisisPortfolio.length > 0 ? crisisPortfolio[0].value : 10000;
     const postCrisis = portfolio.filter(d => d.date > crisis.end);
     const recoveryPoint = postCrisis.find(d => d.value >= preCrisisVal);
@@ -785,11 +750,8 @@ async function runStressTest() {
   }
 }
 
-/* ══════════════════════════════════════════════
-   TAB SWITCHING
-   ══════════════════════════════════════════════ */
+/* TAB SWITCHING */
 document.addEventListener("DOMContentLoaded", () => {
-  // Tab switching
   document.querySelectorAll(".sim-tab").forEach(tab => {
     tab.addEventListener("click", () => {
       document.querySelectorAll(".sim-tab").forEach(t => t.classList.remove("active"));
@@ -800,12 +762,10 @@ document.addEventListener("DOMContentLoaded", () => {
     });
   });
 
-  // Portfolio builder
   document.getElementById("pb-add-btn")?.addEventListener("click", pbAddTicker);
   document.getElementById("pb-add-ticker")?.addEventListener("change", pbRefreshAddButton);
   document.getElementById("pb-run")?.addEventListener("click", runPortfolioBuilder);
 
-  // Stress test
   document.getElementById("st-add-btn")?.addEventListener("click", stAddTicker);
   document.getElementById("st-add-ticker")?.addEventListener("change", stRefreshAddButton);
   document.getElementById("st-run")?.addEventListener("click", runStressTest);
@@ -813,7 +773,6 @@ document.addEventListener("DOMContentLoaded", () => {
     el.addEventListener("click", () => selectCrisis(i));
   });
 
-  // Default portfolio builder tickers
   if (document.getElementById("pb-sliders")) {
     pbTickers = ["AAPL", "MSFT", "NVDA"];
     renderPBSliders();
@@ -828,13 +787,10 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 });
 
-/* ══════════════════════════════════════════════
-   ADVANCED SIMULATOR (unified portfolio + chart + stats)
-   ══════════════════════════════════════════════ */
+/* ADVANCED SIMULATOR (unified portfolio + chart + stats) */
 
-// The bundled NASDAQ dataset stops at 2020-04-01 (last common trading day in
-// the Kaggle source). All term/start-date math is anchored here so defaults
-// always land inside the available history.
+// Bundled NASDAQ dataset stops at 2020-04-01. All term/start-date math is
+// anchored here so defaults always land inside the available history.
 const ADV_DATA_END = "2020-04-01";
 
 const ADV_PREMADE = [
@@ -848,8 +804,7 @@ const ADV_PREMADE = [
     tickers: ["KO", "PEP", "WMT", "JNJ", "PG"] },
 ];
 
-// Bundled NASDAQ data ends at ADV_DATA_END (2020-04-01), so any crisis window
-// past that date is clipped or omitted - otherwise the chart silently goes blank.
+// Crisis windows past ADV_DATA_END are clipped, else the chart goes blank.
 const ADV_CRISES = [
   { id: "dotcom", name: "Dot-com Bubble",       start: "1999-09-01", end: "2003-04-01" },
   { id: "2008",   name: "2008 Financial Crisis",start: "2007-04-01", end: "2009-09-01" },
@@ -916,7 +871,6 @@ function advUpdatePillState() {
   });
 }
 
-/* ── Modal helpers ── */
 function advOpenModal(id) {
   const modal = document.getElementById(id);
   if (!modal) return;
@@ -930,7 +884,6 @@ function advCloseModal(id) {
   document.body.style.overflow = "";
 }
 
-/* ── Pre-made modal ── */
 function advRenderPremadeOptions() {
   const root = document.getElementById("adv-premade-options");
   if (!root) return;
@@ -963,7 +916,6 @@ function advRenderPremadeOptions() {
   });
 }
 
-/* ── Custom modal ── */
 let advCustomWorking = [];
 
 function advRenderCustomSelected() {
@@ -1016,7 +968,6 @@ async function advRunCustomSearch() {
   });
 }
 
-/* ── Random modal ── */
 let advRandomWorking = [];
 async function advShuffleRandom() {
   const meta = await StockData.loadMeta();
@@ -1042,7 +993,7 @@ async function advShuffleRandom() {
   if (apply) apply.disabled = picked.length === 0;
 }
 
-/* ── Term ↔ start date sync (anchored on ADV_DATA_END, not today) ── */
+/* Term <-> start date sync, anchored on ADV_DATA_END (not today). */
 function advSetTermFromMonths(months) {
   const m = Math.max(6, Math.min(120, Math.round(months / 6) * 6));
   const slider = document.getElementById("adv-term");
@@ -1068,7 +1019,6 @@ function advSyncTermFromDate() {
   if (out) out.textContent = advFormatTerm(clamped);
 }
 
-/* ── Run + draw ── */
 let advRunTimer = null;
 function advScheduleRun() {
   clearTimeout(advRunTimer);
@@ -1110,14 +1060,13 @@ async function runAdvancedSim() {
     advRenderAux([], [], []);
     return;
   }
-  // Drop tickers that failed to load.
   const okTickers = okIdx.map(i => advState.tickers[i]);
   const okData = okIdx.map(i => datasets[i]);
   const okWeights = okIdx.map(i => advState.weights[i] || 0);
 
-  // Drop tickers that have no rows inside the chosen window so a single
-  // late-IPO ticker (e.g. NFLX during the dotcom era) doesn't collapse the
-  // aligned date set in computePortfolioValue to zero.
+  // Drop tickers with no rows inside the window so a single late-IPO ticker
+  // (e.g. NFLX during the dotcom era) doesn't collapse the aligned date set
+  // in computePortfolioValue to zero.
   const filteredAll = okData.map(d => StockData.filterByDate(d, startDate, endDate));
   const survIdx = filteredAll.map((d, i) => (d && d.length > 0 ? i : -1)).filter(i => i >= 0);
   if (survIdx.length === 0) {
@@ -1129,8 +1078,8 @@ async function runAdvancedSim() {
   const survTickers = survIdx.map(i => okTickers[i]);
   const survData = survIdx.map(i => filteredAll[i]);
   const survRawWeights = survIdx.map(i => okWeights[i]);
-  // Re-normalize the surviving weights to sum to 100% (they were originally
-  // normalized across the full ticker list including the dropped ones).
+  // Re-normalize survivors to sum to 100% (they were originally normalized
+  // across the full ticker list including the dropped ones).
   const survSum = survRawWeights.reduce((a, b) => a + b, 0) || 1;
   const survWeights = survRawWeights.map(w => w / survSum);
   const droppedTickers = okTickers.filter(t => !survTickers.includes(t));
@@ -1147,7 +1096,6 @@ async function runAdvancedSim() {
   const data = portfolio.map(p => ({ date: new Date(p.date), price: p.value }));
   if (typeof drawChart === "function") drawChart(chartArea, data, amount);
 
-  // Chart-toolbar label reflects the actual ticker count used.
   if (nameEl) {
     let lbl = `Portfolio · ${survTickers.length} stocks`;
     if (crisis) lbl += ` · ${crisis.name}`;
@@ -1157,8 +1105,6 @@ async function runAdvancedSim() {
   advUpdateStats(data, amount, survTickers.length);
   advRenderAux(survTickers, survData, survWeights);
 
-  // Crisis stats: load QQQ benchmark for the same window and render the
-  // bottom panel. Hidden when no crisis is active.
   if (crisis) {
     const qqqRaw = await StockData.loadTicker("QQQ");
     let qqqSeries = [];
@@ -1193,7 +1139,6 @@ function advUpdateStats(data, amount, numStocks) {
   const cagr = years > 0 ? (Math.pow(finalValue / amount, 1 / years) - 1) * 100 : 0;
   const positive = finalValue >= amount;
 
-  // Daily returns from portfolio values
   const rets = [];
   for (let i = 1; i < data.length; i++) rets.push(data[i].price / data[i - 1].price - 1);
   const mean = rets.length ? rets.reduce((a, b) => a + b, 0) / rets.length : 0;
@@ -1227,7 +1172,7 @@ function advUpdateStats(data, amount, numStocks) {
   set("stat-vol", annVol.toFixed(1) + "%");
 }
 
-/* ── Weight sliders (auto-normalized to 100%) ── */
+/* Weight sliders, auto-normalized to 100%. */
 function advRenderWeights() {
   const list = document.getElementById("adv-weights-list");
   const wrap = document.getElementById("adv-weights");
@@ -1289,7 +1234,7 @@ function advNormalizeWeights(idx, pctNew) {
   for (let i = 0; i < n; i++) {
     if (i === idx) continue;
     if (i === lastOtherIdx) {
-      // Fill the rounding gap so percentages sum to exactly 100.
+      // Last slot absorbs the rounding gap so percentages sum to exactly 100.
       out[i] = Math.max(0, (100 - assignedPct) / 100);
     } else if (otherSum === 0) {
       const each = Math.floor(remaining * 100 / (n - 1));
@@ -1304,7 +1249,7 @@ function advNormalizeWeights(idx, pctNew) {
   advState.weights = out;
 }
 
-/* ── Auxiliary analyses: correlation heatmap + efficient frontier ── */
+/* Auxiliary analyses: correlation heatmap + efficient frontier. */
 function advRenderAux(survTickers, survFiltered, survWeights) {
   const corrEl = document.getElementById("adv-corr");
   const frontierEl = document.getElementById("adv-frontier");
@@ -1324,7 +1269,7 @@ function advRenderAux(survTickers, survFiltered, survWeights) {
   const textMuted  = cs.getPropertyValue("--text-muted").trim() || "#787b86";
   const RISK_FREE_PCT = 2; // Annualized risk-free rate used by Sharpe / CML.
 
-  // ── Correlation heatmap (daily-return correlation, -1 = inverse, +1 = lockstep) ──
+  /* Correlation heatmap (daily-return correlation, -1 = inverse, +1 = lockstep). */
   const returnSets = survFiltered.map(d => StockData.dailyReturns(d));
   const minLen = Math.min(...returnSets.map(r => r.length));
   if (minLen < 5) {
@@ -1335,8 +1280,8 @@ function advRenderAux(survTickers, survFiltered, survWeights) {
   }
   const aligned = returnSets.map(r => r.slice(r.length - minLen));
   const matrix = StockData.computeCorrelationMatrix(aligned);
-  // Per-ticker average off-diagonal correlation - useful as a "diversification
-  // score" displayed alongside each row label.
+  // Per-ticker average off-diagonal correlation, shown as a diversification
+  // score alongside each row label.
   const avgCorr = matrix.map((row, i) => {
     const others = row.filter((_, j) => j !== i);
     return others.reduce((a, b) => a + b, 0) / others.length;
@@ -1363,7 +1308,7 @@ function advRenderAux(survTickers, survFiltered, survWeights) {
     yaxis: { autorange: "reversed", automargin: true },
   }));
 
-  // ── Efficient frontier (Monte Carlo) + Capital Market Line ──
+  /* Efficient frontier (Monte Carlo) + Capital Market Line. */
   const n = aligned.length;
   const means = aligned.map(r => r.reduce((a, b) => a + b, 0) / r.length * 252);
   const cov = Array.from({ length: n }, () => Array(n).fill(0));
@@ -1387,8 +1332,7 @@ function advRenderAux(survTickers, survFiltered, survWeights) {
     portfolios.push({ ret: ret * 100, vol: Math.sqrt(vari) * 100, weights: wn });
   }
 
-  // Individual asset positions in (vol, return) space - matches the "Inferior
-  // portfolios & Individual Assets" cloud in the reference image.
+  // Individual asset positions in (vol, return) space.
   const assetPoints = survTickers.map((t, i) => ({
     ticker: t,
     ret: means[i] * 100,
@@ -1401,8 +1345,8 @@ function advRenderAux(survTickers, survFiltered, survWeights) {
   for (let i = 0; i < n; i++) for (let j = 0; j < n; j++) userVar += survWeights[i] * survWeights[j] * cov[i][j];
   const userVol = Math.sqrt(userVar);
 
-  // Analytical tangency portfolio. Fall back to long-only best Sharpe if
-  // the closed-form solution requires shorting any asset.
+  // Fall back to long-only best Sharpe if the closed-form tangency requires
+  // shorting any asset.
   const advAnalytical = _analyticalFrontier(means, cov, RISK_FREE_PCT / 100);
   const advAllLong = advAnalytical && advAnalytical.wTan.every(w => isFinite(w) && w >= -1e-6);
   let bestPort = null;
@@ -1420,9 +1364,8 @@ function advRenderAux(survTickers, survFiltered, survWeights) {
     });
   }
 
-  // Axis bounds: cloud + assets + user portfolio. Tangency only if it sits
-  // inside cloud-derived bounds; otherwise an out-of-range tangency would
-  // crush the cloud into one corner.
+  // Tangency only contributes to bounds if it sits inside the cloud-derived
+  // range; an out-of-range tangency would crush the cloud into one corner.
   const allVols = portfolios.map(p => p.vol).concat(assetPoints.map(a => a.vol), [userVol * 100]);
   const allRets = portfolios.map(p => p.ret).concat(assetPoints.map(a => a.ret), [userRet * 100]);
   const advCloudVolMin = Math.min(...allVols);
@@ -1433,8 +1376,8 @@ function advRenderAux(survTickers, survFiltered, survWeights) {
     && bestPort.vol <= advCloudVolMax * 1.25
     && bestPort.ret <= advCloudRetMax * 1.25;
   if (advTangencyInView) { allVols.push(bestPort.vol); allRets.push(bestPort.ret); }
-  // Start near the cloud (not at 0,0) so the data fills the plot area;
-  // always keep the risk-free reference line visible.
+  // Start near the cloud (not at 0,0) so data fills the plot, but always keep
+  // the risk-free reference line visible.
   const advWidth = advCloudVolMax - advCloudVolMin;
   const advHeight = advCloudRetMax - advCloudRetMin;
   const xMin = Math.max(0, advCloudVolMin - advWidth * 0.25);
@@ -1442,11 +1385,9 @@ function advRenderAux(survTickers, survFiltered, survWeights) {
   const yMin = Math.min(RISK_FREE_PCT - 1, advCloudRetMin - advHeight * 0.25);
   const yMax = Math.max(...allRets) + advHeight * 0.12;
 
-  // Markers carry no inline text labels - the chart got too cramped before.
-  // Each special point is identified by a small annotation with an arrow
-  // (matching the reference image) and a hover tooltip.
+  // Markers carry no inline text labels (chart got too cramped). Each special
+  // point is identified by a small annotation with an arrow and a hover tooltip.
   const fTraces = [
-    // Random portfolios cloud
     {
       x: portfolios.map(p => p.vol), y: portfolios.map(p => p.ret),
       mode: "markers", type: "scatter", name: "Random portfolios",
@@ -1458,7 +1399,6 @@ function advRenderAux(survTickers, survFiltered, survWeights) {
       hovertemplate: "Vol: %{x:.1f}%<br>Return: %{y:.1f}%<extra></extra>",
       showlegend: false,
     },
-    // Individual constituent assets
     {
       x: assetPoints.map(a => a.vol), y: assetPoints.map(a => a.ret),
       mode: "markers+text", type: "scatter", name: "Individual assets",
@@ -1469,7 +1409,6 @@ function advRenderAux(survTickers, survFiltered, survWeights) {
       hovertemplate: "<b>%{text}</b><br>Vol: %{x:.1f}%<br>Return: %{y:.1f}%<extra></extra>",
       showlegend: false,
     },
-    // The user's actual portfolio (weighted)
     {
       x: [userVol * 100], y: [userRet * 100], mode: "markers", type: "scatter",
       name: "Your portfolio",
@@ -1481,8 +1420,7 @@ function advRenderAux(survTickers, survFiltered, survWeights) {
   const layoutShapes = [];
   const layoutAnnots = [];
 
-  // Analytical efficient frontier curve - drawn before the markers so the
-  // tangency diamond sits on top.
+  // Drawn before the tangency markers so the diamond sits on top.
   let advFrontierMinVol = null;
   if (advAnalytical && advAnalytical.frontier && advAnalytical.frontier.length > 1) {
     const pts = advAnalytical.frontier
@@ -1500,9 +1438,8 @@ function advRenderAux(survTickers, survFiltered, survWeights) {
     }
   }
 
-  // Tangency portfolio = "Ideal Market Portfolio" + Capital Market Line.
-  // Only render the CML/diamond if the tangency falls inside the cloud-
-  // derived axis bounds; otherwise we'd dominate the plot with one point.
+  // Only render the CML/diamond if the tangency falls inside the cloud-derived
+  // axis bounds; otherwise one point would dominate the plot.
   if (bestPort && advTangencyInView) {
     const cloudMinVol = Math.min(...portfolios.map(p => p.vol));
     const cmlStartX = advFrontierMinVol != null ? advFrontierMinVol : cloudMinVol * 0.85;
@@ -1543,7 +1480,6 @@ function advRenderAux(survTickers, survFiltered, survWeights) {
     optEl.hidden = true;
   }
 
-  // Risk-free dashed reference at y = RISK_FREE_PCT
   layoutShapes.push({
     type: "line", x0: xMin, x1: xMax, y0: RISK_FREE_PCT, y1: RISK_FREE_PCT,
     line: { color: textMuted, width: 1, dash: "dash" },
@@ -1554,7 +1490,7 @@ function advRenderAux(survTickers, survFiltered, survWeights) {
     showarrow: false, xanchor: "left", yanchor: "bottom",
     font: { color: textMuted, size: 10 },
   });
-  // "You" callout above the user star, with offset arrow so it doesn't sit on top of the diamond.
+  // "You" callout offset so it doesn't sit on top of the tangency diamond.
   layoutAnnots.push({
     x: userVol * 100, y: userRet * 100,
     ax: -28, ay: -22,
@@ -1562,8 +1498,6 @@ function advRenderAux(survTickers, survFiltered, survWeights) {
     xanchor: "right", yanchor: "bottom",
     font: { color: accent, size: 11 },
   });
-  // "Inferior portfolios" annotation - placed in the empty bottom-right
-  // quadrant of the plot.
   layoutAnnots.push({
     x: xMax * 0.97, y: yMin + (yMax - yMin) * 0.10,
     xanchor: "right",
@@ -1583,7 +1517,6 @@ function advRenderAux(survTickers, survFiltered, survWeights) {
   }));
 }
 
-/* ── Crisis-specific stats panel ── */
 function advRenderCrisisStats(crisis, portfolio, qqqSeries) {
   const wrap = document.getElementById("adv-crisis-stats");
   const titleEl = document.getElementById("adv-crisis-stats-title");
@@ -1592,7 +1525,6 @@ function advRenderCrisisStats(crisis, portfolio, qqqSeries) {
   wrap.hidden = false;
   if (titleEl) titleEl.textContent = `${crisis.name} · ${crisis.start.slice(0,7)} → ${crisis.end.slice(0,7)}`;
 
-  // Portfolio drawdown WITHIN the crisis window.
   let peak = -Infinity, maxDD = 0, worstDay = 0;
   for (let i = 0; i < portfolio.length; i++) {
     const v = portfolio[i].price;
@@ -1605,7 +1537,6 @@ function advRenderCrisisStats(crisis, portfolio, qqqSeries) {
     }
   }
 
-  // QQQ benchmark drawdown.
   let qqDD = 0;
   if (qqqSeries.length) {
     let qPeak = -Infinity;
@@ -1626,10 +1557,9 @@ function advRenderCrisisStats(crisis, portfolio, qqqSeries) {
   set("stat-cbench", qqqSeries.length ? "-" + (qqDD * 100).toFixed(1) + "%" : "—",
     qqqSeries.length ? "negative" : "");
   set("stat-cworst", (worstDay * 100).toFixed(1) + "%", worstDay < 0 ? "negative" : "");
-  // Recovery within the same window: first time after the trough where we
-  // climb back to the pre-trough peak. If there's no recovery inside the
-  // chart window, show "—" (the dataset ends at 2020-04-01 so post-2020
-  // crises like COVID have no after-period to compute against).
+  // First time after the trough where we climb back to the pre-trough peak.
+  // Shows "—" when there's no recovery inside the chart window (dataset ends
+  // 2020-04-01, so post-2020 crises like COVID have no after-period).
   let recoveryDays = null;
   if (portfolio.length) {
     const startVal = portfolio[0].price;
@@ -1643,7 +1573,6 @@ function advRenderCrisisStats(crisis, portfolio, qqqSeries) {
   set("stat-crec", recoveryDays !== null ? recoveryDays + "d" : "—");
 }
 
-/* ── Stat info popover ── */
 function advSetupStatPopover() {
   const popover = document.getElementById("adv-stat-popover");
   if (!popover) return;
@@ -1664,7 +1593,7 @@ function advSetupStatPopover() {
       const cr = card.getBoundingClientRect();
       let left = cr.left - lr.left;
       const top  = cr.bottom - lr.top + 8;
-      // Clamp so popover stays within layout horizontally.
+      // Clamp horizontally so popover stays within the layout.
       const popW = 280;
       const layoutW = layout.clientWidth;
       if (left + popW > layoutW - 8) left = layoutW - popW - 8;
@@ -1684,22 +1613,19 @@ function advSetupStatPopover() {
   });
 }
 
-/* ── Init ── */
 document.addEventListener("DOMContentLoaded", () => {
   if (!document.querySelector(".adv-sim")) return;
 
   advRenderPremadeOptions();
   advRenderCurrent();
-  // Intentionally do NOT call advUpdatePillState() at init: we want all three
-  // portfolio-type pills to look unselected on load so the user understands
-  // they're clickable (the default chart still uses Tech Giants, but the
-  // user is prompted to choose). Once the user picks one and applies, the
-  // click handlers below set the active state.
+  // Skip advUpdatePillState() at init so all three pills look unselected on
+  // load: the default chart uses Tech Giants but the user is prompted to
+  // choose, and once they apply one the handlers below set the active state.
   advRenderWeights();
   advSetupStatPopover();
 
-  // Pill clicks open the corresponding modal. Skip pills that belong to the
-  // beginner sim (those carry data-bsim-type and are wired up in simulation.html).
+  // Skip pills that belong to the beginner sim (data-bsim-type, wired up in
+  // simulation.html).
   document.querySelectorAll(".adv-portfolio-pill[data-type]").forEach(pill => {
     pill.addEventListener("click", () => {
       const type = pill.dataset.type;
@@ -1716,7 +1642,6 @@ document.addEventListener("DOMContentLoaded", () => {
     });
   });
 
-  // Modal close: × button + backdrop + Escape.
   document.querySelectorAll(".adv-modal").forEach(modal => {
     modal.addEventListener("click", (e) => {
       if (e.target === modal || e.target.matches("[data-close]")) advCloseModal(modal.id);
@@ -1728,7 +1653,6 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   });
 
-  // Custom search input (debounced).
   const customSearch = document.getElementById("adv-custom-search");
   if (customSearch) {
     customSearch.addEventListener("input", () => {
@@ -1750,7 +1674,6 @@ document.addEventListener("DOMContentLoaded", () => {
     advCloseModal("modal-custom");
   });
 
-  // Random buttons.
   document.getElementById("adv-random-shuffle")?.addEventListener("click", advShuffleRandom);
   document.getElementById("adv-random-apply")?.addEventListener("click", () => {
     if (!advRandomWorking.length) return;
@@ -1766,16 +1689,14 @@ document.addEventListener("DOMContentLoaded", () => {
     advCloseModal("modal-random");
   });
 
-  // When a crisis overlay is on, runAdvancedSim ignores the term slider and
-  // start-date input - it forces the chart window to crisis.start..crisis.end.
-  // So the user moving those controls would silently have no effect. Clear
-  // the crisis dropdown first so the new term/date actually applies.
+  // When a crisis overlay is on, runAdvancedSim forces the chart window to
+  // crisis.start..crisis.end and ignores the term/date controls. Clear the
+  // crisis dropdown first so changing those controls actually applies.
   function clearCrisisIfSet() {
     const sel = document.getElementById("adv-crisis");
     if (sel && sel.value) sel.value = "";
   }
 
-  // Strategy controls - every change re-runs.
   document.getElementById("adv-term")?.addEventListener("input", () => {
     clearCrisisIfSet();
     const m = parseInt(document.getElementById("adv-term").value, 10);
@@ -1790,7 +1711,6 @@ document.addEventListener("DOMContentLoaded", () => {
   document.getElementById("adv-amount")?.addEventListener("input", advScheduleRun);
   document.getElementById("adv-crisis")?.addEventListener("change", advScheduleRun);
 
-  // Timeframe pills above the chart.
   document.getElementById("adv-timeframe")?.addEventListener("click", (e) => {
     const btn = e.target.closest("button[data-tf]");
     if (!btn) return;

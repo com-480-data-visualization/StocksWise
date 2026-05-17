@@ -1,8 +1,7 @@
-/* ══════════════════════════════════════════════
-   StocksWise - Main JS
-   ══════════════════════════════════════════════ */
+/* StocksWise - Main JS
+   Theme toggle, nav, scroll effects, module quizzes, hero counters. */
 
-/* ── Theme Toggle ── */
+/* Theme Toggle */
 (function initTheme() {
   const saved = localStorage.getItem("sw-theme");
   if (saved === "light") document.body.classList.add("light");
@@ -18,7 +17,7 @@
   });
 })();
 
-/* ── Ticker Tape ── */
+/* Ticker Tape */
 (function initTicker() {
   const track = document.getElementById("ticker-track");
   if (!track) return;
@@ -49,11 +48,10 @@
     )
     .join("");
 
-  // Once the company-name cache is warm, set hover tooltips on each item.
   if (window.StockData?.annotateTickerTitles) StockData.annotateTickerTitles(track);
 })();
 
-/* ── Mobile nav toggle ── */
+/* Mobile nav toggle */
 (function initNavToggle() {
   const toggle = document.getElementById("nav-toggle");
   const links = document.getElementById("nav-links");
@@ -63,13 +61,12 @@
     links.classList.toggle("open");
   });
 
-  // Close on link click
   links.querySelectorAll("a").forEach((a) => {
     a.addEventListener("click", () => links.classList.remove("open"));
   });
 })();
 
-/* ── Scroll-spy: highlight active nav link ── */
+/* Scroll-spy: highlight active nav link */
 (function initScrollSpy() {
   const sections = document.querySelectorAll(".topic-section");
   const navLinks = document.querySelectorAll("#nav-links a");
@@ -97,10 +94,8 @@
   sections.forEach((s) => observer.observe(s));
 })();
 
-/* ── Scroll reveal animation ──
-   Two-way: cards bloom in when they enter the focus band and gracefully
-   fall back out when they leave it, so the module feels alive as you
-   scroll through it instead of all cards piling up statically. */
+/* Scroll reveal animation - two-way: cards toggle .visible on enter/exit
+   so the module feels alive instead of cards piling up statically. */
 (function initReveal() {
   const reveals = document.querySelectorAll(".reveal");
 
@@ -110,16 +105,14 @@
         entry.target.classList.toggle("visible", entry.isIntersecting);
       });
     },
-    // Shrink the viewport observer box: cards become "visible" only when
-    // they're well inside the reading area, which keeps the in-focus card
-    // feeling centered while neighbours blur on the edges.
+    // Shrunk viewport box keeps the in-focus card centered while neighbours blur on the edges.
     { threshold: 0.15, rootMargin: "-8% 0px -18% 0px" }
   );
 
   reveals.forEach((el) => observer.observe(el));
 })();
 
-/* ── Active-section highlight on the sticky label ── */
+/* Active-section highlight on the sticky label */
 (function initActiveSection() {
   const sections = document.querySelectorAll(".topic-section");
   if (!sections.length) return;
@@ -147,13 +140,9 @@
   update();
 })();
 
-/* ── Mouse-following glow ──
-   .section-glow is position: fixed (so it doesn't contribute to document
-   scroll height with its 600px blur halo). With fixed, left/top are
-   viewport coords - we just set them directly from clientX/Y, and only
-   the section currently under :hover ever shows. No scroll handler needed
-   because position: fixed already keeps the glow at the cursor without
-   moving relative to the viewport when the page scrolls. */
+/* Mouse-following glow - .section-glow is position: fixed so its 600px blur halo
+   doesn't bloat document scroll height; left/top are viewport coords from clientX/Y,
+   and only the section currently under :hover ever shows (no scroll handler needed). */
 (function initGlow() {
   const glows = document.querySelectorAll(".section-glow");
   if (!glows.length) return;
@@ -166,7 +155,7 @@
   });
 })();
 
-/* ── Nav background on scroll ── */
+/* Nav background on scroll */
 (function initNavScroll() {
   const nav = document.getElementById("topnav");
   if (!nav) return;
@@ -186,9 +175,7 @@
   });
 })();
 
-/* ══════════════════════════════════════════════
-   PER-MODULE QUIZZES (popup modals)
-   ══════════════════════════════════════════════ */
+/* PER-MODULE QUIZZES (popup modals) */
 (function initModuleQuizzes() {
   const moduleQuizzes = {
     stocks: {
@@ -263,7 +250,6 @@
 
   let currentModule = null;
 
-  // Restore completed modules from localStorage
   function getCompleted() {
     try { return JSON.parse(localStorage.getItem("sw-completed") || "[]"); } catch { return []; }
   }
@@ -290,10 +276,9 @@
     if (btn) { btn.textContent = "Retake Quiz"; btn.classList.add("completed"); }
   }
 
-  // Restore on load
   getCompleted().forEach(updateUI);
 
-  // Open modal - allow retake even when the module is already completed.
+  // Allow retake even when the module is already completed.
   document.querySelectorAll(".btn-quiz").forEach((btn) => {
     btn.addEventListener("click", () => {
       const mod = btn.dataset.module;
@@ -336,7 +321,6 @@
   overlay.addEventListener("click", (e) => { if (e.target === overlay) closeQuiz(); });
   document.addEventListener("keydown", (e) => { if (e.key === "Escape" && overlay.classList.contains("open")) closeQuiz(); });
 
-  // Evaluate
   submitBtn.addEventListener("click", () => {
     // After a fail, the same button becomes "Try Again": reopen the quiz fresh.
     if (submitBtn.dataset.action === "retry") {
@@ -375,8 +359,7 @@
       submitBtn.textContent = "Close";
       submitBtn.dataset.action = "close";
     } else {
-      // Failing a retake on a previously-completed module revokes the
-      // completed badge - the current state of knowledge is "not passed".
+      // Failing a retake revokes the completed badge - current state is "not passed".
       if (getCompleted().includes(currentModule)) unmarkCompleted(currentModule);
       resultEl.classList.add("fail");
       resultEl.textContent = `${score}/${total} - Not quite. Try again!`;
@@ -386,20 +369,19 @@
   });
 })();
 
-/* ── End-of-beginner-flow "Go to Expert mode" button ── */
+/* End-of-beginner-flow "Go to Expert mode" button */
 document.addEventListener("DOMContentLoaded", () => {
   const btn = document.getElementById("upgrade-to-expert");
   if (!btn) return;
   btn.addEventListener("click", () => {
     const toggle = document.getElementById("expert-toggle");
-    // Only flip the toggle if we're in beginner mode - clicking from
-    // expert would silently downgrade the user.
+    // Only flip if we're in beginner mode - clicking from expert would silently downgrade.
     if (toggle && !document.body.classList.contains("expert")) toggle.click();
     window.scrollTo({ top: 0, behavior: "smooth" });
   });
 });
 
-/* ── Hero stat counter animation (count up from 0 on first view) ── */
+/* Hero stat counter animation (count up from 0 on first view) */
 document.addEventListener("DOMContentLoaded", () => {
   const els = document.querySelectorAll(".hero-stat-value[data-target]");
   if (!els.length) return;

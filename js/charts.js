@@ -1,7 +1,5 @@
-/* ══════════════════════════════════════════════
-   StocksWise - Inline Card Charts
-   Mock data today, real NASDAQ data in the future.
-   ══════════════════════════════════════════════ */
+/* StocksWise - Inline Card Charts
+   Mock-data charts rendered inline in beginner module cards. */
 
 /* Disable Chart.js hover tooltips and point-hover effects globally. */
 if (typeof Chart !== "undefined") {
@@ -11,7 +9,7 @@ if (typeof Chart !== "undefined") {
   Chart.defaults.hover = { mode: null };
 }
 
-/* ── Theme colors from CSS variables ── */
+/* Theme colors from CSS variables */
 function getThemeColors() {
   const cs = getComputedStyle(document.documentElement);
   const g = (v) => cs.getPropertyValue(v).trim();
@@ -29,7 +27,7 @@ function getThemeColors() {
   };
 }
 
-/* ── Seeded random for reproducible mock data ── */
+/* Seeded random for reproducible mock data */
 function seededRandom(seed) {
   let s = seed;
   return function () {
@@ -38,7 +36,7 @@ function seededRandom(seed) {
   };
 }
 
-/* ── Shared chart defaults ── */
+/* Shared chart defaults */
 function baseScales(colors) {
   return {
     x: {
@@ -52,16 +50,13 @@ function baseScales(colors) {
   };
 }
 
-/* ══════════════════════════════════════════════
-   CHART 1 - Price Movement (supply & demand)
-   ══════════════════════════════════════════════ */
+/* CHART 1 - Price Movement (supply & demand) */
 function initPriceMovementChart() {
   const canvas = document.getElementById("chart-price-movement");
   if (!canvas) return null;
   const colors = getThemeColors();
   const rand = seededRandom(42);
 
-  // Generate mock price data with a visible dip then rise
   const days = 60;
   const prices = [100];
   for (let i = 1; i < days; i++) {
@@ -72,7 +67,6 @@ function initPriceMovementChart() {
     prices.push(prices[i - 1] * (1 + (rand() - 0.48 + trend / 100) * 0.025));
   }
 
-  // Find annotation points
   let minIdx = 10, maxIdx = 10;
   for (let i = 10; i < 30; i++) { if (prices[i] < prices[minIdx]) minIdx = i; }
   for (let i = 5; i < 20; i++)  { if (prices[i] > prices[maxIdx]) maxIdx = i; }
@@ -155,9 +149,7 @@ function initPriceMovementChart() {
   });
 }
 
-/* ══════════════════════════════════════════════
-   CHART 2 - ETF vs Individual Stock
-   ══════════════════════════════════════════════ */
+/* CHART 2 - ETF vs Individual Stock */
 function initETFvsStockChart() {
   const canvas = document.getElementById("chart-etf-vs-stock");
   if (!canvas) return null;
@@ -238,9 +230,7 @@ function initETFvsStockChart() {
   });
 }
 
-/* ══════════════════════════════════════════════
-   CHART 3 - Rolling Volatility Comparison
-   ══════════════════════════════════════════════ */
+/* CHART 3 - Rolling Volatility Comparison */
 function initVolatilityChart() {
   const canvas = document.getElementById("chart-volatility");
   if (!canvas) return null;
@@ -250,14 +240,12 @@ function initVolatilityChart() {
   const days = 252;
   const window = 20;
 
-  // Generate daily returns
   const etfReturns = [], stockReturns = [];
   for (let i = 0; i < days; i++) {
     etfReturns.push((rand() - 0.5) * 0.015);
     stockReturns.push((rand() - 0.5) * 0.045);
   }
 
-  // Compute rolling std
   function rollingVol(returns, w) {
     const result = [];
     for (let i = 0; i < returns.length; i++) {
@@ -333,9 +321,7 @@ function initVolatilityChart() {
   });
 }
 
-/* ══════════════════════════════════════════════
-   CHART 4 - Max Drawdown
-   ══════════════════════════════════════════════ */
+/* CHART 4 - Max Drawdown */
 function initDrawdownChart() {
   const canvas = document.getElementById("chart-drawdown");
   if (!canvas) return null;
@@ -351,7 +337,6 @@ function initDrawdownChart() {
     prices.push(prices[i - 1] * (1 + trend + (rand() - 0.5) * 0.025));
   }
 
-  // Compute drawdown
   let peak = prices[0];
   const drawdown = prices.map((p) => {
     if (p > peak) peak = p;
@@ -424,9 +409,7 @@ function initDrawdownChart() {
   });
 }
 
-/* ══════════════════════════════════════════════
-   INIT & THEME REACTIVITY
-   ══════════════════════════════════════════════ */
+/* INIT & THEME REACTIVITY */
 let chartInstances = [];
 
 function initAllCharts() {

@@ -1,10 +1,8 @@
-/* ══════════════════════════════════════════════
-   StocksWise - Modern Dark Theme (TradingView-inspired)
-   ══════════════════════════════════════════════ */
+/* StocksWise - Modern Dark Theme (TradingView-inspired) */
 
-/* ── Google Fonts loaded via HTML ── */
+/* Google Fonts loaded via HTML */
 
-/* ── Reset ── */
+/* Reset */
 *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
 
 :root {
@@ -48,7 +46,7 @@
   --section-tint: rgba(30, 34, 45, 0.4);
 }
 
-/* ── Light Theme ── */
+/* Light Theme */
 body.light {
   --bg:           #f8f9fb;
   --bg-deep:      #eef0f4;
@@ -102,15 +100,13 @@ a:hover { color: var(--link-hover); }
 
 strong { color: var(--text-strong); }
 
-/* ── Scrollbar ── */
+/* Scrollbar */
 ::-webkit-scrollbar { width: 8px; }
 ::-webkit-scrollbar-track { background: var(--bg-deep); }
 ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 4px; }
 ::-webkit-scrollbar-thumb:hover { background: var(--border-light); }
 
-/* ══════════════════════════════════════════════
-   NAVIGATION
-   ══════════════════════════════════════════════ */
+/* NAVIGATION */
 #topnav {
   position: fixed;
   top: 0; left: 0; right: 0;
@@ -179,7 +175,7 @@ body.expert .nav-sim-link a {
   color: var(--accent-light);
 }
 
-/* ── Theme Toggle ── */
+/* Theme Toggle */
 .theme-toggle {
   display: flex;
   align-items: center;
@@ -219,7 +215,7 @@ body.light ::-webkit-scrollbar-track { background: var(--bg); }
 body.light ::-webkit-scrollbar-thumb { background: var(--border); }
 body.light ::-webkit-scrollbar-thumb:hover { background: var(--border-light); }
 
-/* ── Mobile hamburger ── */
+/* Mobile hamburger */
 .nav-toggle {
   display: none;
   background: none;
@@ -237,9 +233,7 @@ body.light ::-webkit-scrollbar-thumb:hover { background: var(--border-light); }
   transition: 0.3s;
 }
 
-/* ══════════════════════════════════════════════
-   TICKER TAPE
-   ══════════════════════════════════════════════ */
+/* TICKER TAPE */
 .ticker-tape {
   position: fixed;
   top: var(--nav-h);
@@ -296,9 +290,7 @@ body.light ::-webkit-scrollbar-thumb:hover { background: var(--border-light); }
 body { padding-top: calc(var(--nav-h) + 36px); }
 html  { scroll-padding-top: calc(var(--nav-h) + 36px + 16px); }
 
-/* ══════════════════════════════════════════════
-   HERO
-   ══════════════════════════════════════════════ */
+/* HERO */
 #hero {
   min-height: calc(100vh - var(--nav-h) - 36px);
   display: flex;
@@ -497,7 +489,7 @@ html  { scroll-padding-top: calc(var(--nav-h) + 36px + 16px); }
   color: var(--text-strong);
 }
 
-/* ── Hero Stats Bar ── */
+/* Hero Stats Bar */
 .hero-stats {
   display: flex;
   justify-content: center;
@@ -525,16 +517,12 @@ html  { scroll-padding-top: calc(var(--nav-h) + 36px + 16px); }
   margin-top: 0.2rem;
 }
 
-/* ══════════════════════════════════════════════
-   MAIN CONTENT
-   ══════════════════════════════════════════════ */
+/* MAIN CONTENT */
 #content {
   width: 100%;
 }
 
-/* ══════════════════════════════════════════════
-   TWO-COLUMN SECTIONS
-   ══════════════════════════════════════════════ */
+/* TWO-COLUMN SECTIONS */
 .topic-section {
   position: relative;
   border-top: 1px solid var(--border);
@@ -552,7 +540,7 @@ html  { scroll-padding-top: calc(var(--nav-h) + 36px + 16px); }
   z-index: 1;
 }
 
-/* ── Mouse-following glow per section ── */
+/* Mouse-following glow per section */
 .section-glow {
   /* position: fixed (rather than absolute) so the 600px blur halo doesn't
      contribute to document scroll height when the cursor sits near a
@@ -624,9 +612,7 @@ html  { scroll-padding-top: calc(var(--nav-h) + 36px + 16px); }
 #risks .section-number   { color: #ef5350; background: rgba(239, 83, 80, 0.1); }
 #simulation .section-number { color: #b388ff; background: rgba(124, 77, 255, 0.1); }
 
-/* ══════════════════════════════════════════════
-   CARDS
-   ══════════════════════════════════════════════ */
+/* CARDS */
 .topic-detail {
   display: flex;
   flex-direction: column;
@@ -696,7 +682,7 @@ html  { scroll-padding-top: calc(var(--nav-h) + 36px + 16px); }
 }
 .card-highlight::before { height: 100%; }
 
-/* ── Term lists ── */
+/* Term lists */
 .term-list {
   list-style: none;
   margin-top: 0.75rem;
@@ -710,7 +696,7 @@ html  { scroll-padding-top: calc(var(--nav-h) + 36px + 16px); }
 }
 .term-list li:last-child { border-bottom: none; }
 
-/* ── Comparison Grid ── */
+/* Comparison Grid */
 .comparison {
   display: grid;
   grid-template-columns: 1fr 1fr;
@@ -761,9 +747,7 @@ html  { scroll-padding-top: calc(var(--nav-h) + 36px + 16px); }
   transform: translateY(-50%);
 }
 
-/* ══════════════════════════════════════════════
-   INLINE CHARTS (inside cards)
-   ══════════════════════════════════════════════ */
+/* INLINE CHARTS (inside cards) */
 .chart-wrapper {
   position: relative;
   width: 100%;
@@ -780,9 +764,7 @@ html  { scroll-padding-top: calc(var(--nav-h) + 36px + 16px); }
   .chart-wrapper { height: 180px; }
 }
 
-/* ══════════════════════════════════════════════
-   SIMULATION BUTTON
-   ══════════════════════════════════════════════ */
+/* SIMULATION BUTTON */
 .btn-sim {
   display: inline-flex;
   align-items: center;
@@ -803,9 +785,7 @@ html  { scroll-padding-top: calc(var(--nav-h) + 36px + 16px); }
   color: #fff;
 }
 
-/* ══════════════════════════════════════════════
-   MODULE QUIZ BUTTON & BADGE
-   ══════════════════════════════════════════════ */
+/* MODULE QUIZ BUTTON & BADGE */
 .btn-quiz {
   display: inline-flex;
   align-items: center;
@@ -853,9 +833,7 @@ html  { scroll-padding-top: calc(var(--nav-h) + 36px + 16px); }
   display: inline-flex;
 }
 
-/* ══════════════════════════════════════════════
-   QUIZ MODAL
-   ══════════════════════════════════════════════ */
+/* QUIZ MODAL */
 .quiz-overlay {
   display: none;
   position: fixed;
@@ -1010,12 +988,10 @@ html  { scroll-padding-top: calc(var(--nav-h) + 36px + 16px); }
 
 .hidden { display: none; }
 
-/* ══════════════════════════════════════════════
-   SCROLL REVEAL ANIMATION
+/* SCROLL REVEAL ANIMATION
    Cards fade + lift + unblur as they enter the viewport,
    and ease back out on exit so the module "breathes" while
-   the sticky label holds its position on the left.
-   ══════════════════════════════════════════════ */
+   the sticky label holds its position on the left. */
 .reveal {
   opacity: 0;
   transform: translateY(60px) scale(0.95);
@@ -1067,9 +1043,7 @@ html  { scroll-padding-top: calc(var(--nav-h) + 36px + 16px); }
   box-shadow: 0 4px 16px var(--accent-glow);
 }
 
-/* ══════════════════════════════════════════════
-   END-OF-BEGINNER UPGRADE PROMPT
-   ══════════════════════════════════════════════ */
+/* END-OF-BEGINNER UPGRADE PROMPT */
 /* Lives inside .topic-detail (right column of the simulation section) so it
    sits directly under the "Launch Simulator" card instead of below the
    80vh-tall section's empty bottom. */
@@ -1119,9 +1093,7 @@ html  { scroll-padding-top: calc(var(--nav-h) + 36px + 16px); }
   box-shadow: 0 8px 32px var(--accent-glow);
 }
 
-/* ══════════════════════════════════════════════
-   FOOTER
-   ══════════════════════════════════════════════ */
+/* FOOTER */
 footer {
   text-align: center;
   padding: 3rem 2rem;
@@ -1142,9 +1114,7 @@ footer a:hover { color: var(--accent-light); }
   letter-spacing: 0.04em;
 }
 
-/* ══════════════════════════════════════════════
-   RESPONSIVE
-   ══════════════════════════════════════════════ */
+/* RESPONSIVE */
 @media (max-width: 768px) {
   .topic-section-inner {
     grid-template-columns: 1fr;
@@ -1185,11 +1155,9 @@ footer a:hover { color: var(--accent-light); }
   .hero-actions { flex-direction: column; align-items: center; }
 }
 
-/* ══════════════════════════════════════════════
-   EXPERT MODE
-   ══════════════════════════════════════════════ */
+/* EXPERT MODE */
 
-/* ── Expert Toggle Button ── */
+/* Expert Toggle Button */
 .expert-toggle {
   display: flex;
   align-items: center;
@@ -1242,7 +1210,7 @@ body.expert .expert-toggle-switch::after {
   background: #fff;
 }
 
-/* ── Show/Hide Content ── */
+/* Show/Hide Content */
 .expert-content { display: none !important; }
 body.expert .beginner-content { display: none !important; }
 body.expert .expert-content { display: block !important; }
@@ -1277,7 +1245,7 @@ body.expert #sim-launch .section-number { color: var(--accent-light); background
   padding-bottom: 3rem;
 }
 
-/* ── Expert Controls ── */
+/* Expert Controls */
 .expert-controls {
   display: flex;
   gap: 0.65rem;
@@ -1342,7 +1310,7 @@ body.expert #sim-launch .section-number { color: var(--accent-light); background
   box-shadow: 0 4px 16px var(--accent-glow);
 }
 
-/* ── Toggle checkboxes (indicators) ── */
+/* Toggle checkboxes (indicators) */
 .indicator-toggles {
   display: flex;
   flex-wrap: wrap;
@@ -1375,12 +1343,10 @@ body.expert #sim-launch .section-number { color: var(--accent-light); background
   color: var(--text-strong);
 }
 
-/* ══════════════════════════════════════════════
-   CANDLESTICK ANATOMY (TA module, scroll-driven)
+/* CANDLESTICK ANATOMY (TA module, scroll-driven)
    Two oversized demo candles with labels sit above the actual chart.
    As the user scrolls toward the chart, --fuse is driven from 0 → 1
-   by JS, shrinking + dropping + fading the demo into the chart area.
-   ══════════════════════════════════════════════ */
+   by JS, shrinking + dropping + fading the demo into the chart area. */
 .candle-anatomy {
   margin: 0.5rem 0 1rem;
   display: flex;
@@ -1428,7 +1394,7 @@ body.expert #sim-launch .section-number { color: var(--accent-light); background
 .ca-tag-green { fill: var(--green); }
 .ca-tag-red   { fill: var(--red); }
 
-/* ── Chart containers ── */
+/* Chart containers */
 .expert-chart {
   width: 100%;
   min-height: 200px;
@@ -1446,7 +1412,7 @@ body.expert #sim-launch .section-number { color: var(--accent-light); background
   font-size: 0.85rem;
 }
 
-/* ── Side-by-side charts ── */
+/* Side-by-side charts */
 .chart-pair {
   display: grid;
   grid-template-columns: 1fr 1fr;
@@ -1463,7 +1429,7 @@ body.expert #sim-launch .section-number { color: var(--accent-light); background
   .chart-pair { grid-template-columns: 1fr; }
 }
 
-/* ── Ticker checkboxes grid ── */
+/* Ticker checkboxes grid */
 .ticker-checkboxes {
   display: flex;
   flex-wrap: wrap;
@@ -1487,7 +1453,7 @@ body.expert #sim-launch .section-number { color: var(--accent-light); background
 .ticker-checkbox input { accent-color: var(--accent); width: 13px; height: 13px; }
 .ticker-checkbox input:checked + span { color: var(--accent-light); }
 
-/* ── Inline ticker picker (search + chips) used by course-page expert charts ── */
+/* Inline ticker picker (search + chips) used by course-page expert charts */
 .ticker-picker {
   margin: 0.75rem 0;
   display: flex;
@@ -1577,7 +1543,7 @@ body.expert #sim-launch .section-number { color: var(--accent-light); background
 }
 .ticker-chip button:hover { color: var(--red, #ef5350); }
 
-/* ── Sharpe gauge ── */
+/* Sharpe gauge */
 .sharpe-display {
   text-align: center;
   padding: 1.5rem;
@@ -1603,7 +1569,7 @@ body.expert #sim-launch .section-number { color: var(--accent-light); background
 .sharpe-interp.positive { color: var(--green); }
 .sharpe-interp.excellent { color: #00e676; }
 
-/* ── Timeline event buttons ── */
+/* Timeline event buttons */
 .timeline-events {
   display: flex;
   flex-wrap: wrap;
@@ -1629,7 +1595,7 @@ body.expert #sim-launch .section-number { color: var(--accent-light); background
   color: var(--accent-light);
 }
 
-/* ── Event info card ── */
+/* Event info card */
 .timeline-info {
   display: none;
   padding: 1.25rem;
@@ -1659,7 +1625,7 @@ body.expert #sim-launch .section-number { color: var(--accent-light); background
   line-height: 1.65;
 }
 
-/* ── Bias cards ── */
+/* Bias cards */
 .bias-cards {
   display: grid;
   grid-template-columns: 1fr 1fr;
@@ -1701,7 +1667,7 @@ body.expert #sim-launch .section-number { color: var(--accent-light); background
   .bias-cards { grid-template-columns: 1fr; }
 }
 
-/* ── Expert formula blocks ── */
+/* Expert formula blocks */
 .formula-block {
   padding: 1rem 1.25rem;
   background: var(--bg-deep);
@@ -1715,7 +1681,7 @@ body.expert #sim-launch .section-number { color: var(--accent-light); background
   letter-spacing: 0.02em;
 }
 
-/* ── Expert section descriptions (replaces beginner ones) ── */
+/* Expert section descriptions (replaces beginner ones) */
 .expert-desc {
   font-size: 0.88rem;
   color: var(--text);
@@ -1723,7 +1689,7 @@ body.expert #sim-launch .section-number { color: var(--accent-light); background
   margin-bottom: 0.5rem;
 }
 
-/* ── Simulation Expert Tabs ── */
+/* Simulation Expert Tabs */
 .sim-tabs {
   display: flex;
   gap: 0.25rem;
@@ -1764,7 +1730,7 @@ body.expert #sim-launch .section-number { color: var(--accent-light); background
   display: block;
 }
 
-/* ── Backtest results ── */
+/* Backtest results */
 .backtest-stats {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
@@ -1793,7 +1759,7 @@ body.expert #sim-launch .section-number { color: var(--accent-light); background
 .backtest-stat .value.positive { color: var(--green); }
 .backtest-stat .value.negative { color: var(--red); }
 
-/* ── Portfolio weight sliders ── */
+/* Portfolio weight sliders */
 .weight-sliders {
   display: flex;
   flex-direction: column;
@@ -1835,7 +1801,7 @@ body.expert #sim-launch .section-number { color: var(--accent-light); background
 .weight-total.valid { color: var(--green); }
 .weight-total.invalid { color: var(--red); }
 
-/* ── Crisis buttons ── */
+/* Crisis buttons */
 .crisis-options {
   display: grid;
   grid-template-columns: 1fr 1fr;
@@ -1874,9 +1840,7 @@ body.expert #sim-launch .section-number { color: var(--accent-light); background
   .crisis-options { grid-template-columns: 1fr; }
 }
 
-/* ══════════════════════════════════════════════
-   ADVANCED SIMULATOR (rebuilt unified layout)
-   ══════════════════════════════════════════════ */
+/* ADVANCED SIMULATOR (rebuilt unified layout) */
 /* The base CSS forces `body.expert .expert-content { display: block !important }`
    which, when both classes share the same element, drops .adv-sim out of flex
    and silently kills its `gap`. This more specific rule wins it back. */
@@ -1890,7 +1854,7 @@ body.expert .expert-content.adv-sim {
   padding-bottom: 2rem;
 }
 
-/* ── Top: portfolio type pills ── */
+/* Top: portfolio type pills */
 .adv-portfolio-types {
   display: flex;
   align-items: center;
@@ -1942,7 +1906,7 @@ body.expert .expert-content.adv-sim {
   .adv-portfolio-current { display: none; }
 }
 
-/* ── Two-column grid: sidebar + chart ── */
+/* Two-column grid: sidebar + chart */
 .adv-grid {
   display: grid;
   grid-template-columns: 260px 1fr;
@@ -1953,7 +1917,7 @@ body.expert .expert-content.adv-sim {
   .adv-grid { grid-template-columns: 1fr; }
 }
 
-/* ── Sidebar cards ── */
+/* Sidebar cards */
 .adv-sidebar {
   display: flex;
   flex-direction: column;
@@ -2089,7 +2053,7 @@ body.expert .expert-content.adv-sim {
   line-height: 1.5;
 }
 
-/* ── Chart wrapper (reuses .chart-toolbar / .chart-area from sim CSS) ── */
+/* Chart wrapper (reuses .chart-toolbar / .chart-area from sim CSS) */
 .adv-chart-wrap {
   background: var(--surface);
   border: 1px solid var(--border);
@@ -2099,7 +2063,7 @@ body.expert .expert-content.adv-sim {
 }
 .adv-chart-wrap .chart-area { height: 360px; }
 
-/* ── Stats row ── */
+/* Stats row */
 .adv-stats {
   display: grid;
   grid-template-columns: repeat(7, 1fr);
@@ -2144,7 +2108,7 @@ body.expert .expert-content.adv-sim {
 .adv-stat-value.positive { color: var(--green); }
 .adv-stat-value.negative { color: var(--red); }
 
-/* ── Locked premium row ── */
+/* Locked premium row */
 .adv-locked-row {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
@@ -2182,7 +2146,7 @@ body.expert .expert-content.adv-sim {
   border: 1px solid rgba(41,98,255,0.25);
 }
 
-/* ── Research tools (collapsible) ── */
+/* Research tools (collapsible) */
 .adv-research {
   margin-top: 1.25rem;
   padding-top: 1.5rem;
@@ -2238,9 +2202,7 @@ body.expert .expert-content.adv-sim {
 }
 .adv-tool-card .sim-tool-panel { padding: 0 1.1rem 1.1rem; }
 
-/* ══════════════════════════════════════════════
-   ADV MODALS (portfolio pickers)
-   ══════════════════════════════════════════════ */
+/* ADV MODALS (portfolio pickers) */
 .adv-modal {
   position: fixed;
   inset: 0;
@@ -2501,7 +2463,7 @@ body.expert .expert-content.adv-sim {
   font-style: italic;
 }
 
-/* ── Stat info popover ── */
+/* Stat info popover */
 .adv-stat-popover {
   position: absolute;
   z-index: 550;

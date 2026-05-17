@@ -1,13 +1,10 @@
-/* ══════════════════════════════════════════════
-   StocksWise - Data Loader & Financial Indicators
-   Loads CSV stock/ETF data and computes technical indicators.
-   ══════════════════════════════════════════════ */
+/* StocksWise - Data Loader & Financial Indicators
+   Loads CSV stock/ETF data and computes technical indicators. */
 
 const StockData = (() => {
   const cache = {};
   const DATA_BASE = "https://raw.githubusercontent.com/com-480-data-visualization/StocksWise/data";
 
-  // Map display tickers to the filename actually present in the dataset.
   // Meta rebranded from FB → META in Oct 2021; the historical file is still FB.
   const TICKER_ALIASES = {
     META: "FB",
@@ -42,17 +39,12 @@ const StockData = (() => {
   let metaCache = null;
   let nameMap = null;
 
-  // Synchronous lookup once loadMeta() has populated the cache. Returns the
-  // company name for a ticker, or null if unknown / not yet loaded. Callers
-  // wanting to ensure the cache is warm should `await StockData.loadMeta()`
-  // first (most pages do this at startup to populate ticker pickers).
+  // Synchronous lookup; requires `await StockData.loadMeta()` first to warm the cache.
   function companyName(symbol) {
     if (!nameMap) return null;
     return nameMap.get(symbol.toUpperCase()) || null;
   }
 
-  // Convenience: kick off a lazy load, and once it's done, walk every element
-  // with a `data-ticker` attribute and set its `title` to the company name.
   // Idempotent - call whenever new ticker chips appear in the DOM.
   async function annotateTickerTitles(root) {
     await loadMeta();
@@ -339,7 +331,6 @@ const StockData = (() => {
       if (isLow) supports.push({ date: data[i].date, price: val });
       if (isHigh) resistances.push({ date: data[i].date, price: val });
     }
-    // Cluster nearby levels
     return {
       supports: clusterLevels(supports),
       resistances: clusterLevels(resistances),
@@ -367,7 +358,6 @@ const StockData = (() => {
     return (new Date(d2) - new Date(d1)) / 86400000;
   }
 
-  // Generate portfolio value from multiple tickers with weights
   function computePortfolioValue(tickerDatasets, weights, initialCapital = 1000) {
     // Align all datasets to same date range
     const dateMap = new Map();

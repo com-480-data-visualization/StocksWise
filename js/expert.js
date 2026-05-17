@@ -1,16 +1,15 @@
-/* ══════════════════════════════════════════════
-   StocksWise - Expert Mode
-   All expert module charts and interactions.
-   Uses Plotly.js for advanced charts, Chart.js for simpler ones.
-   ══════════════════════════════════════════════ */
+/*
+ * StocksWise - Expert Mode
+ * All expert module charts and interactions.
+ * Uses Plotly.js for advanced charts, Chart.js for simpler ones.
+ */
 
-/* ── Expert Mode Toggle (shared across pages via a single localStorage key) ── */
+/* Expert Mode Toggle (shared across pages via a single localStorage key) */
 (function initExpertMode() {
   const pageKey = "sw-mode";
   const saved = localStorage.getItem(pageKey);
   if (saved === "expert") document.body.classList.add("expert");
 
-  // Set initial label text
   const toggle = document.getElementById("expert-toggle");
   if (toggle) {
     const label = toggle.querySelector(".expert-toggle-label");
@@ -29,7 +28,6 @@
     if (isExpert) initExpertCharts();
   });
 
-  // Update nav labels on load
   updateNavLabels(saved === "expert");
 })();
 
@@ -39,7 +37,7 @@ function updateNavLabels(isExpert) {
   });
 }
 
-/* ── Ticker autocomplete: populates all <select> with class "ticker-select" ── */
+/* Ticker autocomplete: populates all <select> with class "ticker-select" */
 (async function populateTickerSelects() {
   const meta = await StockData.loadMeta();
   if (!meta || meta.length === 0) return;
@@ -59,7 +57,7 @@ function updateNavLabels(isExpert) {
   });
 })();
 
-/* ── Plotly theme helper ── */
+/* Plotly theme helper */
 function plotlyLayout(overrides = {}) {
   const cs = getComputedStyle(document.documentElement);
   const g = (v) => cs.getPropertyValue(v).trim();
@@ -112,7 +110,6 @@ function initExpertCharts() {
   loadAllExpertCharts();
 }
 
-// Load every expert chart with its current default selections.
 // Staggered so we don't kick off a dozen parallel fetches at once (and so
 // the UI feels alive rather than freezing on a single "loading" flash).
 function loadAllExpertCharts() {
@@ -135,9 +132,7 @@ function loadAllExpertCharts() {
   });
 }
 
-/* ══════════════════════════════════════════════
-   MODULE 01 - Technical Analysis
-   ══════════════════════════════════════════════ */
+/* MODULE 01 - Technical Analysis */
 
 async function loadTechnicalAnalysis() {
   const ticker = document.getElementById("ta-ticker")?.value || "AAPL";
@@ -155,7 +150,6 @@ async function loadTechnicalAnalysis() {
     return;
   }
 
-  // Filter by period
   const now = data[data.length - 1].date;
   const endDate = now;
   let startDate;
@@ -174,7 +168,6 @@ async function loadTechnicalAnalysis() {
     return;
   }
 
-  // Candlestick data
   const dates = filtered.map(d => d.date);
   const open = filtered.map(d => d.open);
   const high = filtered.map(d => d.high);
@@ -189,7 +182,6 @@ async function loadTechnicalAnalysis() {
     name: ticker,
   }];
 
-  // Moving averages
   const showSMA20 = document.getElementById("ta-sma20")?.checked;
   const showSMA50 = document.getElementById("ta-sma50")?.checked;
   const showSMA200 = document.getElementById("ta-sma200")?.checked;
@@ -212,7 +204,6 @@ async function loadTechnicalAnalysis() {
     traces.push({ x: dates, y: ema, type: "scatter", mode: "lines", name: "EMA 20", line: { color: "#00bcd4", width: 1.5, dash: "dot" } });
   }
 
-  // Support & Resistance
   const showSR = document.getElementById("ta-sr")?.checked;
   if (showSR) {
     const sr = StockData.detectSupportResistance(filtered, 15);
@@ -247,7 +238,6 @@ async function loadTechnicalAnalysis() {
     }), plotlyConfig());
   }
 
-  // RSI chart
   if (rsiContainer) {
     const rsi = StockData.computeRSI(filtered, 14);
     rsiContainer.innerHTML = "";
@@ -268,16 +258,13 @@ async function loadTechnicalAnalysis() {
   }
 }
 
-// Bind TA controls - any change reloads the chart (no manual button).
 document.addEventListener("DOMContentLoaded", () => {
   document.querySelectorAll("#ta-ticker, #ta-period, #ta-sma20, #ta-sma50, #ta-sma200, #ta-ema20, #ta-sr").forEach(el => {
     el?.addEventListener("change", loadTechnicalAnalysis);
   });
 });
 
-/* ══════════════════════════════════════════════
-   MODULE 02 - Portfolio Construction
-   ══════════════════════════════════════════════ */
+/* MODULE 02 - Portfolio Construction */
 
 async function loadDiversificationChart() {
   const container1 = document.getElementById("divers-single");
@@ -297,7 +284,6 @@ async function loadDiversificationChart() {
   const end = "2024-12-31";
   const tslaFiltered = StockData.filterByDate(tsla, start, end);
 
-  // Single stock: TSLA
   const tslaStart = tslaFiltered[0].close;
   container1.innerHTML = "";
   Plotly.newPlot(container1, [{
@@ -311,7 +297,6 @@ async function loadDiversificationChart() {
     margin: { l: 55, r: 10, t: 10, b: 30 },
   }), plotlyConfig());
 
-  // Portfolio: equal-weight 5 stocks
   const filteredAll = datasets.map(d => StockData.filterByDate(d, start, end));
   const portfolio = StockData.computePortfolioValue(filteredAll, [0.2, 0.2, 0.2, 0.2, 0.2], 1000);
   container2.innerHTML = "";
@@ -344,7 +329,6 @@ async function loadCorrelationHeatmap() {
     return;
   }
 
-  // Use last 2 years of data
   const end = datasets[0][datasets[0].length - 1].date;
   const startD = new Date(end);
   startD.setFullYear(startD.getFullYear() - 2);
@@ -423,8 +407,7 @@ function loadSectorAllocation() {
   }), plotlyConfig());
 }
 
-// Solve Ax = b for square A via Gaussian elimination with partial pivoting.
-// Returns null if A is (near-)singular. A and b are not mutated.
+// Gaussian elimination with partial pivoting. Returns null if A is (near-)singular.
 function linsolve(A, b) {
   const n = A.length;
   const M = A.map((row, i) => [...row, b[i]]);
@@ -507,7 +490,6 @@ async function loadEfficientFrontier() {
   }
 
   const datasets = await Promise.all(selectedTickers.map(t => StockData.loadTicker(t)));
-  // Drop tickers that failed to load.
   const okIdx = datasets.map((d, i) => d ? i : -1).filter(i => i >= 0);
   if (okIdx.length < 2) {
     container.innerHTML = '<div class="chart-loading">Could not load price data for these tickers.</div>';
@@ -516,7 +498,6 @@ async function loadEfficientFrontier() {
   const okTickers = okIdx.map(i => selectedTickers[i]);
   const okData = okIdx.map(i => datasets[i]);
 
-  // Last 3 years of data, aligned across tickers.
   const end = okData[0][okData[0].length - 1].date;
   const startD = new Date(end);
   startD.setFullYear(startD.getFullYear() - 3);
@@ -544,7 +525,6 @@ async function loadEfficientFrontier() {
     }
   }
 
-  // Random Monte-Carlo portfolios + the equal-weight portfolio.
   const portfolios = [];
   for (let p = 0; p < 2000; p++) {
     const w = Array.from({ length: n }, () => Math.random());
@@ -564,17 +544,13 @@ async function loadEfficientFrontier() {
   for (let i = 0; i < n; i++) for (let j = 0; j < n; j++) eqVar += eqW[i] * eqW[j] * cov[i][j];
   const eqVol = Math.sqrt(eqVar);
 
-  // Individual asset positions (for the "individual assets" cloud).
   const assetPoints = okTickers.map((t, i) => ({
     ticker: t, ret: means[i] * 100, vol: Math.sqrt(cov[i][i]) * 100,
   }));
 
-  // Tangency = max-Sharpe = "Ideal Market Portfolio".
-  // Solve analytically: w_tan ∝ Σ⁻¹ (μ − rf·1). If the unconstrained
-  // solution requires SHORTING any asset, fall back to the best-Sharpe
-  // long-only sample so the diamond stays inside the feasible cloud
-  // (an "outside-cloud" tangency dominates the axes and makes the cloud
-  // unreadable).
+  // Tangency = max-Sharpe = "Ideal Market Portfolio": w_tan ∝ Σ⁻¹ (μ − rf·1).
+  // If the unconstrained solution requires shorting, fall back to the best-Sharpe
+  // long-only sample so the diamond stays inside the feasible cloud.
   const RISK_FREE_PCT = 2;
   const rfDecimal = RISK_FREE_PCT / 100;
   const analytical = computeAnalyticalFrontier(means, cov, rfDecimal);
@@ -600,14 +576,11 @@ async function loadEfficientFrontier() {
   const muted = cs.getPropertyValue("--text-muted").trim();
   const strong = cs.getPropertyValue("--text-strong").trim() || "#d1d4dc";
 
-  // Axis bounds based on the cloud + individual assets + equal-weight, NOT
-  // the analytical tangency. The tangency can land far outside the long-only
-  // feasible region; including it would crush the cloud into one corner.
+  // Axis bounds exclude the analytical tangency: it can land far outside the
+  // long-only feasible region and crush the cloud into one corner.
   const allVols = portfolios.map(p => p.vol).concat(assetPoints.map(a => a.vol), [eqVol * 100]);
   const allRets = portfolios.map(p => p.ret).concat(assetPoints.map(a => a.ret), [eqRet * 100]);
-  // Include the tangency only if it's not a wild outlier (within 25% of the
-  // cloud's bounds). Keeps the cloud readable while still showing the diamond
-  // when it lives near the edge of the feasible set.
+  // Include the tangency only if it's not a wild outlier (within 25% of cloud bounds).
   const cloudVolMin = Math.min(...allVols);
   const cloudVolMax = Math.max(...allVols);
   const cloudRetMin = Math.min(...allRets);
@@ -616,9 +589,8 @@ async function loadEfficientFrontier() {
     && bestPort.vol <= cloudVolMax * 1.25
     && bestPort.ret <= cloudRetMax * 1.25;
   if (tangencyInView) { allVols.push(bestPort.vol); allRets.push(bestPort.ret); }
-  // Tight bounds: start near the cloud instead of (0, 0) so the data fills
-  // the plot area. Always include the risk-free line (y = RISK_FREE_PCT) so
-  // the reference dash stays visible.
+  // Tight bounds: start near the cloud (not at 0,0) so data fills the plot.
+  // Always include the risk-free line (y = RISK_FREE_PCT) so the dash stays visible.
   const cloudWidth = cloudVolMax - cloudVolMin;
   const cloudHeight = cloudRetMax - cloudRetMin;
   const xMin = Math.max(0, cloudVolMin - cloudWidth * 0.25);
@@ -674,7 +646,6 @@ async function loadEfficientFrontier() {
     font: { color: accent, size: 11 },
   });
   if (bestPort) {
-    // Analytical efficient frontier curve (clipped to plotted bounds).
     let frontierMinVol = null;
     if (analytical && analytical.frontier && analytical.frontier.length > 1) {
       const pts = analytical.frontier
@@ -691,10 +662,8 @@ async function loadEfficientFrontier() {
         });
       }
     }
-    // Only draw the CML, diamond, and label if the tangency is within the
-    // cloud-derived axis bounds. Otherwise the tangency is an out-of-range
-    // "short-heavy" portfolio and we already swapped in the long-only
-    // approximation; if even that's out of view, skip the marker entirely.
+    // Only draw the CML, diamond, and label when the tangency lies within the
+    // cloud-derived axis bounds; otherwise it's an out-of-range short-heavy point.
     if (tangencyInView) {
       const cloudMinVol = Math.min(...portfolios.map(p => p.vol));
       const cmlStartX = frontierMinVol != null ? frontierMinVol : cloudMinVol * 0.85;
@@ -744,9 +713,7 @@ async function loadEfficientFrontier() {
   }), plotlyConfig());
 }
 
-/* ══════════════════════════════════════════════
-   MODULE 03 - Risk Metrics Deep
-   ══════════════════════════════════════════════ */
+/* MODULE 03 - Risk Metrics Deep */
 
 async function loadVolatilityDeep() {
   const container = document.getElementById("vol-deep-chart");
@@ -777,7 +744,6 @@ async function loadVolatilityDeep() {
   const vol = StockData.computeRollingVolatility(filtered, 30);
   const dates = filtered.map(d => d.date);
 
-  // Price chart
   if (priceContainer) {
     priceContainer.innerHTML = "";
     Plotly.newPlot(priceContainer, [{
@@ -789,7 +755,6 @@ async function loadVolatilityDeep() {
     }), plotlyConfig());
   }
 
-  // Volatility chart
   container.innerHTML = "";
   Plotly.newPlot(container, [{
     x: dates, y: vol, type: "scatter", mode: "lines",
@@ -881,7 +846,6 @@ async function loadStrategiesComparison() {
   if (!container) return;
   container.innerHTML = '<div class="chart-loading">Loading comparison data...</div>';
 
-  // Value: INTC, Growth: AMZN, Momentum: NVDA
   const tickers = [
     { symbol: "INTC", label: "INTC (Value)", color: "#ff9800" },
     { symbol: "AMZN", label: "AMZN (Growth)", color: getAccentColor() },
@@ -913,9 +877,7 @@ async function loadStrategiesComparison() {
   }), plotlyConfig());
 }
 
-/* ══════════════════════════════════════════════
-   MODULE 04 - Market History & Psychology
-   ══════════════════════════════════════════════ */
+/* MODULE 04 - Market History & Psychology */
 
 const MARKET_EVENTS = [
   { date: "1987-10-19", label: "Black Monday", period: ["1987-08-01", "1988-03-01"], desc: "On October 19, 1987, the NASDAQ fell over 11% in a single day. Program trading and panic selling cascaded across global markets. The crash was triggered by rising interest rates and overvaluation concerns." },
@@ -942,14 +904,11 @@ async function loadNasdaqTimeline() {
   const dataStart = dates[0];
   const dataEnd = dates[dates.length - 1];
 
-  // Stash the data on the container so the timeline buttons can compute a
-  // proper y-range for the zoomed period (log y-axis + a relayout that
-  // doesn't include the visible data goes pathological otherwise).
+  // Stash data on the container so timeline buttons can compute a proper
+  // y-range for the zoomed period (autorange pathology otherwise).
   container.__qqqData = data;
   container.__qqqRange = [dataStart, dataEnd];
 
-  // Hide buttons whose event date isn't covered by the available data.
-  // (The reset button has no data-event - leave it visible.)
   document.querySelectorAll(".timeline-event-btn[data-event]").forEach((btn) => {
     const idx = parseInt(btn.dataset.event);
     const ev = MARKET_EVENTS[idx];
@@ -965,10 +924,8 @@ async function loadNasdaqTimeline() {
   const fullYRange = [pMin * 0.9, pMax * 1.1];
 
   const visibleEvents = MARKET_EVENTS.filter(e => e.date >= dataStart && e.date <= dataEnd);
-  // Anchor each annotation to the PEAK price in the event's period - keeps
-  // all three arrows above the price line. (Using the price on the exact
-  // event date lands COVID at its trough, below the pre-crash peak, which
-  // looks visually wrong.)
+  // Anchor each annotation to the PEAK price in the event's period so arrows
+  // stay above the price line (the exact event date lands COVID at its trough).
   const peakPriceInPeriod = (event) => {
     const [s, e] = event.period;
     const slice = data.filter(d => d.date >= s && d.date <= e);
@@ -979,10 +936,7 @@ async function loadNasdaqTimeline() {
     return Math.max(...slice.map(d => d.high || d.close));
   };
 
-  // Compute each event's relative position in the timeline so labels near
-  // the right edge can be shifted leftward (otherwise "COVID Crash" clips).
-  // Labels near the top get a smaller vertical offset so they sit below the
-  // chart's upper edge.
+  // Shift labels near the right/top edge inward so they don't clip.
   const dayMs = 86400000;
   const totalDays = (new Date(dataEnd) - new Date(dataStart)) / dayMs;
   const annotations = visibleEvents.map((event) => {
@@ -990,8 +944,6 @@ async function loadNasdaqTimeline() {
     const positionFrac = totalDays > 0 ? eventDays / totalDays : 0.5;
     const nearRight = positionFrac > 0.85;
     const nearLeft = positionFrac < 0.05;
-    // If the annotation y sits in the top 25% of the price range, shrink
-    // ay so the label stays inside the plot rectangle.
     const eventY = peakPriceInPeriod(event);
     const nearTop = (eventY - pMin) / (pMax - pMin) > 0.75;
     return {
@@ -1022,7 +974,6 @@ async function loadNasdaqTimeline() {
     annotations,
   }), plotlyConfig());
 
-  // Click handler for annotations
   container.on("plotly_click", (eventData) => {
     if (!infoCard) return;
     const clickDate = eventData.points[0].x;
@@ -1035,8 +986,6 @@ async function loadNasdaqTimeline() {
     if (event) showTimelineEvent(MARKET_EVENTS.indexOf(event));
   });
 
-  // Default to the full-timeline view (all crisis annotations visible). The
-  // reset button mirrors that state; event buttons zoom into a single crisis.
   const resetBtn = document.getElementById("timeline-reset-btn");
   if (resetBtn) resetBtn.classList.add("active");
   if (infoCard) infoCard.style.display = "none";
@@ -1072,23 +1021,20 @@ function showTimelineEvent(idx, { zoom = true } = {}) {
 
   if (zoom && container && container.data) {
     const allData = container.__qqqData || [];
-    // Clamp the requested period to the data's actual extent - otherwise the
-    // chart shows a trailing empty stretch (e.g. COVID period runs to
-    // 2020-06-01 but the dataset stops at 2020-04-01).
+    // Clamp the requested period to the data's actual extent to avoid trailing
+    // empty stretches when the event period extends past the dataset.
     const dataRange = container.__qqqRange || [];
     const reqStart = event.period[0];
     const reqEnd = event.period[1];
     const xStart = dataRange[0] && reqStart < dataRange[0] ? dataRange[0] : reqStart;
     const xEnd = dataRange[1] && reqEnd > dataRange[1] ? dataRange[1] : reqEnd;
     const slice = allData.filter(d => d.date >= xStart && d.date <= xEnd);
-    // Hide the multi-event annotations when zoomed - they were positioned
-    // for the full-timeline scale and look wrong (clipped or floating in
-    // space) at zoom scale. The info card below already names the event.
+    // Hide multi-event annotations when zoomed: they were positioned for the
+    // full-timeline scale. The info card below already names the event.
     const update = { "xaxis.range": [xStart, xEnd], annotations: [] };
     if (slice.length) {
-      // Compute y range manually from data inside the zoomed window. Plotly's
-      // autorange uses the whole series, so it'd otherwise keep the full y
-      // span and the line would look flat on the zoom.
+      // Compute y range manually: Plotly's autorange uses the whole series,
+      // not the visible slice, so the line would otherwise look flat on zoom.
       let lo = Infinity, hi = -Infinity;
       slice.forEach(d => { if (d.low < lo) lo = d.low; if (d.high > hi) hi = d.high; });
       if (lo > 0 && hi > 0) {
@@ -1147,10 +1093,8 @@ async function loadVolatilityClustering() {
   }), plotlyConfig());
 }
 
-/* ══════════════════════════════════════════════
-   Inline ticker picker: search the full meta universe and pick chips.
-   Used by the course's correlation and efficient-frontier cards.
-   ══════════════════════════════════════════════ */
+/* Inline ticker picker: search the full meta universe and pick chips.
+   Used by the correlation and efficient-frontier cards. */
 function initTickerPicker(root, { initial = [], max = 8, onChange } = {}) {
   if (!root) return null;
   let tickers = [...initial];
@@ -1170,7 +1114,7 @@ function initTickerPicker(root, { initial = [], max = 8, onChange } = {}) {
         if (onChange) onChange(tickers);
       });
     });
-    // In case the meta cache wasn't ready yet, re-annotate once it is.
+    // Re-annotate in case the meta cache wasn't ready yet.
     StockData.annotateTickerTitles?.(chips);
   }
 
@@ -1214,7 +1158,7 @@ function initTickerPicker(root, { initial = [], max = 8, onChange } = {}) {
     clearTimeout(searchTimer);
     searchTimer = setTimeout(runSearch, 120);
   });
-  // Click outside the picker dismisses the suggestions popover.
+  // Click outside dismisses the suggestions popover.
   document.addEventListener("click", (e) => {
     if (!root.contains(e.target)) { results.hidden = true; }
   });
@@ -1229,11 +1173,10 @@ function initTickerPicker(root, { initial = [], max = 8, onChange } = {}) {
 let __corrPicker = null;
 let __frontierPicker = null;
 
-/* ── Init all expert module charts on demand ── */
+/* Init all expert module charts on demand */
 document.addEventListener("DOMContentLoaded", () => {
   setupTimelineButtons();
 
-  // Module 02 - inline ticker pickers replace the old hardcoded checkboxes.
   __corrPicker = initTickerPicker(document.getElementById("corr-picker"), {
     initial: ["AAPL", "MSFT", "NVDA", "GOOG"],
     max: 8,
@@ -1245,13 +1188,11 @@ document.addEventListener("DOMContentLoaded", () => {
     onChange: () => loadEfficientFrontier(),
   });
 
-  // Module 03 - selects reload their chart automatically on change.
   document.querySelectorAll("#vol-ticker, #vol-period").forEach(el => el.addEventListener("change", loadVolatilityDeep));
   document.querySelectorAll("#sharpe-ticker, #sharpe-period").forEach(el => el.addEventListener("change", computeSharpeDisplay));
   document.getElementById("dd-ticker")?.addEventListener("change", loadMaxDrawdownDeep);
 
   // Auto-load when entering advanced mode (or now, if we're already there).
-  // Default selections populate charts immediately so nothing waits on a button click.
   if (document.body.classList.contains("expert")) {
     initExpertCharts();
   }
