@@ -608,15 +608,23 @@ async function loadEfficientFrontier() {
   // Include the tangency only if it's not a wild outlier (within 25% of the
   // cloud's bounds). Keeps the cloud readable while still showing the diamond
   // when it lives near the edge of the feasible set.
+  const cloudVolMin = Math.min(...allVols);
   const cloudVolMax = Math.max(...allVols);
+  const cloudRetMin = Math.min(...allRets);
   const cloudRetMax = Math.max(...allRets);
   const tangencyInView = bestPort
     && bestPort.vol <= cloudVolMax * 1.25
     && bestPort.ret <= cloudRetMax * 1.25;
   if (tangencyInView) { allVols.push(bestPort.vol); allRets.push(bestPort.ret); }
-  const xMax = Math.max(...allVols) * 1.08;
-  const yMin = Math.min(0, ...allRets) - 2;
-  const yMax = Math.max(...allRets) * 1.12;
+  // Tight bounds: start near the cloud instead of (0, 0) so the data fills
+  // the plot area. Always include the risk-free line (y = RISK_FREE_PCT) so
+  // the reference dash stays visible.
+  const cloudWidth = cloudVolMax - cloudVolMin;
+  const cloudHeight = cloudRetMax - cloudRetMin;
+  const xMin = Math.max(0, cloudVolMin - cloudWidth * 0.25);
+  const xMax = Math.max(...allVols) + cloudWidth * 0.08;
+  const yMin = Math.min(RISK_FREE_PCT - 1, cloudRetMin - cloudHeight * 0.25);
+  const yMax = Math.max(...allRets) + cloudHeight * 0.12;
 
   const traces = [
     {
@@ -650,11 +658,11 @@ async function loadEfficientFrontier() {
   ];
   const annots = [];
   const shapes = [
-    { type: "line", x0: 0, x1: xMax, y0: RISK_FREE_PCT, y1: RISK_FREE_PCT,
+    { type: "line", x0: xMin, x1: xMax, y0: RISK_FREE_PCT, y1: RISK_FREE_PCT,
       line: { color: muted, width: 1, dash: "dash" } },
   ];
   annots.push({
-    x: 0, y: RISK_FREE_PCT, text: " Risk-free " + RISK_FREE_PCT + "%",
+    x: xMin, y: RISK_FREE_PCT, text: " Risk-free " + RISK_FREE_PCT + "%",
     showarrow: false, xanchor: "left", yanchor: "bottom",
     font: { color: muted, size: 10 },
   });
@@ -729,7 +737,7 @@ async function loadEfficientFrontier() {
   Plotly.newPlot(container, traces, plotlyLayout({
     height: 420,
     margin: { l: 70, r: 30, t: 16, b: 60 },
-    xaxis: { title: "Expected Risk (annualized volatility, %) →", range: [0, xMax] },
+    xaxis: { title: "Expected Risk (annualized volatility, %) →", range: [xMin, xMax] },
     yaxis: { title: "Expected Return (%) ↑", range: [yMin, yMax] },
     showlegend: false,
     shapes, annotations: annots,
@@ -948,35 +956,60 @@ async function loadNasdaqTimeline() {
     btn.style.display = (ev && ev.date >= dataStart && ev.date <= dataEnd) ? "" : "none";
   });
 
+  // Linear y-axis: the QQQ range across the whole series is only ~5×, easily
+  // readable on linear. A log axis here renders confusing minor-tick labels
+  // (just the leading digit, so "2" can mean $2, $20 or $200).
+  const positivePrices = prices.filter(p => p > 0);
+  const pMin = Math.min(...positivePrices);
+  const pMax = Math.max(...positivePrices);
+  const fullYRange = [pMin * 0.9, pMax * 1.1];
+
   const visibleEvents = MARKET_EVENTS.filter(e => e.date >= dataStart && e.date <= dataEnd);
-  const findPriceAt = (date) => {
-    let i = dates.indexOf(date);
-    if (i < 0) i = dates.findIndex(d => d >= date);
-    return i >= 0 ? prices[i] : null;
+  // Anchor each annotation to the PEAK price in the event's period - keeps
+  // all three arrows above the price line. (Using the price on the exact
+  // event date lands COVID at its trough, below the pre-crash peak, which
+  // looks visually wrong.)
+  const peakPriceInPeriod = (event) => {
+    const [s, e] = event.period;
+    const slice = data.filter(d => d.date >= s && d.date <= e);
+    if (!slice.length) {
+      const i = dates.indexOf(event.date);
+      return i >= 0 ? prices[i] : prices[0];
+    }
+    return Math.max(...slice.map(d => d.high || d.close));
   };
 
+  // Compute each event's relative position in the timeline so labels near
+  // the right edge can be shifted leftward (otherwise "COVID Crash" clips).
+  // Labels near the top get a smaller vertical offset so they sit below the
+  // chart's upper edge.
+  const dayMs = 86400000;
+  const totalDays = (new Date(dataEnd) - new Date(dataStart)) / dayMs;
   const annotations = visibleEvents.map((event) => {
-    const y = findPriceAt(event.date);
+    const eventDays = (new Date(event.date) - new Date(dataStart)) / dayMs;
+    const positionFrac = totalDays > 0 ? eventDays / totalDays : 0.5;
+    const nearRight = positionFrac > 0.85;
+    const nearLeft = positionFrac < 0.05;
+    // If the annotation y sits in the top 25% of the price range, shrink
+    // ay so the label stays inside the plot rectangle.
+    const eventY = peakPriceInPeriod(event);
+    const nearTop = (eventY - pMin) / (pMax - pMin) > 0.75;
     return {
-      x: event.date, y: y ?? prices[0],
+      x: event.date, y: eventY,
       text: event.label, showarrow: true,
       arrowhead: 2, arrowsize: 1, arrowwidth: 1.5,
-      arrowcolor: getRedColor(), ax: 0, ay: -40,
+      arrowcolor: getRedColor(),
+      ax: nearRight ? -55 : (nearLeft ? 55 : 0),
+      ay: nearTop ? -18 : -40,
+      xanchor: nearRight ? "right" : (nearLeft ? "left" : "center"),
       font: { size: 11, color: getAccentColor() },
       bgcolor: "rgba(30,34,45,0.9)", borderpad: 4,
       bordercolor: getAccentColor(), borderwidth: 1,
     };
   });
-
-  // Explicit y-range in log space. Plotly's `autorange: true` on a log axis
-  // can collapse to a pathological 1 → 10^200 default when it gets confused
-  // (e.g. by trace/annotation interactions); pinning the range avoids that.
-  const positivePrices = prices.filter(p => p > 0);
-  const pMin = Math.min(...positivePrices);
-  const pMax = Math.max(...positivePrices);
-  const fullYRange = [Math.log10(pMin * 0.9), Math.log10(pMax * 1.1)];
   container.__qqqFullYRange = fullYRange;
   container.__qqqFullXRange = [dataStart, dataEnd];
+  container.__qqqFullAnnotations = annotations;
 
   container.innerHTML = "";
   Plotly.newPlot(container, [{
@@ -985,7 +1018,7 @@ async function loadNasdaqTimeline() {
   }], plotlyLayout({
     height: 400,
     xaxis: { range: [dataStart, dataEnd] },
-    yaxis: { title: "Price ($)", type: "log", range: fullYRange },
+    yaxis: { title: "Price ($)", tickprefix: "$", range: fullYRange },
     annotations,
   }), plotlyConfig());
 
@@ -1017,6 +1050,7 @@ function resetTimelineView() {
       Plotly.relayout(container, {
         "xaxis.range": container.__qqqFullXRange,
         "yaxis.range": container.__qqqFullYRange,
+        annotations: container.__qqqFullAnnotations || [],
       });
     } catch (_) {}
   }
@@ -1047,15 +1081,19 @@ function showTimelineEvent(idx, { zoom = true } = {}) {
     const xStart = dataRange[0] && reqStart < dataRange[0] ? dataRange[0] : reqStart;
     const xEnd = dataRange[1] && reqEnd > dataRange[1] ? dataRange[1] : reqEnd;
     const slice = allData.filter(d => d.date >= xStart && d.date <= xEnd);
-    const update = { "xaxis.range": [xStart, xEnd] };
+    // Hide the multi-event annotations when zoomed - they were positioned
+    // for the full-timeline scale and look wrong (clipped or floating in
+    // space) at zoom scale. The info card below already names the event.
+    const update = { "xaxis.range": [xStart, xEnd], annotations: [] };
     if (slice.length) {
       // Compute y range manually from data inside the zoomed window. Plotly's
-      // autorange uses the whole series, so a log y-axis can otherwise end up
-      // showing 1 → 10^200 with no line in view.
+      // autorange uses the whole series, so it'd otherwise keep the full y
+      // span and the line would look flat on the zoom.
       let lo = Infinity, hi = -Infinity;
       slice.forEach(d => { if (d.low < lo) lo = d.low; if (d.high > hi) hi = d.high; });
       if (lo > 0 && hi > 0) {
-        update["yaxis.range"] = [Math.log10(lo * 0.9), Math.log10(hi * 1.1)];
+        const pad = (hi - lo) * 0.08 || hi * 0.05;
+        update["yaxis.range"] = [lo - pad, hi + pad];
       }
     }
     try { Plotly.relayout(container, update); } catch (_) {}

@@ -424,15 +424,21 @@ async function runPortfolioBuilder() {
     // would crush the cloud into one corner of the plot).
     const pbAllVols = portfolios.map(p => p.vol).concat([userVol * 100]);
     const pbAllRets = portfolios.map(p => p.ret).concat([userRet * 100]);
+    const pbCloudVolMin = Math.min(...pbAllVols);
     const pbCloudVolMax = Math.max(...pbAllVols);
+    const pbCloudRetMin = Math.min(...pbAllRets);
     const pbCloudRetMax = Math.max(...pbAllRets);
     const pbTangencyInView = bestPort
       && bestPort.vol <= pbCloudVolMax * 1.25
       && bestPort.ret <= pbCloudRetMax * 1.25;
     if (pbTangencyInView) { pbAllVols.push(bestPort.vol); pbAllRets.push(bestPort.ret); }
-    const pbXMax = Math.max(...pbAllVols) * 1.08;
-    const pbYMin = Math.min(0, ...pbAllRets) - 2;
-    const pbYMax = Math.max(...pbAllRets) * 1.12;
+    // Tight bounds: start near the cloud so the data fills the plot area.
+    const pbWidth = pbCloudVolMax - pbCloudVolMin;
+    const pbHeight = pbCloudRetMax - pbCloudRetMin;
+    const pbXMin = Math.max(0, pbCloudVolMin - pbWidth * 0.25);
+    const pbXMax = Math.max(...pbAllVols) + pbWidth * 0.08;
+    const pbYMin = Math.min(0, pbCloudRetMin - pbHeight * 0.25);
+    const pbYMax = Math.max(...pbAllRets) + pbHeight * 0.12;
     let pbFrontierMinVol = null;
     if (analytical && analytical.frontier && analytical.frontier.length > 1) {
       const pts = analytical.frontier
@@ -480,7 +486,7 @@ async function runPortfolioBuilder() {
     frontierEl.innerHTML = "";
     Plotly.newPlot(frontierEl, fTraces, simPlotlyLayout({
       height: 320,
-      xaxis: { title: "Volatility (%)", range: [0, pbXMax] },
+      xaxis: { title: "Volatility (%)", range: [pbXMin, pbXMax] },
       yaxis: { title: "Return (%)", range: [pbYMin, pbYMax] },
       legend: { x: 0.02, y: 0.98, bgcolor: "rgba(0,0,0,0)" },
     }), simPlotlyConfig());
@@ -1405,15 +1411,22 @@ function advRenderAux(survTickers, survFiltered, survWeights) {
   // crush the cloud into one corner.
   const allVols = portfolios.map(p => p.vol).concat(assetPoints.map(a => a.vol), [userVol * 100]);
   const allRets = portfolios.map(p => p.ret).concat(assetPoints.map(a => a.ret), [userRet * 100]);
+  const advCloudVolMin = Math.min(...allVols);
   const advCloudVolMax = Math.max(...allVols);
+  const advCloudRetMin = Math.min(...allRets);
   const advCloudRetMax = Math.max(...allRets);
   const advTangencyInView = bestPort
     && bestPort.vol <= advCloudVolMax * 1.25
     && bestPort.ret <= advCloudRetMax * 1.25;
   if (advTangencyInView) { allVols.push(bestPort.vol); allRets.push(bestPort.ret); }
-  const xMax = Math.max(...allVols) * 1.08;
-  const yMin = Math.min(0, ...allRets) - 2;
-  const yMax = Math.max(...allRets) * 1.12;
+  // Start near the cloud (not at 0,0) so the data fills the plot area;
+  // always keep the risk-free reference line visible.
+  const advWidth = advCloudVolMax - advCloudVolMin;
+  const advHeight = advCloudRetMax - advCloudRetMin;
+  const xMin = Math.max(0, advCloudVolMin - advWidth * 0.25);
+  const xMax = Math.max(...allVols) + advWidth * 0.08;
+  const yMin = Math.min(RISK_FREE_PCT - 1, advCloudRetMin - advHeight * 0.25);
+  const yMax = Math.max(...allRets) + advHeight * 0.12;
 
   // Markers carry no inline text labels - the chart got too cramped before.
   // Each special point is identified by a small annotation with an arrow
@@ -1518,11 +1531,11 @@ function advRenderAux(survTickers, survFiltered, survWeights) {
 
   // Risk-free dashed reference at y = RISK_FREE_PCT
   layoutShapes.push({
-    type: "line", x0: 0, x1: xMax, y0: RISK_FREE_PCT, y1: RISK_FREE_PCT,
+    type: "line", x0: xMin, x1: xMax, y0: RISK_FREE_PCT, y1: RISK_FREE_PCT,
     line: { color: textMuted, width: 1, dash: "dash" },
   });
   layoutAnnots.push({
-    x: 0, y: RISK_FREE_PCT,
+    x: xMin, y: RISK_FREE_PCT,
     text: " Risk-free " + RISK_FREE_PCT + "%",
     showarrow: false, xanchor: "left", yanchor: "bottom",
     font: { color: textMuted, size: 10 },
@@ -1548,7 +1561,7 @@ function advRenderAux(survTickers, survFiltered, survWeights) {
 
   simPlotlyMount(frontierEl, fTraces, simPlotlyLayout({
     margin: { l: 70, r: 30, t: 16, b: 60 },
-    xaxis: { title: "Expected Risk (annualized volatility, %) →", range: [0, xMax] },
+    xaxis: { title: "Expected Risk (annualized volatility, %) →", range: [xMin, xMax] },
     yaxis: { title: "Expected Return (%) ↑", range: [yMin, yMax] },
     showlegend: false,
     shapes: layoutShapes,
