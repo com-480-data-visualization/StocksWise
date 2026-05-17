@@ -2343,7 +2343,7 @@ body.expert .expert-content.adv-sim {
   transform: none;
   box-shadow: none;
 }
-.adv-modal-actions { display: flex; gap: 0.6rem; }
+.adv-modal-actions { display: flex; gap: 0.6rem; margin-top: 1rem; }
 .adv-modal-actions .adv-modal-apply { flex: 1; margin-top: 0; }
 .adv-modal-shuffle {
   flex: 1;

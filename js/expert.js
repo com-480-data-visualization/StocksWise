@@ -1159,9 +1159,10 @@ function initTickerPicker(root, { initial = [], max = 8, onChange } = {}) {
   const chips = root.querySelector(".ticker-picker-chips");
 
   function renderChips() {
-    chips.innerHTML = tickers.map(t => `
-      <span class="ticker-chip">${t}<button data-rm="${t}" aria-label="Remove ${t}">×</button></span>
-    `).join("");
+    chips.innerHTML = tickers.map(t => {
+      const name = (StockData.companyName && StockData.companyName(t)) || "";
+      return `<span class="ticker-chip" data-ticker="${t}"${name ? ` title="${name.replace(/"/g, "&quot;")}"` : ""}>${t}<button data-rm="${t}" aria-label="Remove ${t}">×</button></span>`;
+    }).join("");
     chips.querySelectorAll("button[data-rm]").forEach(b => {
       b.addEventListener("click", () => {
         tickers = tickers.filter(t => t !== b.dataset.rm);
@@ -1169,6 +1170,8 @@ function initTickerPicker(root, { initial = [], max = 8, onChange } = {}) {
         if (onChange) onChange(tickers);
       });
     });
+    // In case the meta cache wasn't ready yet, re-annotate once it is.
+    StockData.annotateTickerTitles?.(chips);
   }
 
   let searchTimer = null;

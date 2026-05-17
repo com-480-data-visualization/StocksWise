@@ -40,6 +40,30 @@ const StockData = (() => {
   }
 
   let metaCache = null;
+  let nameMap = null;
+
+  // Synchronous lookup once loadMeta() has populated the cache. Returns the
+  // company name for a ticker, or null if unknown / not yet loaded. Callers
+  // wanting to ensure the cache is warm should `await StockData.loadMeta()`
+  // first (most pages do this at startup to populate ticker pickers).
+  function companyName(symbol) {
+    if (!nameMap) return null;
+    return nameMap.get(symbol.toUpperCase()) || null;
+  }
+
+  // Convenience: kick off a lazy load, and once it's done, walk every element
+  // with a `data-ticker` attribute and set its `title` to the company name.
+  // Idempotent - call whenever new ticker chips appear in the DOM.
+  async function annotateTickerTitles(root) {
+    await loadMeta();
+    const scope = root || document;
+    scope.querySelectorAll("[data-ticker]").forEach((el) => {
+      const t = el.dataset.ticker;
+      const name = companyName(t);
+      if (name && el.getAttribute("title") !== name) el.setAttribute("title", name);
+    });
+  }
+
   async function loadMeta() {
     if (metaCache) return metaCache;
     try {
@@ -58,6 +82,7 @@ const StockData = (() => {
         }
       }
       metaCache = rows.filter(r => r.symbol && r.symbol.length > 0);
+      nameMap = new Map(metaCache.map(r => [r.symbol.toUpperCase(), r.name]));
       return metaCache;
     } catch (e) { return []; }
   }
@@ -390,6 +415,8 @@ const StockData = (() => {
     detectSupportResistance,
     computePortfolioValue,
     loadMeta,
+    companyName,
+    annotateTickerTitles,
     daysBetween,
   };
 })();

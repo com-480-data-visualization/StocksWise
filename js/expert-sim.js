@@ -199,9 +199,11 @@ function renderPBSliders() {
   const remainder = 100 - each * pbTickers.length;
   container.innerHTML = pbTickers.map((t, i) => {
     const w = each + (i === 0 ? remainder : 0);
+    const name = (StockData.companyName && StockData.companyName(t)) || "";
+    const titleAttr = name ? ` title="${name.replace(/"/g, "&quot;")}"` : "";
     return `
     <div class="weight-slider-row">
-      <span class="ticker-label">${t}</span>
+      <span class="ticker-label" data-ticker="${t}"${titleAttr}>${t}</span>
       <input type="range" min="0" max="100" value="${w}" class="pb-weight" data-ticker="${t}" oninput="updatePBWeights(this)">
       <span class="weight-value" id="pb-w-${t}">${w}%</span>
       <button onclick="pbRemoveTicker('${t}')" style="background:none;border:none;color:var(--red);cursor:pointer;font-size:1rem;padding:0 0.3rem;">×</button>
@@ -589,9 +591,11 @@ function renderSTSliders() {
   const remainder = 100 - each * stTickers.length;
   container.innerHTML = stTickers.map((t, i) => {
     const w = each + (i === 0 ? remainder : 0);
+    const name = (StockData.companyName && StockData.companyName(t)) || "";
+    const titleAttr = name ? ` title="${name.replace(/"/g, "&quot;")}"` : "";
     return `
     <div class="weight-slider-row">
-      <span class="ticker-label">${t}</span>
+      <span class="ticker-label" data-ticker="${t}"${titleAttr}>${t}</span>
       <input type="range" min="0" max="100" value="${w}" class="st-weight" data-ticker="${t}" oninput="updateSTWeights(this)">
       <span class="weight-value" id="st-w-${t}">${w}%</span>
       <button onclick="stRemoveTicker('${t}')" style="background:none;border:none;color:var(--red);cursor:pointer;font-size:1rem;padding:0 0.3rem;">×</button>
@@ -934,7 +938,10 @@ function advRenderPremadeOptions() {
     <button class="adv-premade-option" data-id="${p.id}">
       <h4>${p.name}</h4>
       <p>${p.desc}</p>
-      <div class="adv-premade-tickers">${p.tickers.map(t => `<span>${t}</span>`).join("")}</div>
+      <div class="adv-premade-tickers">${p.tickers.map(t => {
+        const name = (StockData.companyName && StockData.companyName(t)) || "";
+        return `<span data-ticker="${t}"${name ? ` title="${name.replace(/"/g, "&quot;")}"` : ""}>${t}</span>`;
+      }).join("")}</div>
     </button>
   `).join("");
   root.querySelectorAll(".adv-premade-option").forEach(btn => {
@@ -963,9 +970,11 @@ function advRenderCustomSelected() {
   const root = document.getElementById("adv-custom-selected");
   const count = document.getElementById("adv-custom-count");
   if (!root) return;
-  root.innerHTML = advCustomWorking.map(t => `
-    <span class="adv-portfolio-chip">${t}<button data-rm="${t}" aria-label="Remove ${t}">×</button></span>
-  `).join("");
+  root.innerHTML = advCustomWorking.map(t => {
+    const name = (StockData.companyName && StockData.companyName(t)) || "";
+    const titleAttr = name ? ` title="${name.replace(/"/g, "&quot;")}"` : "";
+    return `<span class="adv-portfolio-chip" data-ticker="${t}"${titleAttr}>${t}<button data-rm="${t}" aria-label="Remove ${t}">×</button></span>`;
+  }).join("");
   root.querySelectorAll("button[data-rm]").forEach(b => {
     b.addEventListener("click", () => {
       advCustomWorking = advCustomWorking.filter(t => t !== b.dataset.rm);
@@ -1025,7 +1034,10 @@ async function advShuffleRandom() {
     picked.push(m.symbol);
   }
   advRandomWorking = picked;
-  preview.innerHTML = picked.map(t => `<span>${t}</span>`).join("");
+  preview.innerHTML = picked.map(t => {
+    const name = (StockData.companyName && StockData.companyName(t)) || "";
+    return `<span data-ticker="${t}"${name ? ` title="${name.replace(/"/g, "&quot;")}"` : ""}>${t}</span>`;
+  }).join("");
   const apply = document.getElementById("adv-random-apply");
   if (apply) apply.disabled = picked.length === 0;
 }
@@ -1225,9 +1237,11 @@ function advRenderWeights() {
   const ws = advState.weights;
   list.innerHTML = advState.tickers.map((t, i) => {
     const pct = Math.round((ws[i] || 0) * 100);
+    const name = (StockData.companyName && StockData.companyName(t)) || "";
+    const titleAttr = name ? ` title="${name.replace(/"/g, "&quot;")}"` : "";
     return `
       <div class="adv-weight-row">
-        <span class="adv-weight-ticker">${t}</span>
+        <span class="adv-weight-ticker" data-ticker="${t}"${titleAttr}>${t}</span>
         <input type="range" min="0" max="100" value="${pct}" data-idx="${i}" class="adv-weight">
         <span class="adv-weight-pct" id="adv-weight-pct-${i}">${pct}%</span>
       </div>
@@ -1676,7 +1690,11 @@ document.addEventListener("DOMContentLoaded", () => {
 
   advRenderPremadeOptions();
   advRenderCurrent();
-  advUpdatePillState();
+  // Intentionally do NOT call advUpdatePillState() at init: we want all three
+  // portfolio-type pills to look unselected on load so the user understands
+  // they're clickable (the default chart still uses Tech Giants, but the
+  // user is prompted to choose). Once the user picks one and applies, the
+  // click handlers below set the active state.
   advRenderWeights();
   advSetupStatPopover();
 

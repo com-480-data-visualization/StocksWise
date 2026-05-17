@@ -41,13 +41,16 @@
   track.innerHTML = items
     .map(
       (t) => `
-    <div class="ticker-item">
+    <div class="ticker-item" data-ticker="${t.symbol}">
       <span class="ticker-symbol">${t.symbol}</span>
       <span class="ticker-price">$${t.price}</span>
       <span class="ticker-change ${t.up ? "up" : "down"}">${t.change}</span>
     </div>`
     )
     .join("");
+
+  // Once the company-name cache is warm, set hover tooltips on each item.
+  if (window.StockData?.annotateTickerTitles) StockData.annotateTickerTitles(track);
 })();
 
 /* ── Mobile nav toggle ── */

@@ -641,7 +641,7 @@
     <div class="sim-controls beginner-content">
       <div class="sim-field">
         <label>Start Date</label>
-        <input type="date" id="sim-date" value="2015-01-02">
+        <input type="date" id="sim-date" value="2015-01-02" min="1980-12-12" max="2020-04-01">
       </div>
       <div class="sim-field">
         <label>Amount (€)</label>
@@ -688,7 +688,7 @@
     <div class="expert-content adv-sim">
       <!-- Portfolio type pills - each opens its modal -->
       <div class="adv-portfolio-types" role="tablist" aria-label="Portfolio type">
-        <button class="adv-portfolio-pill active" data-type="premade">
+        <button class="adv-portfolio-pill" data-type="premade">
           Pre-made
         </button>
         <button class="adv-portfolio-pill" data-type="custom">
@@ -709,7 +709,7 @@
         </div>
         <div class="adv-field">
           <label>Start date</label>
-          <input type="date" id="adv-start" value="2015-04-01" max="2020-03-31">
+          <input type="date" id="adv-start" value="2015-04-01" min="1980-12-12" max="2020-04-01">
         </div>
         <div class="adv-field">
           <label>Amount (€)</label>
@@ -923,6 +923,19 @@
         }
       });
     })();
+
+    /* ── Clamp <input type="date"> to its min/max even if the user types
+       out-of-range manually. Browsers accept anything typed in date fields;
+       this snaps the value back inside [min, max] on commit. ── */
+    document.querySelectorAll('input[type="date"][min][max]').forEach((input) => {
+      const clamp = () => {
+        if (!input.value) return;
+        if (input.min && input.value < input.min) input.value = input.min;
+        else if (input.max && input.value > input.max) input.value = input.max;
+      };
+      input.addEventListener("change", clamp);
+      input.addEventListener("blur", clamp);
+    });
 
     /* ── Mouse-following glow ── */
     const pageGlow = document.getElementById("page-glow");
