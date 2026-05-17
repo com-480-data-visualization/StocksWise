@@ -832,7 +832,6 @@ html  { scroll-padding-top: calc(var(--nav-h) + 36px + 16px); }
   border-color: var(--green);
   background: var(--green-bg);
   color: var(--green);
-  pointer-events: none;
 }
 
 .module-badge {

@@ -275,21 +275,28 @@
     if (!list.includes(mod)) { list.push(mod); setCompleted(list); }
     updateUI(mod);
   }
+  function unmarkCompleted(mod) {
+    const list = getCompleted().filter(m => m !== mod);
+    setCompleted(list);
+    const badge = document.getElementById("badge-" + mod);
+    if (badge) { badge.textContent = ""; badge.classList.remove("show"); }
+    const btn = document.querySelector(`.btn-quiz[data-module="${mod}"]`);
+    if (btn) { btn.textContent = "Take Quiz"; btn.classList.remove("completed"); }
+  }
   function updateUI(mod) {
     const badge = document.getElementById("badge-" + mod);
     if (badge) { badge.textContent = "Completed"; badge.classList.add("show"); }
     const btn = document.querySelector(`.btn-quiz[data-module="${mod}"]`);
-    if (btn) { btn.textContent = "Completed"; btn.classList.add("completed"); }
+    if (btn) { btn.textContent = "Retake Quiz"; btn.classList.add("completed"); }
   }
 
   // Restore on load
   getCompleted().forEach(updateUI);
 
-  // Open modal
+  // Open modal - allow retake even when the module is already completed.
   document.querySelectorAll(".btn-quiz").forEach((btn) => {
     btn.addEventListener("click", () => {
       const mod = btn.dataset.module;
-      if (getCompleted().includes(mod)) return;
       currentModule = mod;
       openQuiz(mod);
     });
@@ -302,6 +309,7 @@
     resultEl.classList.remove("fail");
     submitBtn.disabled = false;
     submitBtn.textContent = "Check Answers";
+    delete submitBtn.dataset.action;
 
     let html = "";
     data.questions.forEach((item, i) => {
@@ -330,6 +338,16 @@
 
   // Evaluate
   submitBtn.addEventListener("click", () => {
+    // After a fail, the same button becomes "Try Again": reopen the quiz fresh.
+    if (submitBtn.dataset.action === "retry") {
+      openQuiz(currentModule);
+      return;
+    }
+    if (submitBtn.dataset.action === "close") {
+      closeQuiz();
+      return;
+    }
+
     const questions = bodyEl.querySelectorAll(".quiz-question");
     let score = 0;
 
@@ -347,7 +365,6 @@
       if (selected && parseInt(selected.value, 10) === correct) score++;
     });
 
-    submitBtn.disabled = true;
     const total = questions.length;
     const passed = score === total;
 
@@ -355,9 +372,16 @@
     if (passed) {
       resultEl.textContent = `${score}/${total} - Module completed!`;
       markCompleted(currentModule);
+      submitBtn.textContent = "Close";
+      submitBtn.dataset.action = "close";
     } else {
+      // Failing a retake on a previously-completed module revokes the
+      // completed badge - the current state of knowledge is "not passed".
+      if (getCompleted().includes(currentModule)) unmarkCompleted(currentModule);
       resultEl.classList.add("fail");
-      resultEl.textContent = `${score}/${total} - Not quite! Close and try again.`;
+      resultEl.textContent = `${score}/${total} - Not quite. Try again!`;
+      submitBtn.textContent = "Try Again";
+      submitBtn.dataset.action = "retry";
     }
   });
 })();
