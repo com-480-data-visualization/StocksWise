@@ -134,6 +134,6 @@ See PDF "Milestone 2"
 
 ## Milestone 3
 
-* A screencast shows live interactions with the visualizations: [video]()
+* A screencast shows live interactions with the visualizations: [video](https://github.com/com-480-data-visualization/StocksWise/blob/main/presentation%20video.mp4)
 * A process book shows the design process moving from ideas to sketches, and from a high fidelity prototype to a final web version: [process book]()
 * The final live prototype can be found at this link: [website](https://com-480-data-visualization.github.io/StocksWise/)
