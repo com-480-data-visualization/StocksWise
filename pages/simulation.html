@@ -899,9 +899,9 @@
       });
     })();
 
-    /* ── Advanced Mode Toggle (independent per page) ── */
+    /* ── Advanced Mode Toggle (shared across pages via a single localStorage key) ── */
     (function initExpertMode() {
-      const pageKey = "sw-mode-sim";
+      const pageKey = "sw-mode";
       const saved = localStorage.getItem(pageKey);
       if (saved === "expert") document.body.classList.add("expert");
       const toggle = document.getElementById("expert-toggle");

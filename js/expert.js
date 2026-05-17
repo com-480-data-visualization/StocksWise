@@ -4,9 +4,9 @@
    Uses Plotly.js for advanced charts, Chart.js for simpler ones.
    ══════════════════════════════════════════════ */
 
-/* ── Expert Mode Toggle (independent per page) ── */
+/* ── Expert Mode Toggle (shared across pages via a single localStorage key) ── */
 (function initExpertMode() {
-  const pageKey = window.location.pathname.includes("/pages/") ? "sw-mode-sim" : "sw-mode-main";
+  const pageKey = "sw-mode";
   const saved = localStorage.getItem(pageKey);
   if (saved === "expert") document.body.classList.add("expert");
 
