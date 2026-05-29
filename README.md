@@ -135,5 +135,5 @@ See PDF "Milestone 2"
 ## Milestone 3
 
 * A screencast shows live interactions with the visualizations: [video](https://youtu.be/UrugLqVvL2Y)
-* A process book shows the design process moving from ideas to sketches, and from a high fidelity prototype to a final web version: [process book]()
+* A process book shows the design process moving from ideas to sketches, and from a high fidelity prototype to a final web version: [process book](./docs/Milestone3.pdf)
 * The final live prototype can be found at this link: [website](https://com-480-data-visualization.github.io/StocksWise/)
